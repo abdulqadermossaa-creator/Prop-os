@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prop OS | نظام إدارة الأملاك</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Reem+Kufi:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0c0f14;--bg2:#12161e;--bg3:#1a1f2d;--brd:#252c3d;--gold:#c9a55c;--gold2:#e4c882;--gold3:#f0dba8;--txt:#e8eaed;--muted:#7a8494;--ok:#4eba6f;--err:#d95555;--warn:#e4a832;--info:#5b9bd5}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;background-image:radial-gradient(ellipse at 15% 5%,rgba(201,165,92,.07) 0%,transparent 50%),radial-gradient(ellipse at 85% 95%,rgba(201,165,92,.04) 0%,transparent 50%)}
+h1,h2,h3{font-family:'Reem Kufi',sans-serif}
+::selection{background:var(--gold);color:#0c0f14}
+.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{background:var(--bg2);border:1px solid var(--brd);border-radius:22px;padding:36px;width:100%;max-width:460px;position:relative;overflow:hidden}
+.auth-card::before{content:'';position:absolute;top:-40%;right:-20%;width:300px;height:300px;background:radial-gradient(circle,rgba(201,165,92,.15),transparent 70%);pointer-events:none}
+.auth-logo-box{display:flex;align-items:center;gap:14px;margin-bottom:28px;position:relative}
+.auth-logo{width:56px;height:56px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:14px;display:grid;place-items:center;font-family:'Reem Kufi',sans-serif;font-weight:700;color:#0c0f14;font-size:22px}
+.auth-logo-text h2{font-size:24px;letter-spacing:-.5px}.auth-logo-text span{font-size:12px;color:var(--muted)}
+.mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg3);padding:4px;border-radius:10px;margin-bottom:20px}
+.mode-tab{padding:10px;text-align:center;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:.2s;font-weight:500}
+.mode-tab.on{background:var(--gold);color:#0c0f14}.mode-tab .ti{display:block;font-size:16px;margin-bottom:1px}
+.fg{margin-bottom:14px}.fg label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px;font-weight:500}
+input,select,textarea{width:100%;background:var(--bg3);border:1px solid var(--brd);color:var(--txt);padding:10px 13px;border-radius:9px;font-family:'Tajawal',sans-serif;font-size:13.5px;transition:.2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+textarea{resize:vertical;min-height:70px}
+.btn{padding:10px 20px;border-radius:9px;font-family:'Tajawal',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:.2s}
+.btn-g{background:var(--gold);color:#0c0f14}.btn-g:hover{background:var(--gold2)}
+.btn-o{background:transparent;color:var(--txt);border:1px solid var(--brd)}.btn-o:hover{border-color:var(--gold)}
+.btn-sm{padding:6px 12px;font-size:11.5px}
+.alert-box{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none}
+.alert-box.err{background:rgba(217,85,85,.1);color:var(--err)}.alert-box.show{display:block}
+header{border-bottom:1px solid var(--brd);background:rgba(12,15,20,.88);backdrop-filter:blur(14px);position:sticky;top:0;z-index:100}
+.hi{max-width:1320px;margin:0 auto;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.hbrand{display:flex;align-items:center;gap:10px}
+.hlogo{width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:9px;display:grid;place-items:center;font-family:'Reem Kufi',sans-serif;font-weight:700;color:#0c0f14;font-size:17px}
+.hname{font-family:'Reem Kufi',sans-serif;font-size:17px;font-weight:600}.hsub{font-size:10px;color:var(--muted)}
+nav ul{display:flex;list-style:none;gap:3px;flex-wrap:wrap}
+nav a{padding:7px 12px;color:var(--muted);text-decoration:none;border-radius:7px;font-size:12.5px;font-weight:500;transition:.2s;cursor:pointer;white-space:nowrap}
+nav a:hover{color:var(--txt);background:var(--bg2)}nav a.on{color:var(--gold);background:rgba(201,165,92,.1)}
+.uchip{display:flex;align-items:center;gap:8px;padding:5px 5px 5px 12px;background:var(--bg3);border:1px solid var(--brd);border-radius:24px;font-size:12.5px}
+.uav{width:26px;height:26px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:50%;display:grid;place-items:center;color:#0c0f14;font-weight:700;font-size:11px}
+.ubtn{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:3px 6px;font-size:11px;border-radius:5px}.ubtn:hover{color:var(--err)}
+.nav-badge{background:var(--err);color:#fff;padding:1px 6px;border-radius:10px;font-size:9.5px;margin-right:3px}
+.ct{max-width:1320px;margin:0 auto;padding:24px}
+.pg{display:none}.pg.on{display:block}
+.ph h1{font-size:28px;font-weight:600;margin-bottom:5px;letter-spacing:-.5px}.ph p{color:var(--muted);font-size:13.5px}.ph{margin-bottom:24px}
+.stitle{font-size:18px;margin-bottom:14px;display:flex;align-items:center;gap:9px}.stitle::before{content:'';width:3px;height:18px;background:var(--gold);border-radius:2px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.st{background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.st::before{content:'';position:absolute;top:0;right:0;width:70px;height:70px;background:radial-gradient(circle,rgba(201,165,92,.08),transparent 70%)}
+.st-l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.st-v{font-family:'Reem Kufi',sans-serif;font-size:26px;font-weight:600}.st-t{font-size:10.5px;color:var(--ok);margin-top:3px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px}
+.card{background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:20px;cursor:pointer;transition:.25s;position:relative;overflow:hidden}
+.card:hover{border-color:var(--gold);transform:translateY(-2px)}
+.card-ico{width:42px;height:42px;border-radius:9px;display:grid;place-items:center;margin-bottom:12px;font-size:20px}
+.ico-o{background:rgba(78,186,111,.15);color:var(--ok)}.ico-t{background:rgba(228,168,50,.15);color:var(--warn)}.ico-c{background:rgba(201,165,92,.15);color:var(--gold)}
+.card h3{font-size:16px;margin-bottom:4px}.card p{color:var(--muted);font-size:12px;margin-bottom:12px;line-height:1.5}
+.card-ft{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--brd);font-size:10.5px;color:var(--muted)}
+.badge{background:rgba(201,165,92,.12);color:var(--gold);padding:2px 8px;border-radius:16px;font-size:10px;font-weight:500}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;align-items:flex-start;justify-content:center;padding:24px 14px;overflow-y:auto}
+.ov.show{display:flex}
+.md{background:var(--bg2);border:1px solid var(--brd);border-radius:16px;max-width:700px;width:100%;padding:26px;margin:auto}
+.md-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--brd)}
+.md-h h2{font-size:19px;margin-bottom:3px}.md-h p{color:var(--muted);font-size:12px}
+.xbtn{background:transparent;border:1px solid var(--brd);color:var(--muted);width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:15px}.xbtn:hover{color:var(--txt);border-color:var(--gold)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fg2 .full{grid-column:1/-1}
+.fa{display:flex;gap:9px;margin-top:20px;padding-top:16px;border-top:1px solid var(--brd);flex-wrap:wrap}
+.tbl-box{background:var(--bg3);border:1px solid var(--brd);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.tbl-hd{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--brd);flex-wrap:wrap;gap:10px}
+.tbl-hd h3{font-size:14px}.filters{display:flex;gap:5px;flex-wrap:wrap}
+.fchip{padding:4px 10px;background:var(--bg2);border:1px solid var(--brd);border-radius:16px;font-size:11.5px;cursor:pointer;color:var(--muted);transition:.2s}
+.fchip.on{background:var(--gold);color:#0c0f14;border-color:var(--gold)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:600px}
+th,td{padding:11px 18px;text-align:right;font-size:12.5px}
+th{background:var(--bg2);color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.4px;font-size:10.5px}
+tr{border-bottom:1px solid var(--brd)}tr:last-child{border-bottom:none}tr:hover td{background:rgba(201,165,92,.02)}
+.tag{display:inline-block;padding:2px 9px;border-radius:16px;font-size:10.5px;font-weight:500}
+.tag-o{background:rgba(78,186,111,.15);color:var(--ok)}.tag-t{background:rgba(228,168,50,.15);color:var(--warn)}.tag-c{background:rgba(201,165,92,.15);color:var(--gold)}
+.tag-p{background:rgba(217,85,85,.15);color:var(--err)}.tag-d{background:rgba(78,186,111,.15);color:var(--ok)}.tag-f{background:rgba(228,168,50,.15);color:var(--warn)}.tag-cv{background:rgba(91,155,213,.15);color:var(--info)}
+.tag-maint{background:rgba(255,152,0,.15);color:#ff9800}.tag-vacant{background:rgba(217,85,85,.15);color:var(--err)}.tag-rented{background:rgba(78,186,111,.15);color:var(--ok)}
+.abtn{background:transparent;border:1px solid var(--brd);color:var(--txt);padding:4px 9px;border-radius:5px;font-size:11px;cursor:pointer;font-family:'Tajawal',sans-serif;margin-left:3px}.abtn:hover{border-color:var(--gold);color:var(--gold)}
+.abtn.del:hover{border-color:var(--err);color:var(--err)}
+.wa-btn{background:rgba(37,211,102,.15);border-color:rgba(37,211,102,.3);color:#25d366;font-size:10.5px}.wa-btn:hover{background:rgba(37,211,102,.25);border-color:#25d366}
+.empty{padding:44px 18px;text-align:center;color:var(--muted)}.empty-i{font-size:36px;margin-bottom:8px;opacity:.4}
+.al{background:var(--bg3);border:1px solid var(--brd);border-right:3px solid var(--warn);padding:12px 16px;border-radius:9px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}.al.urg{border-right-color:var(--err)}
+.al-t{font-weight:600;font-size:13.5px;margin-bottom:2px}.al-d{font-size:12px;color:var(--muted)}.al-days{font-size:11.5px;font-weight:600}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.rcard{background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:20px}.rcard h3{font-size:15px;margin-bottom:14px}
+.cw{position:relative;height:240px}
+.srow{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--brd);font-size:13px}.srow:last-child{border-bottom:none}
+.scard{background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:20px;margin-bottom:14px}.scard h3{font-size:15px;margin-bottom:6px}.scard p{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.plist{display:grid;gap:8px}
+.pi{background:var(--bg2);padding:10px 14px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.pi strong{display:block;font-size:13px;margin-bottom:1px}.pi span{color:var(--muted);font-size:11.5px}
+.rbadge{background:rgba(201,165,92,.15);color:var(--gold);padding:2px 9px;border-radius:16px;font-size:10.5px}
+.ohero{background:linear-gradient(135deg,rgba(201,165,92,.08),rgba(78,186,111,.04));border:1px solid var(--brd);border-radius:14px;padding:24px;margin-bottom:24px;position:relative;overflow:hidden}
+.ohero::before{content:'';position:absolute;top:-30%;left:-10%;width:250px;height:250px;background:radial-gradient(circle,rgba(201,165,92,.12),transparent 70%);pointer-events:none}
+.ohero h1{font-size:26px;margin-bottom:4px;position:relative}.ohero p{color:var(--muted);font-size:13px;position:relative}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:28px}
+.pcard{background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:20px;transition:.2s}.pcard:hover{border-color:var(--gold)}
+.pcard-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.pico{width:40px;height:40px;border-radius:9px;background:rgba(201,165,92,.15);display:grid;place-items:center;font-size:18px}
+.pstatus{padding:2px 9px;border-radius:16px;font-size:10.5px;font-weight:500}
+.ps-r{background:rgba(78,186,111,.15);color:var(--ok)}.ps-v{background:rgba(217,85,85,.15);color:var(--err)}.ps-m{background:rgba(255,152,0,.15);color:#ff9800}
+.pstat{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--brd);font-size:12.5px}.pstat .l{color:var(--muted)}.pstat .v{font-weight:600}
+.fab{position:fixed;bottom:24px;left:24px;width:52px;height:52px;border-radius:50%;background:var(--gold);color:#0c0f14;border:none;font-size:22px;cursor:pointer;box-shadow:0 6px 18px rgba(201,165,92,.3);z-index:50}.fab:hover{background:var(--gold2)}
+/* market insight box in owner portal */
+.mkt-insight{background:var(--bg2);border:1px solid var(--brd);border-radius:10px;padding:14px;margin-top:14px}
+.mkt-insight h4{font-size:13px;margin-bottom:10px;color:var(--gold);display:flex;align-items:center;gap:6px}
+.mkt-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid rgba(37,44,61,.5)}.mkt-row:last-child{border:none}
+.mkt-row .l{color:var(--muted)}.mkt-row .v{font-weight:600}
+.mkt-row .up{color:var(--ok)}.mkt-row .down{color:var(--err)}.mkt-row .eq{color:var(--warn)}
+.chart-sm{height:180px;margin-top:10px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg2);border:1px solid var(--ok);border-right:4px solid var(--ok);padding:12px 18px;border-radius:9px;font-size:13px;z-index:300;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}.toast.show{display:block;animation:tIn .3s ease}
+@keyframes tIn{from{transform:translateX(-40px);opacity:0}to{transform:translateX(0);opacity:1}}
+@media(max-width:768px){.stats,.cards{grid-template-columns:repeat(2,1fr)}.rgrid{grid-template-columns:1fr}.fg2{grid-template-columns:1fr}nav a{padding:5px 8px;font-size:11px}.ct{padding:18px 14px}.ph h1{font-size:24px}}
+@media(max-width:480px){.stats,.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth" id="authScreen">
+<div class="auth-card">
+<div class="auth-logo-box"><div class="auth-logo">PO</div><div class="auth-logo-text"><h2>Prop OS</h2><span>نظام إدارة الأملاك الذكي</span></div></div>
+<div class="mode-tabs"><div class="mode-tab on" data-lt="partner" onclick="swLT('partner')"><span class="ti">🔐</span>شريك / مدير</div><div class="mode-tab" data-lt="owner" onclick="swLT('owner')"><span class="ti">🏠</span>مالك عقار</div></div>
+<div id="partnerAuth"><div class="alert-box" id="pErr"></div>
+<div class="fg"><label>اسم المستخدم</label><input id="p-user" placeholder="salman"></div>
+<div class="fg"><label>كلمة المرور</label><input type="password" id="p-pass" placeholder="••••"></div>
+<button class="btn btn-g" style="width:100%" onclick="partnerLogin()">دخول</button>
+<p style="text-align:center;font-size:11px;color:var(--muted);margin-top:16px">سلمان (111) · أبو سعد (222) · عبدالقادر (333)</p></div>
+<div id="ownerAuth" style="display:none"><div class="alert-box" id="oErr"></div>
+<div class="mode-tabs" style="margin-bottom:16px"><div class="mode-tab on" data-om="acc" onclick="swOM('acc')">حساب</div><div class="mode-tab" data-om="code" onclick="swOM('code')">رمز خاص</div></div>
+<div id="oAccMode"><div class="fg"><label>اسم المستخدم</label><input id="o-user"></div><div class="fg"><label>كلمة المرور</label><input type="password" id="o-pass"></div><button class="btn btn-g" style="width:100%" onclick="ownerLogin()">دخول</button></div>
+<div id="oCodeMode" style="display:none"><div class="fg"><label>الرمز الخاص</label><input id="o-code" placeholder="OWN-XXXX-XXXX"></div><button class="btn btn-g" style="width:100%" onclick="ownerCodeLogin()">دخول بالرمز</button></div>
+<p style="text-align:center;font-size:11px;color:var(--muted);margin-top:14px">تواصل مع الشركة لتفعيل حسابك</p></div>
+</div></div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+<header><div class="hi">
+<div class="hbrand"><div class="hlogo">PO</div><div><div class="hname">Prop OS</div><div class="hsub">نظام إدارة الأملاك</div></div></div>
+<nav><ul>
+<li><a class="on" data-pg="dash" onclick="go('dash')">لوحة التحكم</a></li>
+<li><a data-pg="records" onclick="go('records')">السجلات</a></li>
+<li><a data-pg="owners" onclick="go('owners')">بوابة الملاك</a></li>
+<li><a data-pg="mkt" onclick="go('mkt')">التسويق <span class="nav-badge" id="mktBadge" style="display:none">0</span></a></li>
+<li><a data-pg="market" onclick="go('market')">بيانات السوق</a></li>
+<li><a data-pg="alerts" onclick="go('alerts')">التنبيهات <span class="nav-badge" id="alertBadge" style="display:none">0</span></a></li>
+<li><a data-pg="reports" onclick="go('reports')">التقارير</a></li>
+<li><a data-pg="settings" onclick="go('settings')">الإعدادات</a></li>
+</ul></nav>
+<div class="uchip"><div class="uav" id="uAv">?</div><span id="uNm">--</span><button class="ubtn" onclick="logout()">خروج</button></div>
+</div></header>
+<div class="ct">
+
+<!-- DASH -->
+<div class="pg on" id="pg-dash">
+<div class="ph"><h1>أهلاً بك، <span id="welc">--</span></h1><p>لوحة تحكم Prop OS</p></div>
+<div class="stats">
+<div class="st"><div class="st-l">الملاك</div><div class="st-v" id="cOwn">0</div><div class="st-t">عقارات مدارة</div></div>
+<div class="st"><div class="st-l">المستأجرين</div><div class="st-v" id="cTen">0</div><div class="st-t">عقود نشطة</div></div>
+<div class="st"><div class="st-l">الشركاء</div><div class="st-v" id="cCom">0</div><div class="st-t">اتفاقيات</div></div>
+<div class="st"><div class="st-l">التسويق</div><div class="st-v" id="cMkt">0</div><div class="st-t" id="cMktP" style="color:var(--err)">0 بانتظار</div></div>
+</div>
+<h2 class="stitle">القوالب</h2>
+<div class="cards">
+<div class="card" onclick="openM('owner')"><div class="card-ico ico-o">🏠</div><h3>قالب المالك</h3><p>بيانات المالك وشروط الإدارة</p><div class="card-ft"><span class="badge">12 حقل</span><span>← ابدأ</span></div></div>
+<div class="card" onclick="openM('tenant')"><div class="card-ico ico-t">🔑</div><h3>قالب المستأجر</h3><p>عقد إيجار وقيمة الإيجار</p><div class="card-ft"><span class="badge">12 حقل</span><span>← ابدأ</span></div></div>
+<div class="card" onclick="openM('company')"><div class="card-ico ico-c">🤝</div><h3>قالب الشركاء</h3><p>الحصص والأدوار والأرباح</p><div class="card-ft"><span class="badge">10 حقل</span><span>← ابدأ</span></div></div>
+</div></div>
+
+<!-- RECORDS -->
+<div class="pg" id="pg-records">
+<div class="ph"><h1>السجلات</h1><p>عرض وإدارة كل السجلات</p></div>
+<div class="tbl-box"><div class="tbl-hd"><h3>السجلات</h3><div class="filters"><div class="fchip on" data-f="all" onclick="fRec('all')">الكل</div><div class="fchip" data-f="owner" onclick="fRec('owner')">ملاك</div><div class="fchip" data-f="tenant" onclick="fRec('tenant')">مستأجرين</div><div class="fchip" data-f="company" onclick="fRec('company')">شركاء</div></div></div>
+<div class="tw"><table><thead><tr><th>النوع</th><th>الاسم</th><th>التفاصيل</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody id="recTB"></tbody></table></div>
+</div></div>
+
+<!-- OWNERS MGMT -->
+<div class="pg" id="pg-owners">
+<div class="ph"><h1>بوابة الملاك</h1><p>حسابات الملاك وطلبات الصيانة</p></div>
+<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap"><button class="btn btn-g" onclick="openCreateOA()">+ إنشاء حساب لمالك</button><button class="btn btn-o" onclick="go('maint')">📋 طلبات الصيانة <span class="nav-badge" id="maintBadge" style="display:none">0</span></button></div>
+<div class="tbl-box"><div class="tbl-hd"><h3>حسابات الملاك</h3><span style="color:var(--muted);font-size:11.5px" id="oaCnt">0</span></div>
+<div class="tw"><table><thead><tr><th>الاسم</th><th>الطريقة</th><th>بيانات الدخول</th><th>العقارات</th><th>إجراءات</th></tr></thead><tbody id="oaTB"></tbody></table></div></div>
+</div>
+
+<!-- MAINT -->
+<div class="pg" id="pg-maint"><div class="ph"><h1>طلبات الصيانة</h1></div><div id="adminReqList"></div></div>
+
+<!-- MARKETING -->
+<div class="pg" id="pg-mkt">
+<div class="ph"><h1>التسويق والمتابعة</h1><p>العملاء المحتملين والملاحظات السرية</p></div>
+<div class="stats" style="margin-bottom:20px">
+<div class="st"><div class="st-l">إجمالي</div><div class="st-v" id="mAll">0</div></div>
+<div class="st"><div class="st-l">بانتظار</div><div class="st-v" id="mPend" style="color:var(--err)">0</div></div>
+<div class="st"><div class="st-l">تم التواصل</div><div class="st-v" id="mDone" style="color:var(--ok)">0</div></div>
+<div class="st"><div class="st-l">متابعة</div><div class="st-v" id="mFollow" style="color:var(--warn)">0</div></div>
+</div>
+<div class="scard" style="margin-bottom:20px"><h3>إضافة عميل</h3>
+<div class="fg2">
+<div class="fg"><label>الاسم</label><input id="ld-name"></div><div class="fg"><label>الجوال</label><input id="ld-phone"></div>
+<div class="fg"><label>الحالة</label><select id="ld-status"><option value="pending">لم يتم التواصل</option><option value="contacted">تم التواصل</option><option value="following">قيد المتابعة</option><option value="closed">مغلق</option><option value="converted">تحول لعميل</option></select></div>
+<div class="fg"><label>المصدر</label><select id="ld-source"><option>توصية شخصية</option><option>مكالمة</option><option>تويتر</option><option>انستقرام</option><option>إعلان</option><option>أخرى</option></select></div>
+<div class="fg full"><label>ملاحظة سرية 🔒</label><textarea id="ld-notes"></textarea></div>
+</div><button class="btn btn-g" style="margin-top:12px" onclick="addLead()">+ إضافة</button></div>
+<div class="tbl-box"><div class="tbl-hd"><h3>العملاء</h3><div class="filters"><div class="fchip on" data-lf="all" onclick="fLead('all')">الكل</div><div class="fchip" data-lf="pending" onclick="fLead('pending')">بانتظار</div><div class="fchip" data-lf="contacted" onclick="fLead('contacted')">تم</div><div class="fchip" data-lf="following" onclick="fLead('following')">متابعة</div></div></div>
+<div class="tw"><table><thead><tr><th>الاسم</th><th>الجوال</th><th>المصدر</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody id="ldTB"></tbody></table></div></div>
+</div>
+
+<!-- MARKET DATA (بيانات السوق — للشركاء) -->
+<div class="pg" id="pg-market">
+<div class="ph"><h1>📊 بيانات السوق</h1><p>أضف بيانات مقارنة لكل حي — ستظهر للمالك في بوابته لإقناعه بقيمة العقار</p></div>
+<div class="scard">
+<h3>إضافة بيانات حي / منطقة</h3>
+<p>أدخل متوسط الأسعار وسرعة التأجير للعقارات المشابهة في الحي</p>
+<div class="fg2">
+<div class="fg"><label>اسم الحي / المنطقة</label><input id="mk-area" placeholder="مثال: حي الراكية"></div>
+<div class="fg"><label>نوع العقار</label><select id="mk-type"><option>شقة</option><option>فيلا</option><option>دور</option><option>عمارة</option><option>محل تجاري</option></select></div>
+<div class="fg"><label>متوسط الإيجار الشهري (ر.س)</label><input type="number" id="mk-avgrent" placeholder="3000"></div>
+<div class="fg"><label>أعلى إيجار مسجل (ر.س)</label><input type="number" id="mk-maxrent" placeholder="5000"></div>
+<div class="fg"><label>أقل إيجار مسجل (ر.س)</label><input type="number" id="mk-minrent" placeholder="2000"></div>
+<div class="fg"><label>متوسط مدة التأجير (يوم)</label><input type="number" id="mk-avgdays" placeholder="15"></div>
+<div class="fg"><label>نسبة الإشغال بالحي (%)</label><input type="number" id="mk-occ" placeholder="85"></div>
+<div class="fg"><label>تاريخ التحديث</label><input type="date" id="mk-date"></div>
+<div class="fg full"><label>ملاحظات عن السوق</label><textarea id="mk-notes" placeholder="مثال: الطلب عالي — الشقق تتأجر خلال أسبوع..."></textarea></div>
+</div>
+<button class="btn btn-g" style="margin-top:12px" onclick="addMarketData()">+ إضافة بيانات الحي</button>
+</div>
+<div class="tbl-box"><div class="tbl-hd"><h3>بيانات الأحياء المسجلة</h3></div>
+<div class="tw"><table><thead><tr><th>الحي</th><th>النوع</th><th>متوسط الإيجار</th><th>مدى</th><th>سرعة التأجير</th><th>الإشغال</th><th>إجراءات</th></tr></thead><tbody id="mkTB"></tbody></table></div></div>
+</div>
+
+<!-- ALERTS -->
+<div class="pg" id="pg-alerts"><div class="ph"><h1>التنبيهات</h1></div><div id="alertList"></div></div>
+
+<!-- REPORTS -->
+<div class="pg" id="pg-reports"><div class="ph"><h1>التقارير</h1></div>
+<div class="rgrid"><div class="rcard"><h3>توزيع السجلات</h3><div class="cw"><canvas id="ch1"></canvas></div></div><div class="rcard"><h3>الإيرادات الشهرية</h3><div class="cw"><canvas id="ch2"></canvas></div></div><div class="rcard"><h3>ملخص مالي</h3><div id="finSum"></div></div><div class="rcard"><h3>حالات التسويق</h3><div class="cw"><canvas id="ch3"></canvas></div></div></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="pg" id="pg-settings"><div class="ph"><h1>الإعدادات</h1></div>
+<div class="scard"><h3>الفريق</h3><div class="plist" id="teamList"></div></div>
+<div class="scard"><h3>النسخ الاحتياطي</h3><p>صدّر أو استعد بياناتك</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-g" onclick="doExport()">📥 تصدير</button><button class="btn btn-o" onclick="openImport()">📤 استيراد</button></div></div>
+</div>
+
+</div></div>
+
+<!-- OWNER PORTAL -->
+<div id="ownerPortal" style="display:none">
+<header><div class="hi"><div class="hbrand"><div class="hlogo">PO</div><div><div class="hname">Prop OS</div><div class="hsub">بوابة المالك</div></div></div><div class="uchip"><div class="uav" id="opAv">?</div><span id="opNm">--</span><button class="ubtn" onclick="logoutOp()">خروج</button></div></div></header>
+<div class="ct">
+<div class="ohero"><h1>أهلاً، <span id="opWel">--</span></h1><p>عقاراتك وتحليلات السوق</p></div>
+<div class="stats"><div class="st"><div class="st-l">عقاراتك</div><div class="st-v" id="opP">0</div></div><div class="st"><div class="st-l">مؤجرة</div><div class="st-v" id="opR">0</div></div><div class="st"><div class="st-l">شاغرة</div><div class="st-v" id="opV">0</div></div><div class="st"><div class="st-l">طلباتك</div><div class="st-v" id="opQ">0</div></div></div>
+<h2 class="stitle">عقاراتك</h2><div class="pgrid" id="opGrid"></div>
+<h2 class="stitle">طلباتك</h2><div id="opReqList"></div>
+</div><button class="fab" onclick="openNewReq()">+</button>
+</div>
+
+<!-- MODALS -->
+<div class="ov" id="m-owner"><div class="md"><div class="md-h"><div><h2>قالب المالك</h2><p>بيانات المالك</p></div><button class="xbtn" onclick="closeM('owner')">✕</button></div>
+<div class="fg2">
+<div class="fg"><label>الاسم</label><input id="ow-name"></div><div class="fg"><label>الهوية</label><input id="ow-id"></div>
+<div class="fg"><label>الجوال</label><input id="ow-phone"></div><div class="fg"><label>البريد</label><input id="ow-email"></div>
+<div class="fg full"><label>عنوان العقار</label><input id="ow-prop"></div>
+<div class="fg"><label>الحي / المنطقة</label><input id="ow-area" placeholder="مثال: حي الراكية"></div>
+<div class="fg"><label>نوع العقار</label><select id="ow-type"><option>شقة</option><option>فيلا</option><option>دور</option><option>عمارة</option><option>محل تجاري</option></select></div>
+<div class="fg"><label>رقم الصك</label><input id="ow-deed"></div><div class="fg"><label>الإيجار الشهري (ر.س)</label><input type="number" id="ow-rent"></div>
+<div class="fg"><label>العمولة (%)</label><input type="number" id="ow-com"></div><div class="fg"><label>بداية الإدارة</label><input type="date" id="ow-start"></div>
+<div class="fg"><label>مدة العقد (سنة)</label><input type="number" id="ow-dur"></div>
+<div class="fg"><label>حالة العقار</label><select id="ow-status"><option value="vacant">شاغر</option><option value="rented">مؤجر</option><option value="maintenance">تحت الصيانة</option></select></div>
+<div class="fg full"><label>ملاحظات</label><textarea id="ow-notes"></textarea></div>
+</div><div class="fa"><button class="btn btn-g" onclick="saveRec('owner')">حفظ</button><button class="btn btn-o" onclick="closeM('owner')">إلغاء</button></div></div></div>
+
+<div class="ov" id="m-tenant"><div class="md"><div class="md-h"><div><h2>قالب المستأجر</h2></div><button class="xbtn" onclick="closeM('tenant')">✕</button></div>
+<div class="fg2">
+<div class="fg"><label>الاسم</label><input id="tn-name"></div><div class="fg"><label>الهوية</label><input id="tn-id"></div>
+<div class="fg"><label>الجنسية</label><input id="tn-nat"></div><div class="fg"><label>الجوال</label><input id="tn-phone"></div>
+<div class="fg full"><label>جهة العمل</label><input id="tn-work"></div><div class="fg full"><label>العقار</label><input id="tn-prop"></div>
+<div class="fg"><label>الإيجار السنوي</label><input type="number" id="tn-rent"></div><div class="fg"><label>السداد</label><select id="tn-pay"><option>شهري</option><option>ربع سنوي</option><option>نصف سنوي</option><option>سنوي</option></select></div>
+<div class="fg"><label>التأمين</label><input type="number" id="tn-dep"></div><div class="fg"><label>بداية العقد</label><input type="date" id="tn-start"></div>
+<div class="fg"><label>نهاية العقد</label><input type="date" id="tn-end"></div><div class="fg full"><label>شروط</label><textarea id="tn-notes"></textarea></div>
+</div><div class="fa"><button class="btn btn-g" onclick="saveRec('tenant')">حفظ</button><button class="btn btn-o" onclick="closeM('tenant')">إلغاء</button></div></div></div>
+
+<div class="ov" id="m-company"><div class="md"><div class="md-h"><div><h2>قالب الشركاء</h2></div><button class="xbtn" onclick="closeM('company')">✕</button></div>
+<div class="fg2">
+<div class="fg full"><label>الشركة</label><input id="co-name"></div><div class="fg"><label>السجل التجاري</label><input id="co-cr"></div><div class="fg"><label>التأسيس</label><input type="date" id="co-fd"></div>
+<div class="fg full"><label>الشريك</label><input id="co-partner"></div><div class="fg"><label>الحصة (%)</label><input type="number" id="co-share"></div><div class="fg"><label>المساهمة</label><input type="number" id="co-inv"></div>
+<div class="fg"><label>الدور</label><input id="co-role"></div><div class="fg"><label>القرار</label><select id="co-auth"><option>منفرد</option><option>بالأغلبية</option><option>بالإجماع</option></select></div>
+<div class="fg full"><label>الأرباح</label><textarea id="co-prof"></textarea></div><div class="fg full"><label>بنود</label><textarea id="co-notes"></textarea></div>
+</div><div class="fa"><button class="btn btn-g" onclick="saveRec('company')">حفظ</button><button class="btn btn-o" onclick="closeM('company')">إلغاء</button></div></div></div>
+
+<div class="ov" id="m-createOA"><div class="md" style="max-width:540px"><div class="md-h"><div><h2>إنشاء حساب لمالك</h2></div><button class="xbtn" onclick="closeM('createOA')">✕</button></div>
+<div class="fg"><label>اختر المالك</label><select id="selOwRec"></select></div>
+<div class="fg"><label>الطريقة</label><div class="mode-tabs"><div class="mode-tab on" data-lm="acc" onclick="swLM('acc')">حساب</div><div class="mode-tab" data-lm="code" onclick="swLM('code')">رمز</div></div></div>
+<div id="oaAccF"><div class="fg2"><div class="fg"><label>المستخدم</label><input id="oa-user"></div><div class="fg"><label>كلمة المرور</label><input id="oa-pass"></div></div></div>
+<div id="oaCodeF" style="display:none"><div class="fg"><label>الرمز</label><input id="oa-code" readonly></div></div>
+<div class="fa"><button class="btn btn-g" onclick="createOA()">إنشاء</button><button class="btn btn-o" onclick="closeM('createOA')">إلغاء</button></div></div></div>
+
+<div class="ov" id="m-note"><div class="md" style="max-width:500px"><div class="md-h"><div><h2>🔒 ملاحظة سرية</h2></div><button class="xbtn" onclick="closeM('note')">✕</button></div>
+<div id="noteContent" style="background:var(--bg3);padding:16px;border-radius:9px;border-right:3px solid var(--gold);font-size:13.5px;line-height:1.8"></div>
+<div class="fa"><button class="btn btn-g" onclick="editNote()">✏️ تعديل</button><button class="btn btn-o" onclick="closeM('note')">إغلاق</button></div></div></div>
+
+<div class="ov" id="m-newReq"><div class="md" style="max-width:540px"><div class="md-h"><div><h2>طلب جديد</h2></div><button class="xbtn" onclick="closeM('newReq')">✕</button></div>
+<div class="fg"><label>النوع</label><select id="rq-type"><option>طلب صيانة</option><option>استفسار</option><option>شكوى</option></select></div>
+<div class="fg"><label>العقار</label><select id="rq-prop"></select></div>
+<div class="fg"><label>العنوان</label><input id="rq-title"></div>
+<div class="fg"><label>التفاصيل</label><textarea id="rq-desc"></textarea></div>
+<div class="fa"><button class="btn btn-g" onclick="submitReq()">إرسال</button><button class="btn btn-o" onclick="closeM('newReq')">إلغاء</button></div></div></div>
+
+<div class="ov" id="m-chgStatus"><div class="md" style="max-width:440px"><div class="md-h"><div><h2>تغيير حالة العقار</h2><p id="csName"></p></div><button class="xbtn" onclick="closeM('chgStatus')">✕</button></div>
+<div class="fg"><label>الحالة الجديدة</label><select id="cs-val"><option value="vacant">شاغر</option><option value="rented">مؤجر</option><option value="maintenance">تحت الصيانة</option></select></div>
+<div class="fa"><button class="btn btn-g" onclick="applyStatus()">حفظ</button><button class="btn btn-o" onclick="closeM('chgStatus')">إلغاء</button></div></div></div>
+
+<!-- Chart modal for owner portal -->
+<div class="ov" id="m-propChart"><div class="md" style="max-width:580px"><div class="md-h"><div><h2 id="pcTitle">تحليل السوق</h2><p id="pcSub">مقارنة عقارك بالسوق</p></div><button class="xbtn" onclick="closeM('propChart')">✕</button></div>
+<div id="pcContent"></div></div></div>
+
+<div class="ov" id="m-import"><div class="md" style="max-width:560px"><div class="md-h"><div><h2>استيراد</h2></div><button class="xbtn" onclick="closeM('import')">✕</button></div>
+<textarea id="impText" placeholder="الصق هنا..." style="min-height:220px;font-family:monospace;font-size:11px;direction:ltr"></textarea>
+<div class="fa"><button class="btn btn-g" onclick="doImport()">استيراد</button><button class="btn btn-o" onclick="closeM('import')">إلغاء</button></div></div></div>
+
+<div class="ov" id="m-backup"><div class="md" style="max-width:560px"><div class="md-h"><div><h2>نسخة احتياطية</h2></div><button class="xbtn" onclick="closeM('backup')">✕</button></div>
+<textarea id="bkText" readonly style="min-height:260px;font-family:monospace;font-size:10px;direction:ltr"></textarea>
+<div class="fa"><button class="btn btn-g" onclick="copyBk()">📋 نسخ</button><button class="btn btn-o" onclick="closeM('backup')">إغلاق</button></div></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DU=[
+  {username:'salman',name:'سلمان',role:'partner',pwh:'h_11jl'},
+  {username:'abusaad',name:'أبو سعد',role:'partner',pwh:'h_12b6'},
+  {username:'abdulqader',name:'عبدالقادر',role:'partner',pwh:'h_132r'}
+];
+let D={users:[],records:[],ownerAccounts:[],leads:[],requests:[],marketData:[]};
+let CU=null,CO=null,noteIdx=null,csRecId=null,charts={},opCharts=[];
+
+function h(s){let v=0;for(let i=0;i<s.length;i++){v=((v<<5)-v)+s.charCodeAt(i);v|=0}return'h_'+Math.abs(v).toString(36)}
+function $(id){return document.getElementById(id)}
+function v(id){const e=$(id);return e?e.value:''}
+
+// STORAGE
+async function load(){
+  try{const r=await window.storage.get('propos_data',true);if(r)D=JSON.parse(r.value)}catch{}
+  if(!D.users||!D.users.length)D.users=[...DU];
+  ['records','ownerAccounts','leads','requests','marketData'].forEach(k=>{if(!D[k])D[k]=[]});
+  if(!D.records.length) seedDemo();
+}
+async function save(){
+  for(let i=0;i<3;i++){try{const r=await window.storage.set('propos_data',JSON.stringify(D),true);if(r)return true}catch(e){console.warn(e)}await new Promise(r=>setTimeout(r,400*(i+1)))}
+  toast('⚠️ تعذر الحفظ — استخدم التصدير',1);return false;
+}
+
+function seedDemo(){
+  D.records=[
+    {id:'r_d1',type:'owner',name:'فهد العتيبي',date:'٢٠٢٦/٥/١٥',ts:'2026-05-15T10:00:00',by:'سلمان',details:'شقة: حي الراكية',data:{name:'فهد العتيبي',id:'1088776655',phone:'0501234567',email:'fahad@email.com',property:'حي الراكية، شارع الملك فهد، عمارة 12، شقة 5',area:'حي الراكية',propertyType:'شقة',deed:'443322',rent:'3500',commission:'10',startDate:'2026-01-01',duration:'2',status:'rented',notes:'مالك متعاون'}},
+    {id:'r_d2',type:'owner',name:'فهد العتيبي',date:'٢٠٢٦/٥/١٥',ts:'2026-05-15T10:01:00',by:'سلمان',details:'فيلا: حي النرجس',data:{name:'فهد العتيبي',id:'1088776655',phone:'0501234567',email:'fahad@email.com',property:'حي النرجس، شارع الأمير سلطان، فيلا 8',area:'حي النرجس',propertyType:'فيلا',deed:'554433',rent:'8000',commission:'8',startDate:'2026-01-01',duration:'3',status:'vacant',notes:''}},
+    {id:'r_d3',type:'tenant',name:'محمد الشهري',date:'٢٠٢٦/٥/١٥',ts:'2026-05-15T10:02:00',by:'أبو سعد',details:'42000 ر.س — سنوي',endDate:'2026-07-15',data:{name:'محمد الشهري',id:'2099887766',nationality:'سعودي',phone:'0559876543',work:'شركة الاتصالات',property:'حي الراكية، شارع الملك فهد، عمارة 12، شقة 5',rent:'42000',payment:'سنوي',deposit:'3500',startDate:'2025-07-15',endDate:'2026-07-15',notes:''}},
+    {id:'r_d4',type:'company',name:'سلمان',date:'٢٠٢٦/٥/١٥',ts:'2026-05-15T10:03:00',by:'سلمان',details:'40% — مدير تنفيذي',data:{company:'Prop OS لإدارة الأملاك',cr:'4030123456',founded:'2026-01-01',partner:'سلمان',share:'40',investment:'100000',role:'المدير التنفيذي',authority:'بالأغلبية',profits:'حسب الحصة',notes:''}}
+  ];
+  D.ownerAccounts=[
+    {id:'oa_d1',recordId:'r_d1',name:'فهد العتيبي',phone:'0501234567',loginMethod:'account',username:'fahad',pwh:h('1234'),pwPlain:'1234',ts:'2026-05-15T10:05:00',by:'سلمان'},
+    {id:'oa_d2',recordId:'r_d1',name:'فهد العتيبي',phone:'0501234567',loginMethod:'code',accessCode:'OWN-TEST-1234',ts:'2026-05-15T10:06:00',by:'سلمان'}
+  ];
+  D.leads=[
+    {id:'l_d1',name:'خالد الدوسري',phone:'0541112233',status:'pending',source:'توصية',notes:'يملك 3 عمارات بالعزيزية، مهتم بالأتمتة',date:'٢٠٢٦/٥/١٥',by:'سلمان'},
+    {id:'l_d2',name:'عبدالله القحطاني',phone:'0567778899',status:'contacted',source:'مكالمة',notes:'فيلا واحدة للتأجير. طلب عرض سعر',date:'٢٠٢٦/٥/١٤',by:'أبو سعد'},
+    {id:'l_d3',name:'نورة السبيعي',phone:'0588990011',status:'following',source:'انستقرام',notes:'شقق مفروشة — تفاوض على العمولة',date:'٢٠٢٦/٥/١٣',by:'عبدالقادر'}
+  ];
+  D.marketData=[
+    {id:'mk_d1',area:'حي الراكية',type:'شقة',avgRent:3200,maxRent:4500,minRent:2200,avgDays:12,occupancy:88,date:'2026-05-10',notes:'طلب عالي — شقق تتأجر بسرعة',by:'سلمان'},
+    {id:'mk_d2',area:'حي النرجس',type:'فيلا',avgRent:7500,maxRent:12000,minRent:5000,avgDays:25,occupancy:72,date:'2026-05-10',notes:'سوق الفلل أبطأ لكن أرباحه أعلى',by:'سلمان'}
+  ];
+}
+
+// AUTH
+function swLT(t){document.querySelectorAll('[data-lt]').forEach(e=>e.classList.toggle('on',e.dataset.lt===t));$('partnerAuth').style.display=t==='partner'?'block':'none';$('ownerAuth').style.display=t==='owner'?'block':'none'}
+function swOM(m){document.querySelectorAll('[data-om]').forEach(e=>e.classList.toggle('on',e.dataset.om===m));$('oAccMode').style.display=m==='acc'?'block':'none';$('oCodeMode').style.display=m==='code'?'block':'none'}
+function showA(id,msg){const e=$(id);e.textContent=msg;e.className='alert-box err show'}
+function partnerLogin(){const u=v('p-user').trim(),p=v('p-pass');if(!u||!p){showA('pErr','تعبئة الحقول مطلوبة');return}const user=D.users.find(x=>x.username===u);if(!user){showA('pErr','المستخدم غير موجود');return}if(user.pwh!==h(p)){showA('pErr','كلمة المرور غير صحيحة');return}CU=user;save();enterMain()}
+function ownerLogin(){const u=v('o-user').trim(),p=v('o-pass');if(!u||!p){showA('oErr','مطلوب');return}const a=D.ownerAccounts.find(x=>x.loginMethod==='account'&&x.username===u&&x.pwh===h(p));if(!a){showA('oErr','بيانات غير صحيحة');return}CO=a;enterOwnerP()}
+function ownerCodeLogin(){const c=v('o-code').trim().toUpperCase();if(!c){showA('oErr','أدخل الرمز');return}const a=D.ownerAccounts.find(x=>x.loginMethod==='code'&&x.accessCode===c);if(!a){showA('oErr','رمز غير صحيح');return}CO=a;enterOwnerP()}
+function enterMain(){$('authScreen').style.display='none';$('mainApp').style.display='block';$('uNm').textContent=CU.name;$('uAv').textContent=CU.name[0];$('welc').textContent=CU.name;renderAll()}
+function logout(){CU=null;$('mainApp').style.display='none';$('authScreen').style.display='flex';$('p-user').value='';$('p-pass').value=''}
+function enterOwnerP(){$('authScreen').style.display='none';$('ownerPortal').style.display='block';$('opNm').textContent=CO.name;$('opAv').textContent=CO.name[0];$('opWel').textContent=CO.name;renderOP()}
+function logoutOp(){CO=null;$('ownerPortal').style.display='none';$('authScreen').style.display='flex'}
+
+// NAV
+function go(pg){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));document.querySelectorAll('nav a').forEach(a=>a.classList.remove('on'));const el=$('pg-'+pg);if(el)el.classList.add('on');const nav=document.querySelector(`nav a[data-pg="${pg}"]`);if(nav)nav.classList.add('on');if(pg==='reports')renderCharts();if(pg==='settings')renderTeam();if(pg==='owners')renderOA();if(pg==='maint')renderAdminReq();if(pg==='market')renderMkTB()}
+function openM(id){$('m-'+id).classList.add('show')}
+function closeM(id){$('m-'+id).classList.remove('show')}
+document.addEventListener('click',e=>{if(e.target.classList.contains('ov'))e.target.classList.remove('show')});
+
+// RECORDS
+async function saveRec(type){
+  const r={id:'r_'+Date.now(),type,date:new Date().toLocaleDateString('ar-SA'),ts:new Date().toISOString(),by:CU.name};
+  if(type==='owner'){
+    const nm=v('ow-name');if(!nm){toast('أدخل اسم المالك',1);return}
+    r.name=nm;r.details=`${v('ow-type')}: ${v('ow-prop')||'—'}`;
+    r.data={name:nm,id:v('ow-id'),phone:v('ow-phone'),email:v('ow-email'),property:v('ow-prop'),area:v('ow-area'),propertyType:v('ow-type'),deed:v('ow-deed'),rent:v('ow-rent'),commission:v('ow-com'),startDate:v('ow-start'),duration:v('ow-dur'),status:v('ow-status'),notes:v('ow-notes')};
+  }else if(type==='tenant'){
+    const nm=v('tn-name');if(!nm){toast('أدخل اسم المستأجر',1);return}
+    r.name=nm;r.details=`${v('tn-rent')||0} ر.س — ${v('tn-pay')}`;r.endDate=v('tn-end');
+    r.data={name:nm,id:v('tn-id'),nationality:v('tn-nat'),phone:v('tn-phone'),work:v('tn-work'),property:v('tn-prop'),rent:v('tn-rent'),payment:v('tn-pay'),deposit:v('tn-dep'),startDate:v('tn-start'),endDate:v('tn-end'),notes:v('tn-notes')};
+  }else{
+    const nm=v('co-partner');if(!nm){toast('أدخل اسم الشريك',1);return}
+    r.name=nm;r.details=`${v('co-share')||0}% — ${v('co-role')}`;
+    r.data={company:v('co-name'),cr:v('co-cr'),founded:v('co-fd'),partner:nm,share:v('co-share'),investment:v('co-inv'),role:v('co-role'),authority:v('co-auth'),profits:v('co-prof'),notes:v('co-notes')};
+  }
+  D.records.unshift(r);await save();closeM(type);$('m-'+type).querySelectorAll('input,textarea').forEach(e=>e.value='');renderAll();toast('✓ تم الحفظ');
+  if(type==='owner'&&r.data.phone){const msg=encodeURIComponent(`🏠 Prop OS — مالك جديد:\n${r.name}\n${r.details}`);window.open(`https://wa.me/${r.data.phone.replace(/^0/,'966')}?text=${msg}`,'_blank')}
+}
+async function delRec(id){if(!confirm('حذف؟'))return;D.records=D.records.filter(r=>r.id!==id);await save();renderAll();toast('تم الحذف')}
+function fRec(f){document.querySelectorAll('[data-f]').forEach(c=>c.classList.toggle('on',c.dataset.f===f));renderRecTB(f)}
+
+// تغيير حالة العقار
+function openChgStatus(id){csRecId=id;const r=D.records.find(x=>x.id===id);if(!r)return;$('csName').textContent=r.name+' — '+r.data.property;$('cs-val').value=r.data.status||'vacant';openM('chgStatus')}
+async function applyStatus(){if(!csRecId)return;const r=D.records.find(x=>x.id===csRecId);if(r){r.data.status=v('cs-val');await save();renderAll();closeM('chgStatus');toast('✓ تم تحديث الحالة')}}
+
+function getStatusTag(rec){
+  if(rec.type!=='owner')return'';
+  const s=rec.data.status||'vacant';
+  const M={rented:['مؤجر','tag-rented'],vacant:['شاغر','tag-vacant'],maintenance:['صيانة','tag-maint']};
+  const[l,c]=M[s]||['—',''];
+  return`<span class="tag ${c}">${l}</span>`;
+}
+
+function renderRecTB(f='all'){
+  const tb=$('recTB');const list=f==='all'?D.records:D.records.filter(r=>r.type===f);
+  if(!list.length){tb.innerHTML=`<tr><td colspan="6" class="empty"><div class="empty-i">📋</div>لا توجد سجلات</td></tr>`;return}
+  const L={owner:['مالك','tag-o'],tenant:['مستأجر','tag-t'],company:['شريك','tag-c']};
+  tb.innerHTML=list.map(r=>{const[l,c]=L[r.type];const st=r.type==='owner'?getStatusTag(r):'—';return`<tr><td><span class="tag ${c}">${l}</span></td><td style="font-weight:500">${r.name}</td><td style="color:var(--muted);font-size:11.5px">${r.details}</td><td>${st} ${r.type==='owner'?`<button class="abtn btn-sm" onclick="openChgStatus('${r.id}')" style="font-size:10px">تغيير</button>`:''}</td><td style="color:var(--muted)">${r.date}</td><td>${r.data&&r.data.phone?`<button class="abtn wa-btn" onclick="wa('${r.data.phone}','${r.name}')">واتساب</button>`:''} <button class="abtn" onclick="pdf('${r.id}')">PDF</button> <button class="abtn del" onclick="delRec('${r.id}')">حذف</button></td></tr>`}).join('');
+}
+
+// WHATSAPP
+function wa(phone,name){const c=phone.replace(/\s/g,'').replace(/^0/,'966');const msg=encodeURIComponent(`مرحباً ${name}، معك ${(CU||CO||{name:'Prop OS'}).name} من Prop OS لإدارة الأملاك.\nنسعد بخدمتك 🏠`);window.open(`https://wa.me/${c}?text=${msg}`,'_blank')}
+
+// MARKETING
+async function addLead(){const nm=v('ld-name'),ph=v('ld-phone'),notes=v('ld-notes');if(!nm||!ph||!notes){toast('الاسم + الرقم + الملاحظة مطلوبة',1);return}D.leads.unshift({id:'l_'+Date.now(),name:nm,phone:ph,status:v('ld-status'),source:v('ld-source'),notes,date:new Date().toLocaleDateString('ar-SA'),by:CU.name});await save();['ld-name','ld-phone','ld-notes'].forEach(id=>$(id).value='');renderAll();toast('✓ تم الإضافة')}
+function fLead(f){document.querySelectorAll('[data-lf]').forEach(c=>c.classList.toggle('on',c.dataset.lf===f));renderLdTB(f)}
+function renderLdTB(f='all'){const tb=$('ldTB');const list=f==='all'?D.leads:D.leads.filter(l=>l.status===f);if(!list.length){tb.innerHTML=`<tr><td colspan="6" class="empty"><div class="empty-i">📊</div>لا يوجد عملاء</td></tr>`;return}const SL={pending:['بانتظار','tag-p'],contacted:['تم','tag-d'],following:['متابعة','tag-f'],closed:['مغلق','tag-c'],converted:['عميل','tag-cv']};tb.innerHTML=list.map((l,i)=>{const[sl,sc]=SL[l.status]||['—',''];return`<tr><td style="font-weight:500">${l.name}</td><td>${l.phone} <button class="abtn wa-btn" onclick="wa('${l.phone}','${l.name}')">واتس</button></td><td style="color:var(--muted)">${l.source}</td><td><span class="tag ${sc}">${sl}</span></td><td style="color:var(--muted)">${l.date}</td><td><button class="abtn" onclick="openNote(${i})">🔒</button> <button class="abtn del" onclick="delLead(${i})">حذف</button></td></tr>`}).join('')}
+function openNote(i){noteIdx=i;const l=D.leads[i];$('noteContent').innerHTML=`<strong>العميل:</strong> ${l.name}<br><strong>الجوال:</strong> ${l.phone}<br><strong>بواسطة:</strong> ${l.by}<br><hr style="border-color:var(--brd);margin:10px 0"><strong>الملاحظة:</strong><br>${l.notes}`;openM('note')}
+function editNote(){if(noteIdx===null)return;const n=prompt('تعديل:',D.leads[noteIdx].notes);if(n!==null){D.leads[noteIdx].notes=n;save();closeM('note');toast('✓')}}
+async function delLead(i){if(!confirm('حذف؟'))return;D.leads.splice(i,1);await save();renderAll();toast('تم')}
+
+// MARKET DATA (بيانات السوق — يدخلها الشركاء)
+async function addMarketData(){
+  const area=v('mk-area').trim();if(!area){toast('أدخل اسم الحي',1);return}
+  const avgRent=parseFloat(v('mk-avgrent'))||0;if(!avgRent){toast('أدخل متوسط الإيجار',1);return}
+  D.marketData.push({id:'mk_'+Date.now(),area,type:v('mk-type'),avgRent,maxRent:parseFloat(v('mk-maxrent'))||avgRent,minRent:parseFloat(v('mk-minrent'))||avgRent,avgDays:parseFloat(v('mk-avgdays'))||15,occupancy:parseFloat(v('mk-occ'))||80,date:v('mk-date')||new Date().toISOString().split('T')[0],notes:v('mk-notes'),by:CU.name});
+  await save();['mk-area','mk-avgrent','mk-maxrent','mk-minrent','mk-avgdays','mk-occ','mk-notes'].forEach(id=>$(id).value='');renderMkTB();toast('✓ تم إضافة بيانات الحي')}
+
+async function delMk(id){if(!confirm('حذف؟'))return;D.marketData=D.marketData.filter(m=>m.id!==id);await save();renderMkTB();toast('تم')}
+
+function renderMkTB(){
+  const tb=$('mkTB');if(!D.marketData.length){tb.innerHTML=`<tr><td colspan="7" class="empty"><div class="empty-i">📊</div>لا توجد بيانات — أضف بيانات حي</td></tr>`;return}
+  tb.innerHTML=D.marketData.map(m=>`<tr><td style="font-weight:500">${m.area}</td><td>${m.type}</td><td>${m.avgRent.toLocaleString()} ر.س</td><td style="color:var(--muted);font-size:11px">${m.minRent.toLocaleString()} — ${m.maxRent.toLocaleString()}</td><td>${m.avgDays} يوم</td><td>${m.occupancy}%</td><td><button class="abtn del" onclick="delMk('${m.id}')">حذف</button></td></tr>`).join('')}
+
+// OWNER ACCOUNTS
+let selLM='acc';
+function swLM(m){selLM=m;document.querySelectorAll('[data-lm]').forEach(e=>e.classList.toggle('on',e.dataset.lm===m));$('oaAccF').style.display=m==='acc'?'block':'none';$('oaCodeF').style.display=m==='code'?'block':'none';if(m==='code')$('oa-code').value=genCode()}
+function genCode(){return`OWN-${Math.random().toString(36).substring(2,6).toUpperCase()}-${Math.random().toString(36).substring(2,6).toUpperCase()}`}
+function openCreateOA(){const ow=D.records.filter(r=>r.type==='owner'&&!D.ownerAccounts.find(a=>a.recordId===r.id));const sel=$('selOwRec');sel.innerHTML='<option value="">-- اختر --</option>';ow.forEach(r=>sel.innerHTML+=`<option value="${r.id}">${r.name} — ${r.data.phone||''}</option>`);if(!ow.length){toast('لا يوجد ملاك بدون حساب',1);return}$('oa-user').value='';$('oa-pass').value='';selLM='acc';swLM('acc');openM('createOA')}
+async function createOA(){const rid=v('selOwRec');if(!rid){toast('اختر مالك',1);return}const rec=D.records.find(r=>r.id===rid);if(!rec)return;const acc={id:'oa_'+Date.now(),recordId:rid,name:rec.name,phone:rec.data.phone||'',loginMethod:selLM,ts:new Date().toISOString(),by:CU.name};if(selLM==='acc'){const u=v('oa-user').trim(),p=v('oa-pass');if(!u||!p){toast('بيانات الدخول مطلوبة',1);return}if(D.ownerAccounts.find(a=>a.username===u)){toast('مستخدم مكرر',1);return}acc.username=u;acc.pwh=h(p);acc.pwPlain=p}else{acc.accessCode=v('oa-code')}D.ownerAccounts.push(acc);await save();closeM('createOA');renderOA();const info=selLM==='acc'?`المستخدم: ${acc.username}\nكلمة المرور: ${acc.pwPlain}`:`الرمز: ${acc.accessCode}`;alert(`✓ حساب جاهز!\n\n${info}\n\nيدخل من "مالك عقار"`);toast('✓')}
+function renderOA(){const tb=$('oaTB');$('oaCnt').textContent=D.ownerAccounts.length+' حساب';if(!D.ownerAccounts.length){tb.innerHTML=`<tr><td colspan="5" class="empty"><div class="empty-i">👥</div>لا توجد حسابات</td></tr>`;return}tb.innerHTML=D.ownerAccounts.map(a=>{const props=D.records.filter(r=>r.type==='owner'&&r.name===a.name).length;const info=a.loginMethod==='account'?`<code style="font-size:10.5px;background:var(--bg2);padding:2px 5px;border-radius:3px">${a.username}</code>`:`<code style="font-size:10.5px;background:var(--bg2);padding:2px 5px;border-radius:3px">${a.accessCode}</code>`;return`<tr><td style="font-weight:500">${a.name}</td><td><span class="tag ${a.loginMethod==='account'?'tag-o':'tag-c'}">${a.loginMethod==='account'?'حساب':'رمز'}</span></td><td>${info}</td><td>${props}</td><td><button class="abtn" onclick="copyOACred('${a.id}')">نسخ</button> <button class="abtn del" onclick="delOA('${a.id}')">حذف</button></td></tr>`}).join('')}
+function copyOACred(id){const a=D.ownerAccounts.find(x=>x.id===id);if(!a)return;const t=a.loginMethod==='account'?`Prop OS بوابة المالك:\nالمستخدم: ${a.username}\nكلمة المرور: ${a.pwPlain||'?'}`:`Prop OS بوابة المالك:\nالرمز: ${a.accessCode}`;try{navigator.clipboard.writeText(t);toast('✓ تم النسخ')}catch{alert(t)}}
+async function delOA(id){if(!confirm('حذف؟'))return;D.ownerAccounts=D.ownerAccounts.filter(a=>a.id!==id);await save();renderOA();toast('تم')}
+
+// OWNER PORTAL
+function renderOP(){
+  const props=D.records.filter(r=>r.type==='owner'&&r.name===CO.name);
+  let rented=0,maint=0;props.forEach(p=>{if(p.data.status==='rented')rented++;if(p.data.status==='maintenance')maint++});
+  const reqs=D.requests.filter(r=>r.ownerId===CO.id);
+  $('opP').textContent=props.length;$('opR').textContent=rented;$('opV').textContent=props.length-rented-maint;$('opQ').textContent=reqs.length;
+
+  const g=$('opGrid');
+  if(!props.length){g.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-i">🏠</div>لا توجد عقارات</div>`;return}
+
+  // Destroy old owner charts
+  opCharts.forEach(c=>{if(c)c.destroy()});opCharts=[];
+
+  g.innerHTML=props.map((p,idx)=>{
+    const rent=parseFloat(p.data.rent)||0;const com=parseFloat(p.data.commission)||0;const net=rent-(rent*com/100);
+    const statusLabel=p.data.status==='rented'?'مؤجر':p.data.status==='maintenance'?'تحت الصيانة':'شاغر';
+    const statusClass=p.data.status==='rented'?'ps-r':p.data.status==='maintenance'?'ps-m':'ps-v';
+    const t=p.data.status==='rented'?D.records.find(r=>r.type==='tenant'&&r.data.property&&p.data.property&&r.data.property.includes(p.data.property.substring(0,10))):null;
+
+    // بيانات السوق
+    const mk=D.marketData.find(m=>m.area===p.data.area&&m.type===p.data.propertyType);
+    let mktHtml='';
+    if(mk){
+      const diff=rent-mk.avgRent;const pct=mk.avgRent?Math.round((diff/mk.avgRent)*100):0;
+      const cls=diff>0?'up':diff<0?'down':'eq';const arrow=diff>0?'▲':diff<0?'▼':'=';
+      mktHtml=`<div class="mkt-insight"><h4>📊 تحليل السوق — ${mk.area}</h4>
+      <div class="mkt-row"><span class="l">إيجارك الشهري</span><span class="v">${rent.toLocaleString()} ر.س</span></div>
+      <div class="mkt-row"><span class="l">متوسط الحي</span><span class="v">${mk.avgRent.toLocaleString()} ر.س</span></div>
+      <div class="mkt-row"><span class="l">الفرق</span><span class="v ${cls}">${arrow} ${Math.abs(pct)}% ${diff>0?'أعلى':'أقل'}</span></div>
+      <div class="mkt-row"><span class="l">مدى الأسعار</span><span class="v">${mk.minRent.toLocaleString()} — ${mk.maxRent.toLocaleString()}</span></div>
+      <div class="mkt-row"><span class="l">سرعة التأجير</span><span class="v">${mk.avgDays} يوم</span></div>
+      <div class="mkt-row"><span class="l">نسبة الإشغال</span><span class="v">${mk.occupancy}%</span></div>
+      ${mk.notes?`<div style="margin-top:8px;font-size:11.5px;color:var(--muted)">💡 ${mk.notes}</div>`:''}
+      <div class="chart-sm"><canvas id="opch_${idx}"></canvas></div></div>`;
+    }else{
+      mktHtml=`<div class="mkt-insight" style="border-color:var(--brd)"><h4 style="color:var(--muted)">📊 لا توجد بيانات سوق لهذا الحي</h4><div style="font-size:12px;color:var(--muted)">سيضيفها فريق الإدارة قريباً</div></div>`;
+    }
+
+    return`<div class="pcard"><div class="pcard-h"><div class="pico">🏠</div><span class="pstatus ${statusClass}">${statusLabel}</span></div><h3>${p.data.propertyType||'عقار'}</h3><div style="color:var(--muted);font-size:12px;margin-bottom:12px">${p.data.property||'—'}</div>
+    <div class="pstat"><span class="l">الإيجار</span><span class="v">${rent.toLocaleString()} ر.س</span></div>
+    <div class="pstat"><span class="l">العمولة</span><span class="v">${com}%</span></div>
+    <div class="pstat"><span class="l">صافي</span><span class="v" style="color:var(--ok)">${net.toLocaleString()} ر.س</span></div>
+    ${t?`<div class="pstat"><span class="l">المستأجر</span><span class="v">${t.name}</span></div>`:''}
+    <div style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--brd)"><button class="abtn" onclick="pdf('${p.id}')">📄 العقد</button>${t?`<button class="abtn" onclick="pdf('${t.id}')">📄 عقد المستأجر</button>`:''}</div>
+    ${mktHtml}</div>`}).join('');
+
+  // Render charts after DOM is ready
+  setTimeout(()=>{
+    props.forEach((p,idx)=>{
+      const mk=D.marketData.find(m=>m.area===p.data.area&&m.type===p.data.propertyType);
+      if(!mk)return;
+      const canvas=$('opch_'+idx);if(!canvas)return;
+      const rent=parseFloat(p.data.rent)||0;
+      const ch=new Chart(canvas,{type:'bar',data:{
+        labels:['عقارك','متوسط الحي','الأعلى','الأقل'],
+        datasets:[{label:'ر.س / شهر',data:[rent,mk.avgRent,mk.maxRent,mk.minRent],backgroundColor:['#c9a55c','#5b9bd5','#4eba6f','#d95555'],borderRadius:4}]
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:'#7a8494',font:{size:10}},grid:{color:'#252c3d'}},x:{ticks:{color:'#7a8494',font:{family:'Tajawal',size:10}},grid:{display:false}}}}});
+      opCharts.push(ch);
+    });
+  },100);
+
+  // Requests
+  const rl=$('opReqList');
+  rl.innerHTML=!reqs.length?`<div class="empty"><div class="empty-i">📋</div>لم تقدم طلبات</div>`:reqs.map(r=>{const sc=r.status==='completed'?'tag-d':r.status==='in-progress'?'tag-f':'tag-p';const st=r.status==='completed'?'منجز':r.status==='in-progress'?'قيد المعالجة':'قيد المراجعة';return`<div class="al ${r.status==='pending'?'urg':''}"><div><div class="al-t">${r.title}</div><div class="al-d">${r.type} · ${new Date(r.ts).toLocaleDateString('ar-SA')}</div>${r.reply?`<div style="margin-top:6px;padding:8px;background:var(--bg3);border-radius:6px;font-size:12px"><strong>رد:</strong> ${r.reply}</div>`:''}</div><span class="tag ${sc}">${st}</span></div>`}).join('');
+}
+
+function openNewReq(){const props=D.records.filter(r=>r.type==='owner'&&r.name===CO.name);const sel=$('rq-prop');sel.innerHTML='<option value="">--</option>';props.forEach(p=>sel.innerHTML+=`<option value="${p.data.property}">${p.data.propertyType} — ${p.data.property}</option>`);$('rq-title').value='';$('rq-desc').value='';openM('newReq')}
+async function submitReq(){const title=v('rq-title').trim();if(!title){toast('العنوان مطلوب',1);return}D.requests.unshift({id:'rq_'+Date.now(),ownerId:CO.id,ownerName:CO.name,type:v('rq-type'),property:v('rq-prop'),title,description:v('rq-desc'),status:'pending',ts:new Date().toISOString(),reply:''});await save();closeM('newReq');renderOP();toast('✓ تم الإرسال')}
+
+// Admin requests
+function renderAdminReq(){const el=$('adminReqList');if(!D.requests.length){el.innerHTML=`<div class="empty"><div class="empty-i">✓</div>لا توجد طلبات</div>`;return}el.innerHTML=D.requests.map(r=>{const sc=r.status==='completed'?'tag-d':r.status==='in-progress'?'tag-f':'tag-p';const st=r.status==='completed'?'منجز':r.status==='in-progress'?'قيد المعالجة':'قيد المراجعة';return`<div class="al ${r.status==='pending'?'urg':''}"><div style="flex:1"><div class="al-t">${r.title} <span style="color:var(--muted);font-size:11px">— ${r.ownerName}</span></div><div class="al-d">${r.type} · ${new Date(r.ts).toLocaleDateString('ar-SA')}</div>${r.reply?`<div style="margin-top:6px;padding:8px;background:var(--bg3);border-radius:6px;font-size:12px">الرد: ${r.reply}</div>`:''}</div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end"><span class="tag ${sc}">${st}</span><select onchange="chReqSt('${r.id}',this.value)" style="padding:3px 6px;font-size:10.5px"><option value="pending" ${r.status==='pending'?'selected':''}>مراجعة</option><option value="in-progress" ${r.status==='in-progress'?'selected':''}>معالجة</option><option value="completed" ${r.status==='completed'?'selected':''}>منجز</option></select><button class="abtn" onclick="replyReq('${r.id}')">💬 رد</button></div></div>`}).join('')}
+async function chReqSt(id,st){const r=D.requests.find(x=>x.id===id);if(r){r.status=st;await save();renderAdminReq();updBadges();toast('✓')}}
+async function replyReq(id){const r=D.requests.find(x=>x.id===id);if(!r)return;const rp=prompt('ردك:',r.reply||'');if(rp!==null){r.reply=rp;await save();renderAdminReq();toast('✓')}}
+
+// ALERTS
+function getAlerts(){const now=new Date();return D.records.filter(r=>r.type==='tenant'&&r.endDate).map(r=>{const end=new Date(r.endDate);const days=Math.floor((end-now)/864e5);if(days>60)return null;return{r,days,urg:days<=30}}).filter(Boolean).sort((a,b)=>a.days-b.days)}
+function renderAlerts(){const al=getAlerts(),el=$('alertList');if(!al.length){el.innerHTML=`<div class="empty"><div class="empty-i">✓</div>لا توجد تنبيهات</div>`;return}el.innerHTML=al.map(a=>`<div class="al ${a.urg?'urg':''}"><div><div class="al-t">عقد ${a.r.name} ${a.days<0?'منتهي':'ينتهي قريباً'}</div><div class="al-d">${a.r.data.property||'—'}</div></div><div class="al-days" style="color:${a.urg?'var(--err)':'var(--warn)'}">${a.days<0?'منتهي':`${a.days} يوم`}</div></div>`).join('')}
+
+// STATS
+function updStats(){$('cOwn').textContent=D.records.filter(r=>r.type==='owner').length;$('cTen').textContent=D.records.filter(r=>r.type==='tenant').length;$('cCom').textContent=D.records.filter(r=>r.type==='company').length;$('cMkt').textContent=D.leads.length;const p=D.leads.filter(l=>l.status==='pending').length;$('cMktP').textContent=p+' بانتظار';$('cMktP').style.color=p?'var(--err)':'var(--ok)'}
+function updBadges(){const mp=D.leads.filter(l=>l.status==='pending').length;const mb=$('mktBadge');if(mp){mb.textContent=mp;mb.style.display='inline'}else mb.style.display='none';const al=getAlerts().length;const ab=$('alertBadge');if(al){ab.textContent=al;ab.style.display='inline'}else ab.style.display='none';const rp=D.requests.filter(r=>r.status==='pending').length;const rb=$('maintBadge');if(rb){if(rp){rb.textContent=rp;rb.style.display='inline'}else rb.style.display='none'}}
+function updMktStats(){$('mAll').textContent=D.leads.length;$('mPend').textContent=D.leads.filter(l=>l.status==='pending').length;$('mDone').textContent=D.leads.filter(l=>l.status==='contacted').length;$('mFollow').textContent=D.leads.filter(l=>l.status==='following').length}
+
+// CHARTS
+function destroyCharts(){Object.values(charts).forEach(c=>{if(c)c.destroy()});charts={}}
+function renderCharts(){destroyCharts();const co={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e8eaed',font:{family:'Tajawal'}}}}};const ow=D.records.filter(r=>r.type==='owner').length,tn=D.records.filter(r=>r.type==='tenant').length,cm=D.records.filter(r=>r.type==='company').length;charts.c1=new Chart($('ch1'),{type:'doughnut',data:{labels:['ملاك','مستأجرين','شركاء'],datasets:[{data:[ow,tn,cm],backgroundColor:['#4eba6f','#e4a832','#c9a55c'],borderColor:'#1a1f2d',borderWidth:2}]},options:co});const rev=D.records.filter(r=>r.type==='tenant').reduce((s,r)=>s+(parseFloat(r.data.rent)||0),0);const mo=Math.round(rev/12);charts.c2=new Chart($('ch2'),{type:'bar',data:{labels:['يناير','فبراير','مارس','أبريل','مايو','يونيو'],datasets:[{label:'الإيرادات',data:[mo,mo,mo,mo,mo,mo],backgroundColor:'#c9a55c',borderRadius:5}]},options:{...co,scales:{y:{ticks:{color:'#7a8494'},grid:{color:'#252c3d'}},x:{ticks:{color:'#7a8494'},grid:{display:false}}}}});const lp=D.leads.filter(l=>l.status==='pending').length,lc=D.leads.filter(l=>l.status==='contacted').length,lf=D.leads.filter(l=>l.status==='following').length,lcv=D.leads.filter(l=>l.status==='converted').length,lcl=D.leads.filter(l=>l.status==='closed').length;charts.c3=new Chart($('ch3'),{type:'doughnut',data:{labels:['بانتظار','تم','متابعة','عميل','مغلق'],datasets:[{data:[lp,lc,lf,lcv,lcl],backgroundColor:['#d95555','#4eba6f','#e4a832','#5b9bd5','#7a8494'],borderColor:'#1a1f2d',borderWidth:2}]},options:co});const totalCom=D.records.filter(r=>r.type==='owner').reduce((s,r)=>{const rent=parseFloat(r.data.rent)||0;const com=parseFloat(r.data.commission)||0;return s+(rent*12*com/100)},0);const totalInv=D.records.filter(r=>r.type==='company').reduce((s,r)=>s+(parseFloat(r.data.investment)||0),0);$('finSum').innerHTML=`<div class="srow"><span style="color:var(--muted)">إيجارات سنوية</span><span style="font-weight:600">${rev.toLocaleString()} ر.س</span></div><div class="srow"><span style="color:var(--muted)">عمولات سنوية</span><span style="font-weight:600">${Math.round(totalCom).toLocaleString()} ر.س</span></div><div class="srow"><span style="color:var(--muted)">رأس المال</span><span style="font-weight:600">${totalInv.toLocaleString()} ر.س</span></div><div class="srow"><span style="color:var(--muted)">عملاء التسويق</span><span style="font-weight:600">${D.leads.length}</span></div>`}
+
+// PDF
+function pdf(id){const r=D.records.find(x=>x.id===id);if(!r)return;const{jsPDF}=window.jspdf;const doc=new jsPDF();const T={owner:'Property Owner Contract',tenant:'Tenant Lease Agreement',company:'Partnership Agreement'};doc.setFontSize(20);doc.setTextColor(201,165,92);doc.text('Prop OS',105,20,{align:'center'});doc.setFontSize(13);doc.setTextColor(50,50,50);doc.text(T[r.type],105,30,{align:'center'});doc.setDrawColor(201,165,92);doc.line(20,35,190,35);doc.setFontSize(10);doc.setTextColor(100,100,100);doc.text(`Date: ${r.date}`,20,45);doc.text(`By: ${r.by}`,20,51);let y=64;doc.setFontSize(10);doc.setTextColor(60,60,60);const L={owner:{name:'Owner',id:'ID',phone:'Phone',email:'Email',property:'Property',area:'Area',propertyType:'Type',deed:'Deed',rent:'Monthly Rent (SAR)',commission:'Commission (%)',startDate:'Start',duration:'Duration',status:'Status',notes:'Notes'},tenant:{name:'Tenant',id:'ID',nationality:'Nationality',phone:'Phone',work:'Employer',property:'Property',rent:'Annual Rent (SAR)',payment:'Payment',deposit:'Deposit',startDate:'Start',endDate:'End',notes:'Notes'},company:{company:'Company',cr:'CR',founded:'Founded',partner:'Partner',share:'Share (%)',investment:'Investment (SAR)',role:'Role',authority:'Authority',profits:'Profits',notes:'Notes'}};for(const[k,val]of Object.entries(r.data)){if(!val)continue;const lines=doc.splitTextToSize(`${L[r.type][k]||k}: ${val}`,170);lines.forEach(l=>{if(y>270){doc.addPage();y=20}doc.text(l,20,y);y+=6})}y+=12;if(y>240){doc.addPage();y=30}doc.setDrawColor(200);doc.line(20,y,90,y);doc.line(120,y,190,y);doc.setFontSize(9);doc.text('First Party',40,y+6);doc.text('Second Party',140,y+6);doc.setFontSize(8);doc.setTextColor(150);doc.text('Generated by Prop OS',105,285,{align:'center'});doc.save(`${r.type}_${r.name}.pdf`);toast('✓ PDF')}
+
+// SETTINGS
+function renderTeam(){$('teamList').innerHTML=D.users.map(u=>`<div class="pi"><div><strong>${u.name}</strong><span>@${u.username}</span></div><span class="rbadge">${u.role==='partner'?'شريك':'مدير'}${CU&&u.username===CU.username?' (أنت)':''}</span></div>`).join('')}
+function doExport(){const json=JSON.stringify({v:'2.0',at:new Date().toISOString(),by:CU?CU.name:'',data:D},null,2);try{navigator.clipboard.writeText(json);toast('✓ تم النسخ')}catch{$('bkText').value=json;openM('backup')}}
+function copyBk(){const ta=$('bkText');ta.select();ta.setSelectionRange(0,99999);try{document.execCommand('copy');toast('✓')}catch{toast('انسخ يدوياً',1)}}
+function openImport(){$('impText').value='';openM('import')}
+async function doImport(){const txt=v('impText').trim();if(!txt){toast('الصق',1);return}if(!confirm('استبدال كل البيانات؟'))return;try{const bk=JSON.parse(txt);if(!bk.data)throw new Error('غير صالح');D=bk.data;if(!D.users||!D.users.length)D.users=[...DU];['records','ownerAccounts','leads','requests','marketData'].forEach(k=>{if(!D[k])D[k]=[]});await save();renderAll();closeM('import');toast(`✓ تم استيراد ${D.records.length} سجل`)}catch(e){toast('خطأ: '+e.message,1)}}
+
+function toast(msg,err){const t=$('toast');t.textContent=msg;t.style.borderColor=err?'var(--err)':'var(--ok)';t.style.borderRightColor=err?'var(--err)':'var(--ok)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function renderAll(){updStats();renderRecTB();renderLdTB();renderAlerts();updMktStats();updBadges()}
+
+(async()=>{await load();$('authScreen').style.display='flex'})();
+</script>
+</body>
+</html>
