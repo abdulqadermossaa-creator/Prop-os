@@ -6,7 +6,7 @@ eventlet.monkey_patch()
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_socketio import SocketIO
 from flask_cors import CORS
 
@@ -27,6 +27,8 @@ app.secret_key = os.getenv("SECRET_KEY", "dev-secret")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
+FRONTEND = os.path.join(os.path.dirname(__file__), "..", "frontend")
+
 # ─── Routes ──────────────────────────────────────────────────────────────────
 from routes.bookings import bp as bookings_bp
 from routes.codes import bp as codes_bp
@@ -38,10 +40,19 @@ for bp in (bookings_bp, codes_bp, extensions_bp, services_bp, host_bp):
     app.register_blueprint(bp)
 
 
-# ─── Health ──────────────────────────────────────────────────────────────────
+# ─── Pages ───────────────────────────────────────────────────────────────────
 @app.get("/")
 def health():
-    return {"status": "ok", "system": "qlevl Smart Apartment OS"}
+    return {"status": "ok", "system": "qlevl Smart Apartment OS",
+            "screens": {"tablet": "/tablet", "host": "/host"}}
+
+@app.get("/tablet")
+def tablet_page():
+    return send_from_directory(os.path.join(FRONTEND, "tablet"), "index.html")
+
+@app.get("/host")
+def host_page():
+    return send_from_directory(os.path.join(FRONTEND, "host"), "index.html")
 
 
 # ─── Background — منطق الوقت والـ Silent Exit ─────────────────────────────────
