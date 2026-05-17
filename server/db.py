@@ -388,15 +388,159 @@ def get_income(apt_id: int) -> dict:
     with get_conn() as conn:
         today = datetime.utcnow().strftime("%Y-%m-%d")
         month = datetime.utcnow().strftime("%Y-%m")
-        today_total = conn.execute("""
+
+        bookings_today = conn.execute("""
             SELECT COALESCE(SUM(total_amount),0) FROM bookings
             WHERE apartment_id=? AND date(created_at)=?
         """, (apt_id, today)).fetchone()[0]
-        month_total = conn.execute("""
+        bookings_month = conn.execute("""
             SELECT COALESCE(SUM(total_amount),0) FROM bookings
             WHERE apartment_id=? AND strftime('%Y-%m',created_at)=?
         """, (apt_id, month)).fetchone()[0]
-        return {"today": round(today_total, 2), "month": round(month_total, 2)}
+
+        ext_today = conn.execute("""
+            SELECT COALESCE(SUM(e.amount_paid),0) FROM extensions e
+            JOIN bookings b ON b.id=e.booking_id
+            WHERE b.apartment_id=? AND date(e.extended_at)=?
+        """, (apt_id, today)).fetchone()[0]
+        ext_month = conn.execute("""
+            SELECT COALESCE(SUM(e.amount_paid),0) FROM extensions e
+            JOIN bookings b ON b.id=e.booking_id
+            WHERE b.apartment_id=? AND strftime('%Y-%m',e.extended_at)=?
+        """, (apt_id, month)).fetchone()[0]
+
+        svc_today = conn.execute("""
+            SELECT COALESCE(SUM(so.amount),0) FROM service_orders so
+            JOIN bookings b ON b.id=so.booking_id
+            WHERE b.apartment_id=? AND date(so.ordered_at)=?
+        """, (apt_id, today)).fetchone()[0]
+        svc_month = conn.execute("""
+            SELECT COALESCE(SUM(so.amount),0) FROM service_orders so
+            JOIN bookings b ON b.id=so.booking_id
+            WHERE b.apartment_id=? AND strftime('%Y-%m',so.ordered_at)=?
+        """, (apt_id, month)).fetchone()[0]
+
+        return {
+            "today": round(bookings_today + ext_today + svc_today, 2),
+            "month": round(bookings_month + ext_month + svc_month, 2),
+            "today_breakdown": {
+                "bookings": round(bookings_today, 2),
+                "extensions": round(ext_today, 2),
+                "services": round(svc_today, 2),
+            },
+            "month_breakdown": {
+                "bookings": round(bookings_month, 2),
+                "extensions": round(ext_month, 2),
+                "services": round(svc_month, 2),
+            },
+        }
+
+
+def get_full_income_report() -> dict:
+    """تقرير دخل شامل لجميع الشقق والملاك — للمؤسس"""
+    with get_conn() as conn:
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        month = datetime.utcnow().strftime("%Y-%m")
+
+        # ─── إجماليات المنصة ───────────────────────────────────────────────
+        totals = conn.execute("""
+            SELECT
+              COALESCE(SUM(total_amount),0)    AS gross,
+              COALESCE(SUM(commission_amt),0)  AS commission,
+              COALESCE(SUM(owner_net),0)        AS owner_net,
+              COUNT(*)                          AS bookings_count
+            FROM bookings WHERE status != 'cancelled'
+        """).fetchone()
+
+        today_totals = conn.execute("""
+            SELECT
+              COALESCE(SUM(total_amount),0)   AS gross,
+              COALESCE(SUM(commission_amt),0) AS commission,
+              COUNT(*) AS count
+            FROM bookings WHERE date(created_at)=? AND status!='cancelled'
+        """, (today,)).fetchone()
+
+        month_totals = conn.execute("""
+            SELECT
+              COALESCE(SUM(total_amount),0)   AS gross,
+              COALESCE(SUM(commission_amt),0) AS commission,
+              COUNT(*) AS count
+            FROM bookings WHERE strftime('%Y-%m',created_at)=? AND status!='cancelled'
+        """, (month,)).fetchone()
+
+        ext_total = conn.execute(
+            "SELECT COALESCE(SUM(amount_paid),0) FROM extensions"
+        ).fetchone()[0]
+
+        svc_total = conn.execute(
+            "SELECT COALESCE(SUM(amount),0) FROM service_orders"
+        ).fetchone()[0]
+
+        # ─── تفصيل كل مالك ────────────────────────────────────────────────
+        owners_rows = conn.execute("""
+            SELECT o.id, o.name, o.phone, o.commission_rate, o.is_active,
+              COALESCE(SUM(b.total_amount),0)   AS total_gross,
+              COALESCE(SUM(b.commission_amt),0) AS total_commission,
+              COALESCE(SUM(b.owner_net),0)       AS total_owner_net,
+              COUNT(b.id)                        AS bookings_count
+            FROM owners o
+            LEFT JOIN apartments a ON a.owner_id=o.id
+            LEFT JOIN bookings b ON b.apartment_id=a.id AND b.status!='cancelled'
+            GROUP BY o.id
+        """).fetchall()
+
+        # ─── تفصيل كل شقة ─────────────────────────────────────────────────
+        apts_rows = conn.execute("""
+            SELECT
+              a.id, a.name, a.location, a.is_active, a.status,
+              a.hourly_rate, o.name AS owner_name,
+              COALESCE(SUM(b.total_amount),0)   AS total_gross,
+              COALESCE(SUM(b.commission_amt),0) AS total_commission,
+              COALESCE(SUM(b.owner_net),0)       AS total_net,
+              COUNT(b.id)                        AS bookings_count,
+              -- هذا الشهر
+              COALESCE(SUM(CASE WHEN strftime('%Y-%m',b.created_at)=? THEN b.total_amount ELSE 0 END),0) AS month_gross,
+              COALESCE(SUM(CASE WHEN strftime('%Y-%m',b.created_at)=? THEN b.commission_amt ELSE 0 END),0) AS month_commission,
+              -- اليوم
+              COALESCE(SUM(CASE WHEN date(b.created_at)=? THEN b.total_amount ELSE 0 END),0) AS today_gross,
+              COALESCE(SUM(CASE WHEN date(b.created_at)=? THEN b.commission_amt ELSE 0 END),0) AS today_commission
+            FROM apartments a
+            LEFT JOIN owners o ON o.id=a.owner_id
+            LEFT JOIN bookings b ON b.apartment_id=a.id AND b.status!='cancelled'
+            GROUP BY a.id
+        """, (month, month, today, today)).fetchall()
+
+        # ─── آخر 20 عملية ─────────────────────────────────────────────────
+        recent = conn.execute("""
+            SELECT
+              b.id, b.guest_name, b.total_amount, b.commission_amt,
+              b.owner_net, b.created_at, b.status,
+              a.name AS apt_name, o.name AS owner_name
+            FROM bookings b
+            JOIN apartments a ON a.id=b.apartment_id
+            LEFT JOIN owners o ON o.id=a.owner_id
+            ORDER BY b.created_at DESC LIMIT 20
+        """).fetchall()
+
+        return {
+            "platform": {
+                "total_gross":       round(totals["gross"] + ext_total + svc_total, 2),
+                "total_commission":  round(totals["commission"], 2),
+                "total_owner_net":   round(totals["owner_net"], 2),
+                "total_extensions":  round(ext_total, 2),
+                "total_services":    round(svc_total, 2),
+                "bookings_count":    totals["bookings_count"],
+                "today_gross":       round(today_totals["gross"], 2),
+                "today_commission":  round(today_totals["commission"], 2),
+                "today_bookings":    today_totals["count"],
+                "month_gross":       round(month_totals["gross"], 2),
+                "month_commission":  round(month_totals["commission"], 2),
+                "month_bookings":    month_totals["count"],
+            },
+            "owners": [dict(r) for r in owners_rows],
+            "apartments": [dict(r) for r in apts_rows],
+            "recent_transactions": [dict(r) for r in recent],
+        }
 
 # ─── Cleaning ─────────────────────────────────────────────────────────────────
 

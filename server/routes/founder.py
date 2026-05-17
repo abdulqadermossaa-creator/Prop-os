@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from db import (
     verify_founder_pin, get_founder_stats, get_all_owners, get_all_apartments,
     toggle_apartment, toggle_owner, set_owner_commission,
-    create_owner, create_apartment, get_owner
+    create_owner, create_apartment, get_owner, get_full_income_report
 )
 
 bp = Blueprint("founder", __name__)
@@ -33,6 +33,14 @@ def founder_stats():
         "owners": owners,
         "apartments": apartments,
     })
+
+
+@bp.get("/api/founder/income")
+def founder_income():
+    pin = request.args.get("pin", "")
+    if not verify_founder_pin(pin):
+        return jsonify({"error": "غير مصرح"}), 401
+    return jsonify(get_full_income_report())
 
 
 # ─── مفتاح القطع ──────────────────────────────────────────────────────────────
