@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>qlevl · لوحة المؤسس</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Tajawal:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090d;--bg2:#0b0e14;--panel:#0f1218;--border:#1a2030;
+  --accent:#00c8ff;--gold:#f0b429;--green:#00e676;--red:#ff3d57;
+  --orange:#ff7043;--purple:#9c6fff;--text:#dce6f0;--dim:#4a5a6a;
+  --mono:'IBM Plex Mono',monospace;--sans:'Tajawal',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+
+/* LOGIN */
+.login-wrap{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:20px;padding:24px;
+}
+.login-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:20px;
+  padding:36px;width:min(380px,100%);text-align:center;
+}
+.login-logo{font-family:var(--mono);font-size:40px;font-weight:600;color:var(--accent);margin-bottom:4px}
+.login-logo em{color:var(--gold);font-style:normal}
+.login-sub{font-size:12px;color:var(--dim);margin-bottom:28px;letter-spacing:1px}
+.pin-input{
+  width:100%;padding:16px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;color:var(--text);font-family:var(--mono);font-size:28px;
+  text-align:center;letter-spacing:8px;outline:none;margin-bottom:14px;
+}
+.pin-input:focus{border-color:var(--accent)}
+.btn-login{
+  width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#0090cc);
+  border:none;border-radius:12px;color:#000;font-family:var(--sans);
+  font-size:16px;font-weight:900;cursor:pointer;
+}
+
+/* HEADER */
+.hdr{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 18px;background:var(--bg2);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:10;
+}
+.logo{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--accent)}
+.logo em{color:var(--gold);font-style:normal}
+.founder-badge{
+  font-family:var(--mono);font-size:10px;padding:4px 10px;
+  border:1px solid rgba(240,180,41,.4);border-radius:10px;color:var(--gold);
+}
+.logout-btn{
+  font-size:11px;color:var(--dim);background:none;border:1px solid var(--border);
+  border-radius:8px;padding:5px 10px;cursor:pointer;
+}
+
+.w{max-width:700px;margin:0 auto;padding:14px;display:flex;flex-direction:column;gap:14px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:500px){.stats-grid{grid-template-columns:1fr 1fr}}
+.stat-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;
+}
+.stat-label{font-size:10px;color:var(--dim);margin-bottom:8px;letter-spacing:1px}
+.stat-val{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--gold)}
+.stat-unit{font-size:10px;color:var(--dim);margin-top:2px}
+
+/* SECTION */
+.section{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.sec-hdr{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.sec-title{font-size:14px;font-weight:800}
+.sec-count{font-family:var(--mono);font-size:11px;color:var(--dim)}
+
+/* OWNER ROW */
+.owner-row{
+  padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.04);
+  display:flex;align-items:center;gap:12px;
+}
+.owner-row:last-child{border:none}
+.owner-info{flex:1;min-width:0}
+.owner-name{font-size:14px;font-weight:800;margin-bottom:3px}
+.owner-meta{font-size:11px;color:var(--dim)}
+.owner-commission{
+  font-family:var(--mono);font-size:12px;color:var(--gold);
+  background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.2);
+  border-radius:8px;padding:4px 10px;white-space:nowrap;
+}
+.kill-btn{
+  width:52px;height:28px;border-radius:14px;border:none;cursor:pointer;
+  font-size:11px;font-weight:700;transition:all .2s;flex-shrink:0;
+}
+.kill-btn.on{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.kill-btn.off{background:rgba(255,61,87,.15);color:var(--red);border:1px solid rgba(255,61,87,.3)}
+.kill-btn:hover{transform:scale(1.05)}
+
+/* APT ROW */
+.apt-row{
+  padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.04);
+  display:flex;align-items:center;gap:10px;
+}
+.apt-row:last-child{border:none}
+.apt-info{flex:1;min-width:0}
+.apt-name{font-size:13px;font-weight:800;margin-bottom:2px}
+.apt-meta{font-size:10px;color:var(--dim)}
+.apt-status{
+  font-family:var(--mono);font-size:9px;padding:3px 8px;
+  border-radius:6px;border:1px solid;margin-left:auto;flex-shrink:0;
+}
+.st-active{color:var(--green);border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.07)}
+.st-suspended{color:var(--red);border-color:rgba(255,61,87,.3);background:rgba(255,61,87,.07)}
+.st-occupied{color:var(--accent);border-color:rgba(0,200,255,.3);background:rgba(0,200,255,.07)}
+
+/* ADD BUTTONS */
+.add-row{padding:12px 18px;display:flex;gap:8px}
+.add-btn{
+  flex:1;padding:10px;background:none;border:1px dashed var(--border);
+  border-radius:10px;color:var(--dim);font-family:var(--sans);font-size:12px;
+  cursor:pointer;transition:all .2s;
+}
+.add-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* MODAL */
+.modal-bg{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);
+  z-index:100;align-items:center;justify-content:center;padding:16px;
+}
+.modal-bg.show{display:flex}
+.modal{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:16px;padding:24px;width:min(400px,100%);
+}
+.modal-title{font-size:16px;font-weight:900;margin-bottom:18px}
+.field{margin-bottom:12px}
+.field label{font-size:11px;color:var(--dim);display:block;margin-bottom:5px}
+.field input{
+  width:100%;padding:11px 14px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none;
+}
+.field input:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.btn-cancel{
+  flex:1;padding:12px;background:none;border:1px solid var(--border);
+  border-radius:10px;color:var(--dim);font-family:var(--sans);font-size:13px;cursor:pointer;
+}
+.btn-save{
+  flex:2;padding:12px;background:var(--accent);border:none;
+  border-radius:10px;color:#000;font-family:var(--sans);font-size:14px;font-weight:900;cursor:pointer;
+}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px}
+.toast{padding:11px 20px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;animation:ti .3s ease}
+.toast.success{background:#00a854}.toast.error{background:#cc1a2c}.toast.info{background:#005f7a}
+@keyframes ti{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Login -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-logo">qlev<em>l</em></div>
+    <div class="login-sub">لوحة المؤسس</div>
+    <input class="pin-input" type="password" id="pinInput" maxlength="8" placeholder="••••"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" onclick="doLogin()">دخول</button>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+<div class="hdr">
+  <div class="logo">qlev<em>l</em></div>
+  <div class="founder-badge">المؤسس</div>
+  <button class="logout-btn" onclick="logout()">خروج</button>
+</div>
+
+<div class="w">
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">عمولة اليوم</div>
+      <div class="stat-val" id="sToday">—</div>
+      <div class="stat-unit">ريال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">عمولة الشهر</div>
+      <div class="stat-val" id="sMonth">—</div>
+      <div class="stat-unit">ريال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">إجمالي الكسب</div>
+      <div class="stat-val" id="sTotal">—</div>
+      <div class="stat-unit">ريال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">حجوزات كلية</div>
+      <div class="stat-val" id="sBookings">—</div>
+      <div class="stat-unit">حجز</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">شقق نشطة</div>
+      <div class="stat-val" id="sActive" style="color:var(--green)">—</div>
+      <div class="stat-unit">شقة</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">شقق موقوفة</div>
+      <div class="stat-val" id="sSuspended" style="color:var(--red)">—</div>
+      <div class="stat-unit">شقة</div>
+    </div>
+  </div>
+
+  <!-- Owners -->
+  <div class="section">
+    <div class="sec-hdr">
+      <div class="sec-title">الملاك</div>
+      <span class="sec-count" id="ownersCount">0</span>
+    </div>
+    <div id="ownersList"></div>
+    <div class="add-row">
+      <button class="add-btn" onclick="openAddOwner()">+ إضافة مالك جديد</button>
+    </div>
+  </div>
+
+  <!-- Apartments -->
+  <div class="section">
+    <div class="sec-hdr">
+      <div class="sec-title">جميع الشقق</div>
+      <span class="sec-count" id="aptsCount">0</span>
+    </div>
+    <div id="aptsList"></div>
+    <div class="add-row">
+      <button class="add-btn" onclick="openAddApt()">+ إضافة شقة</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Add Owner Modal -->
+<div class="modal-bg" id="addOwnerModal">
+  <div class="modal">
+    <div class="modal-title">إضافة مالك جديد</div>
+    <div class="field"><label>الاسم</label><input id="ownerName" placeholder="أحمد الشمري"></div>
+    <div class="field"><label>الجوال</label><input id="ownerPhone" placeholder="966501234567" type="tel"></div>
+    <div class="field"><label>نسبة العمولة %</label><input id="ownerComm" type="number" value="20" min="0" max="100"></div>
+    <div class="field"><label>PIN للمالك (رقم سري)</label><input id="ownerPin" type="password" placeholder="0000" maxlength="8"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModals()">إلغاء</button>
+      <button class="btn-save" onclick="saveOwner()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Apt Modal -->
+<div class="modal-bg" id="addAptModal">
+  <div class="modal">
+    <div class="modal-title">إضافة شقة</div>
+    <div class="field"><label>المالك</label>
+      <select id="aptOwner" style="width:100%;padding:11px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none"></select>
+    </div>
+    <div class="field"><label>اسم الشقة</label><input id="aptName" placeholder="الشقة B"></div>
+    <div class="field"><label>الموقع</label><input id="aptLocation" placeholder="الرياض — حي الملقا"></div>
+    <div class="field"><label>سعر الساعة (ر.س)</label><input id="aptHourly" type="number" value="75"></div>
+    <div class="field"><label>اسم الواي فاي</label><input id="aptWifi" placeholder="qlevl-B"></div>
+    <div class="field"><label>كلمة مرور الواي فاي</label><input id="aptWifiPass" placeholder="12345678"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModals()">إلغاء</button>
+      <button class="btn-save" onclick="saveApt()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const S = window.location.origin;
+let PIN = '';
+let ownersData = [];
+
+async function doLogin() {
+  PIN = document.getElementById('pinInput').value.trim();
+  const res = await fetch(`${S}/api/founder/login`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({pin: PIN})
+  });
+  if (res.ok) {
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadData();
+  } else {
+    toast('PIN خاطئ', 'error');
+  }
+}
+
+function logout() {
+  PIN = '';
+  document.getElementById('loginWrap').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('pinInput').value = '';
+}
+
+async function loadData() {
+  const res = await fetch(`${S}/api/founder/stats?pin=${PIN}`);
+  if (!res.ok) { logout(); return; }
+  const d = await res.json();
+
+  const st = d.stats;
+  document.getElementById('sToday').textContent = st.today_commission;
+  document.getElementById('sMonth').textContent = st.month_commission;
+  document.getElementById('sTotal').textContent = st.total_commission;
+  document.getElementById('sBookings').textContent = st.total_bookings;
+  document.getElementById('sActive').textContent = st.active_apartments;
+  document.getElementById('sSuspended').textContent = st.suspended_apartments;
+
+  ownersData = d.owners;
+  renderOwners(d.owners);
+  renderApts(d.apartments, d.owners);
+}
+
+function renderOwners(owners) {
+  document.getElementById('ownersCount').textContent = owners.length;
+  const el = document.getElementById('ownersList');
+  if (!owners.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--dim);font-size:13px">لا يوجد ملاك بعد</div>';
+    return;
+  }
+  el.innerHTML = owners.map(o => `
+    <div class="owner-row">
+      <div class="owner-info">
+        <div class="owner-name">${o.name}</div>
+        <div class="owner-meta">${o.phone}</div>
+      </div>
+      <div class="owner-commission">${o.commission_rate}%</div>
+      <button class="kill-btn ${o.is_active ? 'on' : 'off'}"
+              onclick="toggleOwner(${o.id}, ${o.is_active ? 0 : 1}, this)">
+        ${o.is_active ? 'ON' : 'OFF'}
+      </button>
+    </div>
+  `).join('');
+}
+
+function renderApts(apts, owners) {
+  document.getElementById('aptsCount').textContent = apts.length;
+  const el = document.getElementById('aptsList');
+  if (!apts.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--dim);font-size:13px">لا توجد شقق بعد</div>';
+    return;
+  }
+  el.innerHTML = apts.map(a => {
+    const stClass = !a.is_active ? 'st-suspended' : a.status === 'occupied' ? 'st-occupied' : 'st-active';
+    const stLabel = !a.is_active ? 'موقوفة' : a.status === 'occupied' ? 'مشغولة' : 'فارغة';
+    return `
+      <div class="apt-row">
+        <div class="apt-info">
+          <div class="apt-name">${a.name}</div>
+          <div class="apt-meta">${a.owner_name || '—'} · ${a.location || '—'} · ${a.hourly_rate} ر.س/ساعة</div>
+        </div>
+        <span class="apt-status ${stClass}">${stLabel}</span>
+        <button class="kill-btn ${a.is_active ? 'on' : 'off'}"
+                onclick="toggleApt(${a.id}, ${a.is_active ? 0 : 1}, this)">
+          ${a.is_active ? 'ON' : 'OFF'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+async function toggleOwner(id, newActive, btn) {
+  const res = await fetch(`${S}/api/founder/owner/toggle`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({pin: PIN, owner_id: id, active: newActive})
+  });
+  const d = await res.json();
+  if (res.ok) {
+    toast(d.status, newActive ? 'success' : 'error');
+    loadData();
+  } else {
+    toast(d.error || 'خطأ', 'error');
+  }
+}
+
+async function toggleApt(id, newActive, btn) {
+  const res = await fetch(`${S}/api/founder/apartment/toggle`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({pin: PIN, apartment_id: id, active: newActive})
+  });
+  const d = await res.json();
+  if (res.ok) {
+    toast(d.status, newActive ? 'success' : 'error');
+    loadData();
+  } else {
+    toast(d.error || 'خطأ', 'error');
+  }
+}
+
+// ─── Add Owner ────────────────────────────────────────────────────────────────
+function openAddOwner() {
+  document.getElementById('addOwnerModal').classList.add('show');
+}
+async function saveOwner() {
+  const body = {
+    pin: PIN,
+    name: document.getElementById('ownerName').value.trim(),
+    phone: document.getElementById('ownerPhone').value.trim(),
+    commission_rate: parseFloat(document.getElementById('ownerComm').value) || 20,
+    pin_owner: document.getElementById('ownerPin').value || '0000',
+  };
+  const res = await fetch(`${S}/api/founder/owner/add`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  const d = await res.json();
+  if (res.ok) {
+    toast(`تم إضافة ${body.name} ✓`, 'success');
+    closeModals(); loadData();
+  } else { toast(d.error || 'خطأ', 'error'); }
+}
+
+// ─── Add Apt ──────────────────────────────────────────────────────────────────
+function openAddApt() {
+  const sel = document.getElementById('aptOwner');
+  sel.innerHTML = ownersData.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+  document.getElementById('addAptModal').classList.add('show');
+}
+async function saveApt() {
+  const body = {
+    pin: PIN,
+    owner_id: parseInt(document.getElementById('aptOwner').value),
+    name: document.getElementById('aptName').value.trim(),
+    location: document.getElementById('aptLocation').value.trim(),
+    hourly_rate: parseFloat(document.getElementById('aptHourly').value) || 75,
+    daily_rate: parseFloat(document.getElementById('aptHourly').value) * 6 || 450,
+    wifi_name: document.getElementById('aptWifi').value.trim(),
+    wifi_pass: document.getElementById('aptWifiPass').value.trim(),
+  };
+  const res = await fetch(`${S}/api/founder/apartment/add`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  const d = await res.json();
+  if (res.ok) {
+    toast(`تم إضافة ${body.name} ✓`, 'success');
+    closeModals(); loadData();
+  } else { toast(d.error || 'خطأ', 'error'); }
+}
+
+function closeModals() {
+  document.querySelectorAll('.modal-bg').forEach(m => m.classList.remove('show'));
+}
+
+function toast(msg, type='info', ms=3000) {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  const w = document.getElementById('toastWrap');
+  w.appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+
+document.getElementById('pinInput').focus();
+</script>
+</body>
+</html>

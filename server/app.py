@@ -35,8 +35,10 @@ from routes.codes import bp as codes_bp
 from routes.extensions import bp as extensions_bp
 from routes.services import bp as services_bp
 from routes.host import bp as host_bp
+from routes.founder import bp as founder_bp
+from routes.owner import bp as owner_bp
 
-for bp in (bookings_bp, codes_bp, extensions_bp, services_bp, host_bp):
+for bp in (bookings_bp, codes_bp, extensions_bp, services_bp, host_bp, founder_bp, owner_bp):
     app.register_blueprint(bp)
 
 
@@ -53,6 +55,14 @@ def tablet_page():
 @app.get("/host")
 def host_page():
     return send_from_directory(os.path.join(FRONTEND, "host"), "index.html")
+
+@app.get("/founder")
+def founder_page():
+    return send_from_directory(os.path.join(FRONTEND, "founder"), "index.html")
+
+@app.get("/owner")
+def owner_page():
+    return send_from_directory(os.path.join(FRONTEND, "owner"), "index.html")
 
 
 # ─── Background — منطق الوقت والـ Silent Exit ─────────────────────────────────

@@ -38,6 +38,9 @@ def book():
     if not apt:
         return jsonify({"error": "الشقة غير موجودة"}), 404
 
+    if not apt.get("is_active", 1):
+        return jsonify({"error": "هذه الشقة موقوفة من قِبل الإدارة"}), 403
+
     if apt.get("status") == "occupied":
         active = get_active_booking(apt_id)
         if active:
