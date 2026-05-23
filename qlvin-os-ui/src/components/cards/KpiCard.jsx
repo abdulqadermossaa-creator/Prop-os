@@ -1,4 +1,6 @@
+import { motion } from "framer-motion";
 import StatDelta from "../ui/StatDelta";
+import { motion as motionTokens, easing } from "../../tokens/index";
 
 export default function KpiCard({ title, value, trend, icon: Icon, accentColor = "blue" }) {
   const accents = {
@@ -16,19 +18,25 @@ export default function KpiCard({ title, value, trend, icon: Icon, accentColor =
   };
 
   return (
-    <div
-      className={`bg-panel p-5 rounded-2xl border animate-fadeIn transition-all duration-300 hover:scale-[1.02] ${accents[accentColor] || accents.blue}`}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: motionTokens.uiResponse, ease: easing.smooth }}
+      whileHover={{ y: -2, scale: 1.02 }}
+      className={`bg-panel p-5 rounded-2xl border transition-shadow duration-300 cursor-default ${
+        accents[accentColor] ?? accents.blue
+      }`}
     >
       <div className="flex items-start justify-between mb-3">
         <p className="text-xs text-gray-400 uppercase tracking-wider">{title}</p>
         {Icon && (
-          <div className={`p-2 rounded-lg ${iconColors[accentColor]}`}>
+          <div className={`p-2 rounded-lg ${iconColors[accentColor] ?? iconColors.blue}`}>
             <Icon size={14} />
           </div>
         )}
       </div>
       <div className="text-2xl font-bold text-white mb-1">{value}</div>
       <StatDelta value={trend} />
-    </div>
+    </motion.div>
   );
 }
