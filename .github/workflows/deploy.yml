@@ -1,0 +1,40 @@
+name: Deploy to Netlify
+
+on:
+  push:
+    branches:
+      - claude/qlvin-os-react-kit-zSq1b
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: qlvin-os-ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: qlvin-os-ui
+
+      - name: Build
+        run: npm run build
+        working-directory: qlvin-os-ui
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: qlvin-os-ui/dist
+          production-branch: claude/qlvin-os-react-kit-zSq1b
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: cb47cff5-443c-4b7a-aa27-049160ebf803
