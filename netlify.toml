@@ -1,7 +1,7 @@
 [build]
   base = "qlvin-os-ui"
   command = "npm run build"
-  publish = "qlvin-os-ui/dist"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
