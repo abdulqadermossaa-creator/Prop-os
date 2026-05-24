@@ -1,7 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import Sidebar from "./components/layout/Sidebar";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
+import InvestorDeck from "./pages/InvestorDeck";
+import Mobile from "./pages/Mobile";
+import GuestCard from "./pages/GuestCard";
 
 function OSLayout({ children }) {
   return (
@@ -12,10 +16,12 @@ function OSLayout({ children }) {
   );
 }
 
-export default function App() {
+function AnimatedRoutes() {
+  const location = useLocation();
+
   return (
-    <BrowserRouter>
-      <Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Landing />} />
         <Route
           path="/dashboard"
@@ -25,8 +31,19 @@ export default function App() {
             </OSLayout>
           }
         />
+        <Route path="/investor" element={<InvestorDeck />} />
+        <Route path="/mobile" element={<Mobile />} />
+        <Route path="/guest" element={<GuestCard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+    </AnimatePresence>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AnimatedRoutes />
     </BrowserRouter>
   );
 }
