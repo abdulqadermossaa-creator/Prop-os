@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { DollarSign, BarChart2, Building2, ShieldCheck } from "lucide-react";
 import KpiCard from "../components/cards/KpiCard";
 import PropertyCard from "../components/cards/PropertyCard";
@@ -5,6 +6,7 @@ import AIInsight from "../components/ai/AIInsight";
 import RevenueChart from "../components/charts/RevenueChart";
 import OccupancyChart from "../components/charts/OccupancyChart";
 import Header from "../components/layout/Header";
+import CommandBar from "../components/ai/CommandBar";
 
 const kpis = [
   { title: "Total Revenue", value: "120K SAR", trend: "+12%", icon: DollarSign, accentColor: "blue" },
@@ -41,9 +43,27 @@ const aiInsights = [
 ];
 
 export default function Dashboard() {
+  const [cmdOpen, setCmdOpen] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setCmdOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  function handleCommandSubmit(query) {
+    console.log("[QLVIN AI]", query);
+    setCmdOpen(false);
+  }
+
   return (
     <div className="flex-1 flex flex-col min-h-screen overflow-auto">
-      <Header title="Dashboard" />
+      <Header title="Dashboard" hint="⌘K — AI Command" onHintClick={() => setCmdOpen(true)} />
 
       <main className="p-6 space-y-6">
         {/* KPI Row */}
@@ -89,6 +109,12 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      <CommandBar
+        open={cmdOpen}
+        onSubmit={handleCommandSubmit}
+        onClose={() => setCmdOpen(false)}
+      />
     </div>
   );
 }

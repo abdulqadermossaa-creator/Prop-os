@@ -7,6 +7,9 @@ import {
   Brain,
   Settings,
   ChevronRight,
+  Smartphone,
+  KeyRound,
+  TrendingUp,
 } from "lucide-react";
 
 const navItems = [
@@ -15,6 +18,9 @@ const navItems = [
   { label: "Tenants", path: "/tenants", icon: Users },
   { label: "Payments", path: "/payments", icon: CreditCard },
   { label: "AI Engine", path: "/ai", icon: Brain },
+  { label: "Investor", path: "/investor", icon: TrendingUp },
+  { label: "Guest Card", path: "/guest", icon: KeyRound },
+  { label: "Mobile", path: "/mobile", icon: Smartphone },
   { label: "Settings", path: "/settings", icon: Settings },
 ];
 
