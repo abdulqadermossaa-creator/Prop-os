@@ -1,134 +1,159 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Circle, CheckCircle2 } from "lucide-react";
+import { usePropertyState } from "../context/PropertyStateEngine";
 
 const CHECKLIST = [
-  { id: "keys",      label: "تسليم المفتاح أو البطاقة الذكية" },
-  { id: "items",     label: "المتعلقات الشخصية كاملة" },
-  { id: "windows",   label: "إغلاق النوافذ" },
-  { id: "ac",        label: "إيقاف التكييف والأجهزة" },
-  { id: "checkout",  label: "تأكيد المغادرة" },
+  { id: "keys",    label: "تسليم المفتاح أو البطاقة الذكية" },
+  { id: "items",   label: "المتعلقات الشخصية كاملة"         },
+  { id: "windows", label: "إغلاق النوافذ والأبواب"          },
+  { id: "ac",      label: "إيقاف الأجهزة والتكييف"          },
+  { id: "confirm", label: "تأكيد المغادرة مع الاستقبال"     },
 ];
 
 export default function CheckoutMode() {
   const navigate = useNavigate();
+  const { guest, scenario } = usePropertyState();
   const [done, setDone] = useState({});
+  const accent = scenario?.accent || "#C8A96A";
   const allDone = CHECKLIST.every(c => done[c.id]);
+  const doneCount = CHECKLIST.filter(c => done[c.id]).length;
 
   const toggle = id => setDone(d => ({ ...d, [id]: !d[id] }));
 
   return (
     <div
       className="relative w-full h-screen overflow-hidden flex flex-col"
-      style={{ background: "#07090E" }}
+      style={{ background: "#08060A" }}
     >
-      {/* Warm glow at bottom */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          bottom: 0, left: "50%", transform: "translateX(-50%)",
-          width: "80vw", height: "45vh",
-          background: "radial-gradient(ellipse at bottom, rgba(200,169,106,0.05) 0%, transparent 70%)",
-        }}
-      />
+      {/* Bottom warm glow */}
+      <div className="absolute pointer-events-none" style={{
+        bottom: 0, left: "50%", transform: "translateX(-50%)",
+        width: "80vw", height: "40vh",
+        background: `radial-gradient(ellipse at bottom, ${accent}07 0%, transparent 70%)`,
+      }} />
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-6 pt-8 pb-4">
+      <div className="relative z-10 flex items-center justify-between px-7 pt-8 pb-2">
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-2"
-          style={{ color: "rgba(255,255,255,0.28)" }}
+          style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.25)" }}
         >
-          <ChevronLeft size={15} />
-          <span className="font-light" style={{ fontSize: 12 }}>الرئيسية</span>
+          <ChevronLeft size={14} />
+          <span style={{ fontSize: 12, fontWeight: 200 }}>الرئيسية</span>
         </button>
-        <div className="font-light tracking-[0.28em]" style={{ fontSize: 10, color: "rgba(255,255,255,0.18)" }}>
+        <div style={{ fontSize: 10, fontWeight: 200, letterSpacing: "0.3em", color: "rgba(255,255,255,0.15)" }}>
           Checkout
         </div>
-        <div style={{ width: 64 }} />
+        <div style={{ width: 70 }} />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex-1 px-6 overflow-y-auto pb-10">
+      <div className="relative z-10 flex-1 overflow-y-auto px-7 pb-10" style={{ scrollbarWidth: "none" }}>
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Time */}
-          <div className="mb-10">
-            <div className="font-light tracking-[0.3em] mb-3" style={{ fontSize: 11, color: "rgba(255,255,255,0.22)" }}>
+          {/* Checkout time */}
+          <div style={{ marginBottom: 36, paddingTop: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 200, letterSpacing: "0.32em", color: "rgba(255,255,255,0.2)", marginBottom: 12 }}>
               وقت المغادرة
             </div>
-            <div
-              className="text-white font-thin mb-1"
-              style={{ fontSize: "clamp(52px, 12vw, 88px)", letterSpacing: "-0.04em", lineHeight: 1 }}
-            >
-              11:00
+            <div style={{
+              fontSize: "clamp(56px, 13vw, 90px)",
+              fontWeight: 100,
+              letterSpacing: "-0.045em",
+              color: "rgba(255,255,255,0.9)",
+              lineHeight: 1,
+            }}>
+              {guest.checkoutTime.split(" ")[0]}
             </div>
-            <div className="font-light" style={{ fontSize: 13, color: "rgba(255,255,255,0.28)" }}>
-              الجمعة، 27 مايو 2026
+            <div style={{ fontSize: 14, fontWeight: 200, color: "rgba(255,255,255,0.28)", marginTop: 8 }}>
+              {guest.checkoutDate}
             </div>
           </div>
 
-          {/* Remaining time */}
-          <div
-            className="flex items-center gap-3 px-5 py-3.5 rounded-2xl mb-8"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
-          >
-            <div className="font-light" style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
-              متبقي · 8 ساعات و 32 دقيقة
+          {/* Progress indicator */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12,
+            padding: "14px 18px",
+            borderRadius: 16,
+            background: "rgba(255,255,255,0.04)",
+            border: "0.5px solid rgba(255,255,255,0.07)",
+            marginBottom: 24,
+          }}>
+            <div style={{ flex: 1, height: 2, borderRadius: 1, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+              <motion.div
+                animate={{ width: `${(doneCount / CHECKLIST.length) * 100}%` }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                style={{ height: "100%", background: accent, borderRadius: 1 }}
+              />
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 200, color: "rgba(255,255,255,0.35)", whiteSpace: "nowrap" }}>
+              {doneCount} / {CHECKLIST.length}
             </div>
           </div>
 
           {/* Checklist */}
-          <div className="font-light tracking-widest mb-4" style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>
-            قائمة المغادرة
-          </div>
-          <div className="space-y-2.5 mb-10">
-            {CHECKLIST.map(item => (
-              <button
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+            {CHECKLIST.map((item, i) => (
+              <motion.button
                 key={item.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.06, duration: 0.5 }}
                 onClick={() => toggle(item.id)}
-                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left transition-all"
                 style={{
-                  background: done[item.id] ? "rgba(200,169,106,0.06)" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${done[item.id] ? "rgba(200,169,106,0.18)" : "rgba(255,255,255,0.07)"}`,
+                  display: "flex", alignItems: "center", gap: 14,
+                  padding: "16px 18px",
+                  borderRadius: 16,
+                  background: done[item.id] ? `${accent}0A` : "rgba(255,255,255,0.04)",
+                  border: `0.5px solid ${done[item.id] ? `${accent}22` : "rgba(255,255,255,0.07)"}`,
+                  cursor: "pointer", textAlign: "left",
+                  transition: "all 0.25s ease",
                 }}
               >
-                {done[item.id]
-                  ? <CheckCircle2 size={16} style={{ color: "#C8A96A", flexShrink: 0 }} />
-                  : <Circle      size={16} style={{ color: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
-                }
-                <span
-                  className="font-light"
-                  style={{
-                    fontSize: 13,
-                    color: done[item.id] ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.7)",
-                    textDecoration: done[item.id] ? "line-through" : "none",
-                  }}
-                >
+                <AnimatePresence mode="wait">
+                  {done[item.id]
+                    ? <motion.div key="check" initial={{ scale: 0.6 }} animate={{ scale: 1 }}>
+                        <CheckCircle2 size={16} style={{ color: accent }} />
+                      </motion.div>
+                    : <motion.div key="circle" initial={{ scale: 0.6 }} animate={{ scale: 1 }}>
+                        <Circle size={16} style={{ color: "rgba(255,255,255,0.15)" }} />
+                      </motion.div>
+                  }
+                </AnimatePresence>
+                <span style={{
+                  fontSize: 13, fontWeight: 200,
+                  color: done[item.id] ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.75)",
+                  textDecoration: done[item.id] ? "line-through" : "none",
+                  transition: "all 0.25s",
+                }}>
                   {item.label}
                 </span>
-              </button>
+              </motion.button>
             ))}
           </div>
 
           {/* Confirm button */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/")}
-            className="w-full py-4 rounded-2xl font-medium transition-all"
+            whileHover={allDone ? { scale: 1.02 } : {}}
+            whileTap={allDone ? { scale: 0.98 } : {}}
+            onClick={() => allDone && navigate("/")}
             style={{
-              background: allDone ? "rgba(200,169,106,0.14)" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${allDone ? "rgba(200,169,106,0.28)" : "rgba(255,255,255,0.07)"}`,
-              color: allDone ? "#C8A96A" : "rgba(255,255,255,0.25)",
-              fontSize: 14,
+              width: "100%",
+              padding: "18px",
+              borderRadius: 18,
+              background: allDone ? `${accent}14` : "rgba(255,255,255,0.03)",
+              border: `0.5px solid ${allDone ? `${accent}30` : "rgba(255,255,255,0.06)"}`,
+              fontSize: 14, fontWeight: allDone ? 300 : 200,
+              color: allDone ? accent : "rgba(255,255,255,0.2)",
+              cursor: allDone ? "pointer" : "default",
+              transition: "all 0.4s ease",
             }}
           >
-            {allDone ? "تأكيد المغادرة" : "أكمل القائمة أولاً"}
+            {allDone ? "تأكيد المغادرة" : `أكمل القائمة (${CHECKLIST.length - doneCount} متبقٍ)`}
           </motion.button>
         </motion.div>
       </div>

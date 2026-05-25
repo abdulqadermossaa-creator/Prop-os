@@ -34,20 +34,9 @@ input[type="range"]::-webkit-slider-thumb {
   background: white;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0E1628;
-}
-::-webkit-scrollbar-thumb {
-  background: #2F80FF44;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #2F80FF88;
-}
+/* Hide scrollbars for ambient feel */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; -ms-overflow-style: none; }
 
 @layer utilities {
   .text-gradient-blue {

@@ -1,306 +1,365 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  Home, SlidersHorizontal, Coffee, Phone,
-  Wifi, ThermometerSun, Moon, Lightbulb,
-  ChevronLeft, Check, ChevronRight,
+  ChevronLeft, Wifi, Moon, Coffee, Phone,
+  ThermometerSun, Lightbulb, PanelTop, Check, ChevronDown,
 } from "lucide-react";
+import { usePropertyState } from "../context/PropertyStateEngine";
 
-const TABS = [
-  { id: "home",     icon: Home,             label: "الرئيسية" },
-  { id: "controls", icon: SlidersHorizontal, label: "التحكم" },
-  { id: "services", icon: Coffee,            label: "الخدمات" },
-  { id: "help",     icon: Phone,             label: "المساعدة" },
+/* ─── iOS-style Vertical Pill Slider ─── */
+function VerticalSlider({ icon: Icon, label, value, onChange, color, unit = "%" }) {
+  const trackRef = useRef(null);
+  const dragging  = useRef(false);
+
+  const calcValue = (clientY) => {
+    const el   = trackRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const rel  = 1 - (clientY - rect.top) / rect.height;
+    const val  = Math.round(Math.max(0, Math.min(1, rel)) * 100);
+    onChange(val);
+  };
+
+  const onPointerDown = (e) => {
+    dragging.current = true;
+    calcValue(e.clientY);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e) => { if (dragging.current) calcValue(e.clientY); };
+  const onPointerUp   = ()  => { dragging.current = false; };
+
+  return (
+    <div className="flex flex-col items-center gap-3 select-none">
+      {/* Pill track */}
+      <div
+        ref={trackRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        style={{
+          position: "relative",
+          width: 54,
+          height: 170,
+          borderRadius: 27,
+          background: "rgba(255,255,255,0.055)",
+          border: "0.5px solid rgba(255,255,255,0.1)",
+          backdropFilter: "blur(32px)",
+          WebkitBackdropFilter: "blur(32px)",
+          overflow: "hidden",
+          cursor: "ns-resize",
+          touchAction: "none",
+        }}
+      >
+        {/* Fill — grows from bottom */}
+        <motion.div
+          animate={{ height: `${value}%` }}
+          transition={{ duration: 0.12, ease: "easeOut" }}
+          style={{
+            position: "absolute",
+            bottom: 0, left: 0, right: 0,
+            background: `linear-gradient(to top, ${color}CC 0%, ${color}40 100%)`,
+            borderRadius: 27,
+          }}
+        />
+
+        {/* White indicator line at current level */}
+        <motion.div
+          animate={{ bottom: `calc(${value}% - 1px)` }}
+          transition={{ duration: 0.12, ease: "easeOut" }}
+          style={{
+            position: "absolute",
+            left: 10, right: 10,
+            height: 2,
+            borderRadius: 1,
+            background: "rgba(255,255,255,0.85)",
+          }}
+        />
+
+        {/* Icon — top of pill */}
+        <div style={{
+          position: "absolute",
+          top: 14, left: 0, right: 0,
+          display: "flex", justifyContent: "center",
+          pointerEvents: "none",
+        }}>
+          <Icon size={13} style={{ color: "rgba(255,255,255,0.45)" }} />
+        </div>
+      </div>
+
+      {/* Label + value */}
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 11, fontWeight: 200, color: "rgba(255,255,255,0.4)" }}>{label}</div>
+        <div style={{ fontSize: 13, fontWeight: 300, color, marginTop: 2 }}>{value}{unit}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Glass Tile ─── */
+function GlassTile({ icon: Icon, label, value, active, onToggle, accent = "rgba(255,255,255,0.9)", wide }) {
+  return (
+    <button
+      onClick={onToggle}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        padding: "16px 18px",
+        borderRadius: 18,
+        background: active ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
+        border: `0.5px solid ${active ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.07)"}`,
+        backdropFilter: "blur(36px)",
+        WebkitBackdropFilter: "blur(36px)",
+        cursor: onToggle ? "pointer" : "default",
+        gridColumn: wide ? "span 2" : undefined,
+        textAlign: "left",
+        transition: "all 0.2s ease",
+      }}
+    >
+      <Icon size={14} style={{ color: active ? accent : "rgba(255,255,255,0.32)", marginBottom: 10 }} />
+      <div style={{ fontSize: 12, fontWeight: 300, color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.55)" }}>
+        {label}
+      </div>
+      {value && (
+        <div style={{ fontSize: 11, fontWeight: 200, color: "rgba(255,255,255,0.28)", marginTop: 2 }}>
+          {value}
+        </div>
+      )}
+    </button>
+  );
+}
+
+/* ─── Services ─── */
+const SERVICES = [
+  { id: "towels",    label: "مناشف إضافية",      time: "30 دقيقة" },
+  { id: "breakfast", label: "فطور في الغرفة",    time: "45 دقيقة" },
+  { id: "cleaning",  label: "تنظيف الوحدة",      time: "ساعة"     },
+  { id: "laundry",   label: "خدمة الغسيل",       time: "يوم عمل"  },
 ];
 
-/* ─── Home Tab ─── */
-function HomeTab() {
-  const [wifiRevealed, setWifiRevealed] = useState(false);
-
-  const quickItems = [
-    { icon: Wifi,          label: "الإنترنت", value: wifiRevealed ? "qlvin-A204" : "اضغط للكشف", sub: wifiRevealed ? "2026@secure" : "", color: "#60A5FA", action: () => setWifiRevealed(true) },
-    { icon: ThermometerSun,label: "الحرارة",  value: "22°C",     sub: "مريح",     color: "#C8A96A", action: null },
-    { icon: Moon,          label: "DND",      value: "شغّال",    sub: "لا تزعج",  color: "#A78BFA", action: null },
-    { icon: Lightbulb,     label: "الإضاءة",  value: "70%",      sub: "دافئ",     color: "#FCD34D", action: null },
-  ];
-
-  return (
-    <div className="space-y-4">
-      {/* Guest header */}
-      <div
-        className="px-6 py-5 rounded-2xl"
-        style={{ background: "rgba(200,169,106,0.07)", border: "1px solid rgba(200,169,106,0.14)" }}
-      >
-        <div className="font-light tracking-[0.28em] mb-1" style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>
-          ضيفنا الكريم
-        </div>
-        <div className="text-white font-light" style={{ fontSize: 22, letterSpacing: "-0.01em" }}>
-          أحمد العمري
-        </div>
-        <div className="font-light mt-2" style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>
-          A-204 · يغادر الجمعة 11:00 ص · 3 ليالٍ متبقية
-        </div>
-      </div>
-
-      {/* Quick grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {quickItems.map((item, i) => (
-          <button
-            key={i}
-            onClick={item.action}
-            className="flex flex-col items-start px-5 py-4 rounded-2xl text-left transition-all"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              cursor: item.action ? "pointer" : "default",
-            }}
-          >
-            <item.icon size={14} style={{ color: item.color, marginBottom: 10 }} />
-            <div className="font-light" style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 2 }}>
-              {item.label}
-            </div>
-            <div className="text-white font-medium" style={{ fontSize: 13 }}>{item.value}</div>
-            {item.sub && (
-              <div className="font-light" style={{ fontSize: 10, color: "rgba(255,255,255,0.22)", marginTop: 2 }}>
-                {item.sub}
-              </div>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Checkout info */}
-      <div
-        className="flex items-center justify-between px-5 py-4 rounded-2xl"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
-      >
-        <div>
-          <div className="text-white font-light" style={{ fontSize: 13 }}>وقت المغادرة</div>
-          <div className="font-light mt-0.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>
-            الجمعة 27 مايو · الساعة 11:00 ص
-          </div>
-        </div>
-        <ChevronRight size={13} style={{ color: "rgba(255,255,255,0.18)" }} />
-      </div>
-    </div>
-  );
-}
-
-/* ─── Controls Tab ─── */
-function RangeControl({ icon: Icon, label, value, onChange, color }) {
-  return (
-    <div
-      className="px-5 py-5 rounded-2xl"
-      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
-    >
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2.5">
-          <Icon size={14} style={{ color }} />
-          <span className="text-white font-light" style={{ fontSize: 13 }}>{label}</span>
-        </div>
-        <span className="font-medium" style={{ fontSize: 13, color }}>{value}%</span>
-      </div>
-      <div className="relative h-1 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
-        <div
-          className="absolute left-0 top-0 h-full rounded-full transition-all"
-          style={{ width: `${value}%`, background: `linear-gradient(90deg, ${color}60, ${color})` }}
-        />
-        <input
-          type="range" min={0} max={100} value={value}
-          onChange={e => onChange(+e.target.value)}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        />
-      </div>
-    </div>
-  );
-}
-
-function ControlsTab() {
-  const [ac, setAc]         = useState(60);
-  const [lights, setLights] = useState(70);
-  const [blinds, setBlinds] = useState(40);
-
-  return (
-    <div className="space-y-3">
-      <RangeControl icon={ThermometerSun} label="تكييف الهواء" value={ac}     onChange={setAc}     color="#60A5FA" />
-      <RangeControl icon={Lightbulb}      label="الإضاءة"      value={lights} onChange={setLights} color="#FCD34D" />
-      <RangeControl icon={Moon}           label="الستائر"      value={blinds} onChange={setBlinds} color="#A78BFA" />
-    </div>
-  );
-}
-
-/* ─── Services Tab ─── */
-function ServicesTab() {
-  const [requested, setRequested] = useState({});
-
-  const services = [
-    { id: "towels",    label: "مناشف إضافية",    time: "30 دقيقة" },
-    { id: "breakfast", label: "فطور في الغرفة",  time: "45 دقيقة" },
-    { id: "cleaning",  label: "تنظيف الوحدة",    time: "ساعة" },
-    { id: "laundry",   label: "خدمة الغسيل",     time: "يوم عمل" },
-    { id: "late",      label: "تمديد وقت الإقامة", time: "حسب التوفر" },
-  ];
-
-  const toggle = id => setRequested(r => ({ ...r, [id]: !r[id] }));
-
-  return (
-    <div className="space-y-3">
-      {services.map(s => (
-        <button
-          key={s.id}
-          onClick={() => toggle(s.id)}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-left transition-all"
-          style={{
-            background: requested[s.id] ? "rgba(200,169,106,0.08)" : "rgba(255,255,255,0.04)",
-            border: `1px solid ${requested[s.id] ? "rgba(200,169,106,0.22)" : "rgba(255,255,255,0.07)"}`,
-          }}
-        >
-          <div>
-            <div className="text-white font-light" style={{ fontSize: 13 }}>{s.label}</div>
-            <div className="font-light mt-0.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.28)" }}>
-              الوقت المتوقع: {s.time}
-            </div>
-          </div>
-          {requested[s.id] ? (
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(200,169,106,0.22)" }}
-            >
-              <Check size={11} style={{ color: "#C8A96A" }} />
-            </div>
-          ) : (
-            <span className="font-light" style={{ fontSize: 11, color: "rgba(255,255,255,0.22)" }}>اطلب</span>
-          )}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* ─── Help Tab ─── */
-function HelpTab() {
-  const items = [
-    { label: "الاستقبال",     sub: "متاح 24/7",              action: "اتصل" },
-    { label: "الصيانة",       sub: "طوارئ فقط",              action: "اتصل" },
-    { label: "واتساب",        sub: "رد خلال دقيقتين",         action: "تواصل" },
-    { label: "المساعد الذكي", sub: "QLVIN AI · مساعدة فورية", action: "ابدأ" },
-  ];
-
-  return (
-    <div className="space-y-3">
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className="flex items-center justify-between px-5 py-4 rounded-2xl"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          <div>
-            <div className="text-white font-light" style={{ fontSize: 13 }}>{item.label}</div>
-            <div className="font-light mt-0.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.28)" }}>{item.sub}</div>
-          </div>
-          <button
-            className="px-3.5 py-1.5 rounded-xl font-light transition-colors"
-            style={{
-              background: "rgba(255,255,255,0.07)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              fontSize: 11,
-              color: "rgba(255,255,255,0.55)",
-            }}
-          >
-            {item.action}
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ─── Main Component ─── */
-const CONTENT = { home: HomeTab, controls: ControlsTab, services: ServicesTab, help: HelpTab };
-
+/* ─── Main ─── */
 export default function GuestPortal() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState("home");
+  const { guest, scenario } = usePropertyState();
 
-  const Content = CONTENT[tab];
+  const [wifiRevealed, setWifiRevealed] = useState(false);
+  const [dnd,  setDnd]  = useState(true);
+  const [ac,   setAc]   = useState(62);
+  const [light,setLight]= useState(70);
+  const [blind,setBlind]= useState(38);
+  const [requested, setRequested] = useState({});
+  const [servicesOpen, setServicesOpen] = useState(false);
+
+  const toggle = id => setRequested(r => ({ ...r, [id]: !r[id] }));
+  const accent = scenario?.accent || "#C8A96A";
 
   return (
     <div
       className="relative w-full h-screen overflow-hidden flex flex-col"
-      style={{ background: "#07090E" }}
+      style={{ background: "#070705" }}
     >
       {/* Ambient */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: 0, left: "50%", transform: "translateX(-50%)",
-          width: "70vw", height: "35vh",
-          background: "radial-gradient(ellipse, rgba(200,169,106,0.05) 0%, transparent 70%)",
-        }}
-      />
+      <div className="absolute pointer-events-none" style={{
+        top: 0, left: "50%", transform: "translateX(-50%)",
+        width: "75vw", height: "38vh",
+        background: `radial-gradient(ellipse, ${accent}08 0%, transparent 70%)`,
+      }} />
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-6 pt-8 pb-4">
+      <div
+        className="relative z-10 flex items-center justify-between px-7 pt-8 pb-5"
+        style={{ flexShrink: 0 }}
+      >
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-2 transition-colors"
-          style={{ color: "rgba(255,255,255,0.28)" }}
+          style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.28)" }}
         >
-          <ChevronLeft size={15} />
-          <span className="font-light" style={{ fontSize: 12 }}>الرئيسية</span>
+          <ChevronLeft size={14} />
+          <span style={{ fontSize: 12, fontWeight: 200 }}>الرئيسية</span>
         </button>
-        <div className="font-light tracking-[0.28em]" style={{ fontSize: 10, color: "rgba(255,255,255,0.18)" }}>
+        <div style={{ fontSize: 10, fontWeight: 200, letterSpacing: "0.3em", color: "rgba(255,255,255,0.18)" }}>
           بوابة الضيف
         </div>
-        <div style={{ width: 64 }} />
+        <div style={{ width: 70 }} />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex-1 overflow-y-auto px-5 pb-28">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+      {/* Scrollable content */}
+      <div className="relative z-10 flex-1 overflow-y-auto px-6 pb-10" style={{ scrollbarWidth: "none" }}>
+
+        {/* Guest card */}
+        <div style={{
+          padding: "20px 22px",
+          borderRadius: 22,
+          background: `${accent}0C`,
+          border: `0.5px solid ${accent}22`,
+          marginBottom: 20,
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 200, letterSpacing: "0.3em", color: `${accent}99`, marginBottom: 6 }}>
+            ضيفنا الكريم
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 100, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>
+            {guest.name}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 200, color: "rgba(255,255,255,0.28)", marginTop: 6, lineHeight: 1.6 }}>
+            {guest.unitId} · يغادر {guest.checkoutDate} {guest.checkoutTime} · {guest.nights - 2} ليالٍ متبقية
+          </div>
+        </div>
+
+        {/* ── Vertical sliders (iOS Control Center style) ── */}
+        <div style={{
+          padding: "22px 20px 20px",
+          borderRadius: 22,
+          background: "rgba(255,255,255,0.04)",
+          border: "0.5px solid rgba(255,255,255,0.07)",
+          marginBottom: 16,
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 200, letterSpacing: "0.3em", color: "rgba(255,255,255,0.22)", marginBottom: 20 }}>
+            التحكم بالوحدة
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-around", alignItems: "flex-end" }}>
+            <VerticalSlider icon={ThermometerSun} label="التكييف" value={ac}    onChange={setAc}    color="#60A5FA" unit="°" />
+            <VerticalSlider icon={Lightbulb}      label="الإضاءة" value={light} onChange={setLight} color={accent} unit="%" />
+            <VerticalSlider icon={PanelTop}        label="الستائر" value={blind} onChange={setBlind} color="#A78BFA" unit="%" />
+          </div>
+        </div>
+
+        {/* ── Tile grid ── */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 10,
+          marginBottom: 16,
+        }}>
+          <GlassTile
+            icon={Wifi}
+            label="الإنترنت"
+            value={wifiRevealed ? "qlvin-A204 · 2026@secure" : "اضغط للكشف"}
+            active={wifiRevealed}
+            onToggle={() => setWifiRevealed(true)}
+            accent={accent}
+          />
+          <GlassTile
+            icon={Moon}
+            label={dnd ? "لا تزعج — شغّال" : "لا تزعج — إيقاف"}
+            active={dnd}
+            onToggle={() => setDnd(d => !d)}
+            accent="#A78BFA"
+          />
+        </div>
+
+        {/* ── Services ── */}
+        <div style={{
+          borderRadius: 22,
+          background: "rgba(255,255,255,0.04)",
+          border: "0.5px solid rgba(255,255,255,0.07)",
+          overflow: "hidden",
+          marginBottom: 16,
+        }}>
+          <button
+            onClick={() => setServicesOpen(o => !o)}
+            style={{
+              width: "100%",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "18px 22px",
+              cursor: "pointer",
+            }}
           >
-            <Content />
-          </motion.div>
-        </AnimatePresence>
-      </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Coffee size={14} style={{ color: "rgba(255,255,255,0.32)" }} />
+              <span style={{ fontSize: 13, fontWeight: 200, color: "rgba(255,255,255,0.7)" }}>خدمات الغرفة</span>
+            </div>
+            <motion.div animate={{ rotate: servicesOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+              <ChevronDown size={14} style={{ color: "rgba(255,255,255,0.25)" }} />
+            </motion.div>
+          </button>
 
-      {/* Bottom nav */}
-      <div className="absolute z-20 bottom-0 inset-x-0 px-5 pb-6 pt-2">
-        <div
-          className="flex items-center justify-around py-3 px-3 rounded-[22px]"
-          style={{
-            background: "rgba(18,18,22,0.85)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            backdropFilter: "blur(28px)",
-            WebkitBackdropFilter: "blur(28px)",
-          }}
-        >
-          {TABS.map(t => {
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className="flex flex-col items-center gap-1.5 px-5 py-2 rounded-xl transition-all"
-                style={{ background: active ? "rgba(255,255,255,0.07)" : "transparent" }}
+          <AnimatePresence>
+            {servicesOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                style={{ overflow: "hidden" }}
               >
-                <t.icon size={15} style={{ color: active ? "#C8A96A" : "rgba(255,255,255,0.28)" }} />
-                <span
-                  className="font-light"
-                  style={{ fontSize: 10, color: active ? "rgba(200,169,106,0.85)" : "rgba(255,255,255,0.25)" }}
-                >
-                  {t.label}
-                </span>
+                <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {SERVICES.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => toggle(s.id)}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        padding: "14px 16px",
+                        borderRadius: 14,
+                        background: requested[s.id] ? `${accent}0E` : "rgba(255,255,255,0.03)",
+                        border: `0.5px solid ${requested[s.id] ? `${accent}28` : "rgba(255,255,255,0.06)"}`,
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 200, color: "rgba(255,255,255,0.75)" }}>{s.label}</div>
+                        <div style={{ fontSize: 11, fontWeight: 200, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>
+                          الوقت المتوقع: {s.time}
+                        </div>
+                      </div>
+                      {requested[s.id]
+                        ? <div style={{ width: 22, height: 22, borderRadius: "50%", background: `${accent}28`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Check size={11} style={{ color: accent }} />
+                          </div>
+                        : <span style={{ fontSize: 11, fontWeight: 200, color: "rgba(255,255,255,0.2)" }}>اطلب</span>
+                      }
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* ── Help ── */}
+        <div style={{
+          borderRadius: 22,
+          background: "rgba(255,255,255,0.04)",
+          border: "0.5px solid rgba(255,255,255,0.07)",
+          overflow: "hidden",
+        }}>
+          {[
+            { icon: Phone, label: "الاستقبال",     sub: "متاح 24/7",              action: "اتصل" },
+            { icon: Phone, label: "واتساب",        sub: "رد خلال دقيقتين",         action: "تواصل" },
+          ].map((item, i, arr) => (
+            <div
+              key={i}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "16px 22px",
+                borderBottom: i < arr.length - 1 ? "0.5px solid rgba(255,255,255,0.05)" : "none",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <item.icon size={13} style={{ color: "rgba(255,255,255,0.28)" }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 200, color: "rgba(255,255,255,0.7)" }}>{item.label}</div>
+                  <div style={{ fontSize: 11, fontWeight: 200, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>{item.sub}</div>
+                </div>
+              </div>
+              <button style={{
+                padding: "6px 14px", borderRadius: 10,
+                background: "rgba(255,255,255,0.06)",
+                border: "0.5px solid rgba(255,255,255,0.1)",
+                fontSize: 11, fontWeight: 200,
+                color: "rgba(255,255,255,0.5)",
+              }}>
+                {item.action}
               </button>
-            );
-          })}
+            </div>
+          ))}
+        </div>
+
+        {/* QLVIN watermark */}
+        <div style={{ textAlign: "center", marginTop: 28, fontSize: 10, fontWeight: 100, letterSpacing: "0.35em", color: "rgba(255,255,255,0.06)" }}>
+          QLVIN OS
         </div>
       </div>
     </div>

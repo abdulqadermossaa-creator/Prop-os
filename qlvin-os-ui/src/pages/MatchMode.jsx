@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Volume2, Lightbulb, Thermometer } from "lucide-react";
 
 export default function MatchMode() {
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const [minute, setMinute] = useState(67);
-  const [score]  = useState({ home: 1, away: 0 });
+  const [score]   = useState({ home: 1, away: 0 });
 
   useEffect(() => {
     const t = setInterval(() => setMinute(p => (p < 90 ? p + 1 : p)), 60_000);
@@ -16,41 +16,43 @@ export default function MatchMode() {
   return (
     <div
       className="relative w-full h-screen overflow-hidden flex flex-col"
-      style={{ background: "#05080A" }}
+      style={{ background: "#03070A" }}
     >
-      {/* Green ambient */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: "25%", left: "50%", transform: "translateX(-50%)",
-          width: "85vw", height: "50vh",
-          background: "radial-gradient(ellipse, rgba(52,160,44,0.06) 0%, transparent 70%)",
-        }}
-      />
+      {/* Green ambient glow */}
+      <div className="absolute pointer-events-none" style={{
+        top: "20%", left: "50%", transform: "translateX(-50%)",
+        width: "90vw", height: "55vh",
+        background: "radial-gradient(ellipse, rgba(34,197,94,0.06) 0%, transparent 70%)",
+      }} />
+      <div className="absolute pointer-events-none" style={{
+        bottom: 0, left: "50%", transform: "translateX(-50%)",
+        width: "60vw", height: "30vh",
+        background: "radial-gradient(ellipse at bottom, rgba(34,197,94,0.04) 0%, transparent 70%)",
+      }} />
 
-      {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between px-6 pt-8">
+      {/* Header */}
+      <div className="relative z-10 flex items-center justify-between px-8 pt-8">
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-2"
-          style={{ color: "rgba(255,255,255,0.28)" }}
+          style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.22)" }}
         >
-          <ChevronLeft size={15} />
-          <span className="font-light" style={{ fontSize: 12 }}>الرئيسية</span>
+          <ChevronLeft size={14} />
+          <span style={{ fontSize: 12, fontWeight: 200 }}>الرئيسية</span>
         </button>
 
-        {/* Live badge */}
-        <div
-          className="flex items-center gap-2 px-4 py-2 rounded-full"
-          style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.18)" }}
-        >
+        {/* LIVE badge */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 7,
+          padding: "7px 16px", borderRadius: 20,
+          background: "rgba(34,197,94,0.08)",
+          border: "0.5px solid rgba(34,197,94,0.2)",
+        }}>
           <motion.span
             animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 1.4, repeat: Infinity }}
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "#4ADE80" }}
+            transition={{ duration: 1.2, repeat: Infinity }}
+            style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E" }}
           />
-          <span className="font-medium" style={{ fontSize: 11, color: "#4ADE80" }}>
+          <span style={{ fontSize: 11, fontWeight: 300, color: "#22C55E", letterSpacing: "0.08em" }}>
             Match Mode
           </span>
         </div>
@@ -58,65 +60,78 @@ export default function MatchMode() {
 
       {/* Score */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center">
-        {/* Teams */}
-        <div className="flex items-center gap-14 mb-10">
-          <div className="text-center">
-            <div className="font-light tracking-widest mb-4" style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+        {/* Teams row */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10vw", marginBottom: 32 }}>
+          {/* Home */}
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 11, fontWeight: 200, letterSpacing: "0.2em", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>
               الهلال
             </div>
-            <div
-              className="text-white font-thin"
-              style={{ fontSize: "clamp(64px, 14vw, 112px)", letterSpacing: "-0.04em", lineHeight: 1 }}
-            >
+            <div style={{
+              fontSize: "clamp(72px, 17vw, 130px)",
+              fontWeight: 100,
+              letterSpacing: "-0.05em",
+              color: "rgba(255,255,255,0.92)",
+              lineHeight: 1,
+              fontVariantNumeric: "tabular-nums",
+            }}>
               {score.home}
             </div>
           </div>
 
-          <div className="font-thin" style={{ fontSize: 28, color: "rgba(255,255,255,0.12)" }}>—</div>
+          {/* Divider */}
+          <div style={{ fontSize: 28, fontWeight: 100, color: "rgba(255,255,255,0.1)" }}>—</div>
 
-          <div className="text-center">
-            <div className="font-light tracking-widest mb-4" style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+          {/* Away */}
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 11, fontWeight: 200, letterSpacing: "0.2em", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>
               النصر
             </div>
-            <div
-              className="font-thin"
-              style={{
-                fontSize: "clamp(64px, 14vw, 112px)",
-                letterSpacing: "-0.04em",
-                lineHeight: 1,
-                color: "rgba(255,255,255,0.3)",
-              }}
-            >
+            <div style={{
+              fontSize: "clamp(72px, 17vw, 130px)",
+              fontWeight: 100,
+              letterSpacing: "-0.05em",
+              color: "rgba(255,255,255,0.25)",
+              lineHeight: 1,
+              fontVariantNumeric: "tabular-nums",
+            }}>
               {score.away}
             </div>
           </div>
         </div>
 
-        {/* Minute */}
-        <div
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full mb-14"
-          style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.15)" }}
-        >
-          <span className="font-light" style={{ fontSize: 13, color: "#4ADE80" }}>
+        {/* Minute pill */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 8,
+          padding: "8px 20px", borderRadius: 20, marginBottom: 48,
+          background: "rgba(34,197,94,0.07)",
+          border: "0.5px solid rgba(34,197,94,0.15)",
+        }}>
+          <span style={{ fontSize: 13, fontWeight: 200, color: "#22C55E" }}>
             الدقيقة {minute}′
           </span>
         </div>
 
         {/* Quick controls */}
-        <div className="flex gap-3">
+        <div style={{ display: "flex", gap: 12 }}>
           {[
-            { icon: Volume2,     label: "الصوت",   value: "مرتفع" },
-            { icon: Lightbulb,   label: "الإضاءة", value: "مريح" },
-            { icon: Thermometer, label: "التكييف", value: "22°C" },
+            { icon: Volume2,     label: "الصوت",    value: "مرتفع" },
+            { icon: Lightbulb,   label: "الإضاءة",  value: "مريح"  },
+            { icon: Thermometer, label: "التكييف",  value: "22°C"  },
           ].map((c, i) => (
             <div
               key={i}
-              className="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+                padding: "18px 24px", borderRadius: 18,
+                background: "rgba(255,255,255,0.04)",
+                border: "0.5px solid rgba(255,255,255,0.07)",
+                backdropFilter: "blur(30px)",
+              }}
             >
-              <c.icon size={15} style={{ color: "rgba(255,255,255,0.35)" }} />
-              <span className="text-white font-light" style={{ fontSize: 12 }}>{c.label}</span>
-              <span className="font-light" style={{ fontSize: 10, color: "rgba(255,255,255,0.25)" }}>{c.value}</span>
+              <c.icon size={14} style={{ color: "rgba(255,255,255,0.32)" }} />
+              <span style={{ fontSize: 12, fontWeight: 200, color: "rgba(255,255,255,0.7)" }}>{c.label}</span>
+              <span style={{ fontSize: 11, fontWeight: 200, color: "rgba(255,255,255,0.25)" }}>{c.value}</span>
             </div>
           ))}
         </div>
