@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>qlevl · لوحة المضيف</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Tajawal:wght@300;400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+:root {
+  --bg: #07090d;--bg2: #0b0e14;--panel: #0f1218;
+  --border: #1a2030;--accent: #00c8ff;--gold: #f0b429;
+  --green: #00e676;--red: #ff3d57;--orange: #ff7043;
+  --text: #dce6f0;--dim: #4a5a6a;
+  --mono: 'IBM Plex Mono', monospace;--sans: 'Tajawal', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+
+.hdr{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 18px;background:var(--bg2);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:10;
+}
+.logo{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--accent)}
+.logo em{color:var(--gold);font-style:normal}
+.host-badge{font-size:11px;color:var(--dim);padding:4px 10px;border:1px solid var(--border);border-radius:10px}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.conn-dot.live{background:var(--green);box-shadow:0 0 8px var(--green)}
+
+.w{max-width:480px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+
+/* STATUS CARD */
+.status-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:16px;
+  overflow:hidden;
+}
+.status-top{
+  padding:18px 20px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.status-badge{
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  padding:5px 14px;border-radius:20px;border:1px solid;
+}
+.badge-occupied{color:var(--green);border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.08)}
+.badge-vacant{color:var(--dim);border-color:var(--border);background:var(--bg2)}
+.apt-label{font-size:13px;color:var(--dim)}
+
+.status-body{padding:18px 20px}
+.guest-row{display:flex;justify-content:space-between;margin-bottom:10px}
+.gr-label{font-size:12px;color:var(--dim)}
+.gr-val{font-size:13px;font-weight:700}
+.time-bar{
+  margin-top:14px;height:4px;background:var(--border);
+  border-radius:2px;overflow:hidden;
+}
+.time-bar-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 1s linear}
+.time-remaining{font-family:var(--mono);font-size:28px;font-weight:600;color:var(--accent);margin-top:12px;text-align:center}
+
+/* INCOME */
+.income-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.income-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;
+}
+.ic-label{font-size:11px;color:var(--dim);margin-bottom:8px}
+.ic-amount{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--gold)}
+.ic-unit{font-size:11px;color:var(--dim);margin-top:2px}
+
+/* ACTIONS */
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.action-btn{
+  padding:16px 12px;background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;cursor:pointer;transition:all .2s;text-align:center;
+  font-family:var(--sans);color:var(--text);font-size:13px;font-weight:700;
+}
+.action-btn:hover{border-color:var(--accent);background:rgba(0,200,255,.06)}
+.action-btn:active{transform:scale(.97)}
+.ab-icon{font-size:22px;display:block;margin-bottom:6px}
+.ab-label{font-size:12px}
+.ab-sub{font-size:10px;color:var(--dim);margin-top:2px}
+
+/* Silent Exit Alert */
+.silent-alert{
+  display:none;background:rgba(255,61,87,.08);border:1px solid var(--red);
+  border-radius:14px;padding:18px 20px;
+}
+.silent-alert.show{display:block}
+.sa-title{color:var(--red);font-weight:800;margin-bottom:8px;font-size:15px}
+.sa-desc{font-size:12px;color:#c08090;margin-bottom:14px;line-height:1.6}
+.sa-btn{
+  width:100%;padding:12px;background:var(--red);border:none;
+  border-radius:10px;color:#fff;font-family:var(--sans);font-size:13px;
+  font-weight:700;cursor:pointer;
+}
+
+/* Code Modal */
+.modal-bg{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+  z-index:100;align-items:center;justify-content:center;
+}
+.modal-bg.show{display:flex}
+.modal{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:16px;padding:26px;width:min(380px,94vw);
+}
+.modal-title{font-size:16px;font-weight:900;margin-bottom:14px}
+.code-display{
+  font-family:var(--mono);font-size:42px;font-weight:600;
+  color:var(--accent);text-align:center;letter-spacing:8px;
+  padding:20px;background:var(--bg2);border-radius:12px;
+  border:1px solid var(--border);margin:16px 0;
+}
+.modal-close{
+  width:100%;padding:12px;background:none;border:1px solid var(--border);
+  border-radius:10px;color:var(--dim);font-family:var(--sans);
+  font-size:14px;cursor:pointer;margin-top:6px;
+}
+
+/* Toast */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;pointer-events:none}
+.toast{
+  padding:12px 20px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;
+  white-space:nowrap;animation:toastIn .3s ease;
+}
+.toast.success{background:#00a854}
+.toast.error{background:#cc1a2c}
+.toast.info{background:#005f7a}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* Extend modal opts */
+.ext-opts{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.ext-opt{
+  display:flex;justify-content:space-between;padding:12px 14px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  cursor:pointer;transition:all .2s;
+}
+.ext-opt.sel{border-color:var(--accent);background:rgba(0,200,255,.08)}
+.ext-opt-label{font-size:13px;font-weight:700}
+.ext-opt-price{font-family:var(--mono);font-size:12px;color:var(--gold)}
+.modal-actions{display:flex;gap:8px;margin-top:6px}
+.btn-confirm{
+  flex:2;padding:12px;background:var(--accent);border:none;border-radius:10px;
+  color:#000;font-family:var(--sans);font-size:14px;font-weight:900;cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Code Modal -->
+<div class="modal-bg" id="codeModal">
+  <div class="modal">
+    <div class="modal-title">🔐 الكود الجديد</div>
+    <div class="code-display" id="codeDisplay">——————</div>
+    <div style="font-size:11px;color:var(--dim);text-align:center">
+      تم إرسال الكود عبر واتساب للضيف
+    </div>
+    <button class="modal-close" onclick="document.getElementById('codeModal').classList.remove('show')">
+      إغلاق
+    </button>
+  </div>
+</div>
+
+<!-- Extend Modal -->
+<div class="modal-bg" id="extModal">
+  <div class="modal">
+    <div class="modal-title">⏱️ تمديد يدوي</div>
+    <div class="ext-opts" id="extOpts"></div>
+    <div class="modal-actions">
+      <button class="modal-close" style="flex:1" onclick="document.getElementById('extModal').classList.remove('show')">إلغاء</button>
+      <button class="btn-confirm" onclick="doExtend()">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<div class="hdr">
+  <div class="logo">qlev<em>l</em></div>
+  <div class="host-badge">لوحة المضيف</div>
+  <span class="conn-dot" id="connDot"></span>
+</div>
+
+<div class="w">
+
+  <!-- Silent Exit Alert -->
+  <div class="silent-alert" id="silentAlert">
+    <div class="sa-title">🚪 خروج صامت كُشف</div>
+    <div class="sa-desc">لا توجد حركة في الشقة منذ أكثر من 10 دقائق. يبدو أن الضيف غادر.</div>
+    <button class="sa-btn" onclick="handleSilentExit()">تأكيد الخروج + طلب تنظيف</button>
+  </div>
+
+  <!-- Status Card -->
+  <div class="status-card">
+    <div class="status-top">
+      <div>
+        <div class="apt-label" id="aptLabel">—</div>
+      </div>
+      <div class="status-badge" id="statusBadge">جار التحميل…</div>
+    </div>
+    <div class="status-body" id="statusBody">
+      <div style="color:var(--dim);font-size:13px">جار التحميل…</div>
+    </div>
+  </div>
+
+  <!-- Income -->
+  <div class="income-row">
+    <div class="income-card">
+      <div class="ic-label">دخل اليوم</div>
+      <div class="ic-amount" id="incomeToday">—</div>
+      <div class="ic-unit">ريال سعودي</div>
+    </div>
+    <div class="income-card">
+      <div class="ic-label">دخل الشهر</div>
+      <div class="ic-amount" id="incomeMonth">—</div>
+      <div class="ic-unit">ريال سعودي</div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <div class="action-btn" onclick="generateCode()">
+      <span class="ab-icon">🔐</span>
+      <div class="ab-label">كود جديد</div>
+      <div class="ab-sub">توليد + إرسال</div>
+    </div>
+    <div class="action-btn" onclick="requestCleaning()">
+      <span class="ab-icon">🧹</span>
+      <div class="ab-label">طلب تنظيف</div>
+      <div class="ab-sub">إرسال للفريق</div>
+    </div>
+    <div class="action-btn" onclick="openExtModal()">
+      <span class="ab-icon">⏱️</span>
+      <div class="ab-label">تمديد يدوي</div>
+      <div class="ab-sub">وقت إضافي</div>
+    </div>
+    <div class="action-btn" onclick="loadStatus()">
+      <span class="ab-icon">🔄</span>
+      <div class="ab-label">تحديث</div>
+      <div class="ab-sub">الحالة الآن</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SERVER = window.location.origin;
+const APT_ID = new URLSearchParams(location.search).get('apt') || '1';
+let currentBooking = null;
+let selectedExtHours = 0.5;
+let ticker = null;
+let hourlyRate = 75;
+
+const socket = io(SERVER, {transports:['websocket','polling']});
+socket.on('connect', () => document.getElementById('connDot').classList.add('live'));
+socket.on('disconnect', () => document.getElementById('connDot').classList.remove('live'));
+socket.on('expiry_warning', d => toast(`⏰ تحذير: باقي ${d.minutes_left} دقيقة للضيف`, 'info', 5000));
+socket.on('booking_ended', () => { toast('انتهى وقت الضيف تلقائياً', 'info'); loadStatus(); });
+
+async function loadStatus() {
+  try {
+    const [statusRes, incomeRes] = await Promise.all([
+      fetch(`${SERVER}/api/host/status?apartment_id=${APT_ID}`),
+      fetch(`${SERVER}/api/host/income?apartment_id=${APT_ID}`)
+    ]);
+    const s = await statusRes.json();
+    const income = await incomeRes.json();
+
+    document.getElementById('aptLabel').textContent = s.apartment?.name || '—';
+    hourlyRate = s.apartment?.hourly_rate || 75;
+    currentBooking = s.booking || null;
+
+    const badge = document.getElementById('statusBadge');
+    const body = document.getElementById('statusBody');
+
+    if (s.status === 'occupied' && s.booking) {
+      badge.className = 'status-badge badge-occupied';
+      badge.textContent = '● مشغولة';
+
+      const end = new Date(s.booking.end_time + 'Z');
+      const start = new Date(s.booking.start_time + 'Z');
+      const totalSec = Math.max(1, (end - start) / 1000);
+      const rem = s.remaining_seconds;
+      const pct = Math.max(0, Math.min(100, rem / totalSec * 100));
+
+      body.innerHTML = `
+        <div class="guest-row"><span class="gr-label">الضيف</span><span class="gr-val">${s.booking.guest_name}</span></div>
+        <div class="guest-row"><span class="gr-label">الجوال</span><span class="gr-val" style="font-family:var(--mono)">${s.booking.guest_phone}</span></div>
+        <div class="guest-row"><span class="gr-label">دخل</span><span class="gr-val">${formatHM(s.booking.start_time)}</span></div>
+        <div class="guest-row"><span class="gr-label">خروج</span><span class="gr-val">${formatHM(s.booking.end_time)}</span></div>
+        <div class="time-bar"><div class="time-bar-fill" id="barFill" style="width:${pct}%"></div></div>
+        <div class="time-remaining" id="hostTimer">—</div>
+      `;
+      startTicker(rem);
+    } else {
+      badge.className = 'status-badge badge-vacant';
+      badge.textContent = '○ فارغة';
+      body.innerHTML = '<div style="color:var(--dim);font-size:13px;padding:8px 0">لا يوجد ضيف حالياً</div>';
+      if (ticker) clearInterval(ticker);
+    }
+
+    document.getElementById('incomeToday').textContent = income.today;
+    document.getElementById('incomeMonth').textContent = income.month;
+  } catch(e) { console.error(e); }
+}
+
+let remSec = 0;
+let totalSec = 1;
+function startTicker(rem) {
+  if (ticker) clearInterval(ticker);
+  remSec = rem;
+  ticker = setInterval(() => {
+    if (remSec > 0) remSec--;
+    const el = document.getElementById('hostTimer');
+    if (el) el.textContent = fmtSec(remSec);
+  }, 1000);
+  const el = document.getElementById('hostTimer');
+  if (el) el.textContent = fmtSec(rem);
+}
+
+function fmtSec(s) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+    : `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function formatHM(dt) {
+  if (!dt) return '—';
+  const d = new Date(dt + (dt.includes('Z') ? '' : 'Z'));
+  return d.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
+}
+
+async function generateCode() {
+  if (!currentBooking) { toast('لا يوجد حجز نشط', 'error'); return; }
+  try {
+    const res = await fetch(`${SERVER}/api/host/code`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({booking_id: currentBooking.id})
+    });
+    const d = await res.json();
+    if (res.ok) {
+      document.getElementById('codeDisplay').textContent = d.code;
+      document.getElementById('codeModal').classList.add('show');
+    } else {
+      toast(d.error || 'خطأ', 'error');
+    }
+  } catch(e) { toast('خطأ في الاتصال', 'error'); }
+}
+
+async function requestCleaning() {
+  try {
+    const res = await fetch(`${SERVER}/api/host/cleaning`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({apartment_id: parseInt(APT_ID)})
+    });
+    if (res.ok) toast('تم إرسال طلب التنظيف ✓', 'success');
+    else toast('خطأ في الإرسال', 'error');
+  } catch(e) { toast('خطأ في الاتصال', 'error'); }
+}
+
+async function handleSilentExit() {
+  try {
+    const res = await fetch(`${SERVER}/api/host/silent-exit`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({apartment_id: parseInt(APT_ID)})
+    });
+    if (res.ok) {
+      document.getElementById('silentAlert').classList.remove('show');
+      toast('تم تسجيل الخروج + طلب التنظيف ✓', 'success');
+      loadStatus();
+    }
+  } catch(e) { toast('خطأ في الاتصال', 'error'); }
+}
+
+function openExtModal() {
+  if (!currentBooking) { toast('لا يوجد حجز نشط', 'error'); return; }
+  const opts = [
+    {h:0.5, label:'٣٠ دقيقة'},
+    {h:1, label:'ساعة كاملة'},
+    {h:2, label:'ساعتان'},
+  ];
+  document.getElementById('extOpts').innerHTML = opts.map(o => `
+    <div class="ext-opt ${o.h === selectedExtHours ? 'sel' : ''}"
+         onclick="selExt(this,${o.h})">
+      <span class="ext-opt-label">${o.label}</span>
+      <span class="ext-opt-price">${o.h * hourlyRate} ر.س</span>
+    </div>
+  `).join('');
+  document.getElementById('extModal').classList.add('show');
+}
+
+function selExt(el, h) {
+  document.querySelectorAll('.ext-opt').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedExtHours = h;
+}
+
+async function doExtend() {
+  document.getElementById('extModal').classList.remove('show');
+  try {
+    const res = await fetch(`${SERVER}/api/extend`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({booking_id: currentBooking.id, added_hours: selectedExtHours})
+    });
+    const d = await res.json();
+    if (res.ok) {
+      toast(`تم التمديد ✓ — حتى ${formatHM(d.new_end_time)}`, 'success');
+      loadStatus();
+    } else {
+      toast(d.error || 'خطأ في التمديد', 'error');
+    }
+  } catch(e) { toast('خطأ في الاتصال', 'error'); }
+}
+
+function toast(msg, type='info', duration=3000) {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%)';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), duration);
+}
+
+loadStatus();
+setInterval(loadStatus, 20000);
+</script>
+</body>
+</html>
