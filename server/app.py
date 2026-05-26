@@ -64,6 +64,10 @@ def founder_page():
 def owner_page():
     return send_from_directory(os.path.join(FRONTEND, "owner"), "index.html")
 
+@app.get("/booking")
+def booking_page():
+    return send_from_directory(os.path.join(FRONTEND, "booking"), "index.html")
+
 
 # ─── Background — منطق الوقت والـ Silent Exit ─────────────────────────────────
 WARNING_SENT = set()   # booking_ids أُرسل لها تحذير

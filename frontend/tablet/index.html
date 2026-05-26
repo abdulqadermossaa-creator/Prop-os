@@ -345,7 +345,7 @@ body::before {
 </div>
 
 <script>
-const SERVER = window.location.origin;
+const SERVER = localStorage.getItem('QLEVL_API') || window.location.origin;
 const APT_ID = new URLSearchParams(location.search).get('apt') || '1';
 let state = {bookingId: null, totalSeconds: 0, remaining: 0, hourlyRate: 75};
 let selectedHours = 0.5;
