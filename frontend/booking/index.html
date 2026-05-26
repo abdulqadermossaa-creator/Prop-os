@@ -3,382 +3,827 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>qlevl · احجز الآن</title>
+<title>qlevl · حجز الشقة</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Tajawal:wght@300;400;700;900&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#07090d;--bg2:#0b0e14;--panel:#0f1218;--border:#1a2030;
-  --accent:#00c8ff;--gold:#f0b429;--green:#00e676;--red:#ff3d57;
-  --text:#dce6f0;--dim:#4a5a6a;
-  --mono:'IBM Plex Mono',monospace;--sans:'Tajawal',sans-serif;
+:root {
+  --bg: #07090d;
+  --bg2: #0b0e14;
+  --panel: #0f1218;
+  --border: #1a2030;
+  --accent: #00c8ff;
+  --gold: #f0b429;
+  --green: #00e676;
+  --red: #ff3d57;
+  --orange: #ff7043;
+  --text: #dce6f0;
+  --dim: #4a5a6a;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Tajawal', sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,200,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.015) 1px,transparent 1px);background-size:44px 44px}
+body {
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);min-height:100vh;
+  display:flex;flex-direction:column;
+  overflow-x:hidden;
+}
+body::before {
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,200,255,.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,200,255,.015) 1px,transparent 1px);
+  background-size:44px 44px;
+}
 
-.hdr{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
-.logo{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--accent)}
+/* ── HEADER ── */
+.hdr {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 20px;background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:20;flex-shrink:0;
+}
+.logo {
+  font-family:var(--mono);font-size:20px;font-weight:600;
+  color:var(--accent);letter-spacing:-1px;
+}
 .logo em{color:var(--gold);font-style:normal}
-.step-indicator{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.hdr-right{text-align:left;font-size:11px;color:var(--dim);font-family:var(--mono)}
 
-.main{flex:1;position:relative;z-index:1}
-.screen{display:none;padding:20px;max-width:460px;margin:0 auto;animation:fadeUp .3s ease}
-.screen.active{display:block}
+/* ── STEPS BAR ── */
+.steps-bar {
+  display:flex;align-items:center;justify-content:center;
+  padding:14px 16px;background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:53px;z-index:19;
+  gap:0;
+}
+.step-item {
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;color:var(--dim);
+  font-family:var(--mono);letter-spacing:.5px;
+  transition:color .3s;
+}
+.step-item.active{color:var(--accent)}
+.step-item.done{color:var(--green)}
+.step-dot {
+  width:26px;height:26px;border-radius:50%;
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;
+  transition:all .3s;background:var(--panel);flex-shrink:0;
+}
+.step-item.active .step-dot {
+  border-color:var(--accent);color:var(--accent);
+  box-shadow:0 0 8px rgba(0,200,255,.3);
+}
+.step-item.done .step-dot {
+  border-color:var(--green);color:var(--green);
+  background:rgba(0,230,118,.1);
+}
+.step-lbl{display:none}
+@media(min-width:420px){.step-lbl{display:inline}}
+.step-line {
+  flex:1;height:1px;background:var(--border);
+  margin:0 4px;max-width:36px;transition:background .3s;
+}
+.step-line.done{background:var(--green)}
+
+/* ── MAIN WRAP ── */
+.main-wrap {
+  flex:1;display:flex;align-items:flex-start;
+  justify-content:center;padding:24px 16px 64px;
+  position:relative;z-index:1;
+}
+.card {
+  width:100%;max-width:500px;
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:20px;overflow:hidden;
+}
+
+/* ── SCREENS ── */
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .35s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-/* APT CARD */
-.apt-hero{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:18px}
-.apt-img{width:100%;height:160px;background:linear-gradient(135deg,rgba(0,200,255,.1),rgba(156,111,255,.1));display:flex;align-items:center;justify-content:center;font-size:60px}
-.apt-info{padding:18px}
-.apt-name{font-size:22px;font-weight:900;margin-bottom:4px}
-.apt-loc{font-size:13px;color:var(--dim);margin-bottom:14px}
-.apt-prices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.price-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
-.price-label{font-size:10px;color:var(--dim);margin-bottom:4px}
-.price-val{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--gold)}
-.price-unit{font-size:10px;color:var(--dim);margin-top:2px}
-
-/* DURATION */
-.sec-title{font-size:14px;font-weight:800;margin-bottom:12px;color:var(--text)}
-.duration-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.dur-btn{padding:16px 12px;background:var(--panel);border:1px solid var(--border);border-radius:12px;cursor:pointer;text-align:center;transition:all .2s}
-.dur-btn:hover{border-color:var(--accent)}
-.dur-btn.selected{border-color:var(--accent);background:rgba(0,200,255,.08)}
-.dur-label{font-size:14px;font-weight:800;margin-bottom:3px}
-.dur-price{font-family:var(--mono);font-size:12px;color:var(--gold)}
-
-.custom-dur{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}
-.custom-dur label{font-size:12px;color:var(--dim);white-space:nowrap}
-.custom-dur input{flex:1;background:none;border:none;color:var(--text);font-family:var(--mono);font-size:16px;text-align:center;outline:none;width:60px}
-.custom-dur span{font-size:11px;color:var(--dim)}
-
-/* GUEST FORM */
-.field{margin-bottom:14px}
-.field label{font-size:11px;color:var(--dim);display:block;margin-bottom:6px;letter-spacing:.5px}
-.field input{width:100%;padding:13px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:var(--sans);font-size:15px;outline:none;transition:border .2s}
-.field input:focus{border-color:var(--accent)}
-.field input::placeholder{color:var(--dim)}
-
-/* SUMMARY */
-.summary-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px}
-.sum-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
-.sum-row:last-child{border:none;padding-top:14px;margin-top:4px}
-.sum-label{font-size:13px;color:var(--dim)}
-.sum-val{font-size:14px;font-weight:700}
-.sum-total .sum-label{font-size:15px;font-weight:800;color:var(--text)}
-.sum-total .sum-val{font-family:var(--mono);font-size:24px;color:var(--gold)}
-
-/* SUCCESS */
-.success-wrap{text-align:center;padding:30px 0}
-.success-icon{font-size:64px;margin-bottom:16px;animation:pop .4s ease}
-@keyframes pop{from{transform:scale(.5)}to{transform:scale(1)}}
-.success-title{font-size:22px;font-weight:900;color:var(--green);margin-bottom:8px}
-.success-sub{font-size:13px;color:var(--dim);margin-bottom:28px;line-height:1.7}
-.code-box{background:var(--panel);border:2px solid var(--accent);border-radius:16px;padding:24px;margin-bottom:20px;position:relative}
-.code-label{font-size:11px;color:var(--dim);margin-bottom:10px;letter-spacing:2px;text-transform:uppercase}
-.code-val{font-family:var(--mono);font-size:48px;font-weight:600;color:var(--accent);letter-spacing:12px;text-shadow:0 0 30px rgba(0,200,255,.4)}
-.code-time{font-size:12px;color:var(--dim);margin-top:10px}
-.whatsapp-note{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);border-radius:10px;font-size:13px;color:var(--green)}
-
-/* NAV BUTTON */
-.nav-btn{width:100%;padding:16px;border:none;border-radius:14px;font-family:var(--sans);font-size:16px;font-weight:900;cursor:pointer;transition:all .2s;margin-top:6px}
-.btn-next{background:linear-gradient(135deg,var(--accent),#0090cc);color:#000}
-.btn-next:hover{opacity:.9;transform:translateY(-1px)}
-.btn-next:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.btn-back{background:none;border:1px solid var(--border)!important;color:var(--dim);padding:12px!important;margin-top:10px}
-.btn-back:hover{border-color:var(--accent)!important;color:var(--accent)}
-
-/* LOADING */
-.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:20px;color:var(--dim);font-size:13px}
-.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+/* ── LOADING ── */
+.loading-wrap {
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:72px 24px;gap:16px;
+}
+.spinner {
+  width:40px;height:40px;border:3px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
 @keyframes spin{to{transform:rotate(360deg)}}
+.loading-txt{font-size:13px;color:var(--dim);font-family:var(--mono)}
 
-/* TOAST */
-.toast-wrap{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:100}
-.toast{padding:10px 18px;border-radius:9px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap;animation:ti .25s ease}
-.toast.error{background:#cc1a2c}.toast.success{background:#00a854}
-@keyframes ti{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+/* ── ERROR ── */
+.error-wrap {
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:64px 24px;gap:12px;text-align:center;
+}
+.error-icon{font-size:40px;opacity:.5}
+.error-txt{font-size:14px;color:var(--dim);line-height:1.6}
 
-.error-screen{text-align:center;padding:60px 20px;color:var(--dim)}
-.error-screen .ei{font-size:48px;margin-bottom:16px}
+/* ── APT HERO ── */
+.apt-hero {
+  height:180px;background:linear-gradient(135deg,#0d1520,#0a1018);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.apt-hero::after {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,transparent 60%,var(--panel));
+}
+.hero-placeholder{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  opacity:.2;
+}
+.hero-icon{font-size:56px}
+.hero-lbl{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--accent)}
+.apt-badge {
+  position:absolute;top:14px;right:14px;z-index:2;
+  background:rgba(0,200,255,.12);border:1px solid rgba(0,200,255,.3);
+  border-radius:8px;padding:4px 12px;
+  font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:1px;
+}
+
+/* ── CARD BODY ── */
+.card-body{padding:24px}
+.screen-title{font-size:21px;font-weight:900;margin-bottom:5px}
+.screen-sub{font-size:13px;color:var(--dim);margin-bottom:22px;line-height:1.65}
+
+/* ── APT INFO ── */
+.apt-info-grid {
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px;
+}
+.apt-cell {
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;padding:13px 15px;
+}
+.ac-label{font-size:10px;color:var(--dim);margin-bottom:4px;font-family:var(--mono);letter-spacing:1px}
+.ac-val{font-size:15px;font-weight:700}
+.ac-val.price{font-family:var(--mono);color:var(--gold)}
+
+/* ── DURATION GRID ── */
+.dur-grid {
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;
+}
+.dur-btn {
+  padding:15px 10px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;cursor:pointer;text-align:center;
+  transition:all .2s;color:var(--text);font-family:var(--sans);
+}
+.dur-btn:hover{border-color:var(--accent);background:rgba(0,200,255,.05)}
+.dur-btn.selected{
+  border-color:var(--accent);background:rgba(0,200,255,.1);
+  box-shadow:0 0 10px rgba(0,200,255,.12);
+}
+.dur-h{font-size:16px;font-weight:900;display:block;margin-bottom:3px}
+.dur-p{font-family:var(--mono);font-size:11px;color:var(--gold)}
+.dur-btn.full-day{grid-column:1/-1}
+.dur-btn.full-day .dur-h{color:var(--green)}
+
+/* ── CUSTOM DURATION ── */
+.custom-wrap{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;padding:14px 16px;margin-bottom:0;
+}
+.custom-label{font-size:11px;color:var(--dim);margin-bottom:10px;font-family:var(--mono);letter-spacing:1px}
+.custom-row{display:flex;align-items:center;gap:10px}
+.custom-input {
+  flex:1;background:var(--panel);border:1px solid var(--border);
+  border-radius:8px;padding:10px 13px;
+  color:var(--text);font-family:var(--mono);font-size:16px;
+  outline:none;transition:border-color .2s;text-align:right;
+  -moz-appearance:textfield;
+}
+.custom-input::-webkit-outer-spin-button,
+.custom-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.custom-input:focus{border-color:var(--accent)}
+.custom-unit{font-size:13px;color:var(--dim);white-space:nowrap}
+.custom-price{
+  margin-top:8px;font-family:var(--mono);font-size:12px;
+  color:var(--gold);min-height:18px;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  display:flex;align-items:center;gap:8px;
+  margin:14px 0;color:var(--dim);font-size:10px;font-family:var(--mono);
+}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── FORM FIELD ── */
+.field{margin-bottom:16px}
+.field-lbl {
+  display:block;font-size:11px;color:var(--dim);
+  margin-bottom:7px;font-family:var(--mono);letter-spacing:1px;
+}
+.field-input {
+  width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:13px 15px;
+  color:var(--text);font-family:var(--sans);font-size:15px;
+  outline:none;transition:border-color .2s;direction:rtl;
+}
+.field-input:focus{border-color:var(--accent)}
+.field-input::placeholder{color:var(--dim)}
+.field-hint{font-size:11px;color:var(--dim);margin-top:5px}
+.field-err{font-size:11px;color:var(--red);margin-top:5px;display:none}
+.field-err.show{display:block}
+
+/* ── SUMMARY ROWS ── */
+.sum-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.sum-row {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 15px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;
+}
+.sum-row.total{border-color:rgba(0,200,255,.3);background:rgba(0,200,255,.05)}
+.sr-lbl{font-size:13px;color:var(--dim)}
+.sr-val{font-family:var(--mono);font-size:13px;font-weight:600}
+.sr-val.gold{color:var(--gold);font-size:18px}
+.sr-val.accent{color:var(--accent)}
+
+/* ── SUCCESS ── */
+.success-wrap{padding:32px 24px;text-align:center}
+.suc-icon {
+  width:76px;height:76px;border-radius:50%;
+  background:rgba(0,230,118,.1);border:2px solid var(--green);
+  display:flex;align-items:center;justify-content:center;
+  font-size:34px;margin:0 auto 20px;
+  box-shadow:0 0 24px rgba(0,230,118,.18);
+  animation:popIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.suc-title{font-size:23px;font-weight:900;color:var(--green);margin-bottom:6px}
+.suc-sub{font-size:13px;color:var(--dim);margin-bottom:28px;line-height:1.65}
+
+.code-box {
+  background:var(--bg2);border:2px solid rgba(0,200,255,.4);
+  border-radius:16px;padding:26px 20px;margin-bottom:18px;
+  position:relative;overflow:hidden;
+}
+.code-box::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,200,255,.05),transparent);
+  pointer-events:none;
+}
+.code-lbl{font-size:10px;color:var(--dim);font-family:var(--mono);letter-spacing:2px;margin-bottom:12px}
+.code-val {
+  font-family:var(--mono);font-size:50px;font-weight:600;
+  color:var(--accent);letter-spacing:10px;line-height:1;
+  text-shadow:0 0 30px rgba(0,200,255,.35);
+}
+.code-hint{font-size:11px;color:var(--dim);margin-top:10px;font-family:var(--mono)}
+
+.info-chips{display:flex;flex-direction:column;gap:8px;margin-bottom:22px;text-align:right}
+.chip {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;background:var(--panel);border:1px solid var(--border);
+  border-radius:10px;
+}
+.chip-lbl{font-size:12px;color:var(--dim)}
+.chip-val{font-family:var(--mono);font-size:12px;color:var(--text)}
+
+.wa-note {
+  display:flex;align-items:center;gap:10px;justify-content:center;
+  padding:12px 16px;background:rgba(0,230,118,.06);
+  border:1px solid rgba(0,230,118,.2);border-radius:10px;
+  font-size:13px;color:var(--green);margin-bottom:20px;
+}
+.wa-note span:first-child{font-size:20px;flex-shrink:0}
+
+/* ── BUTTONS ── */
+.btn {
+  width:100%;padding:15px;border:none;border-radius:12px;
+  font-family:var(--sans);font-size:16px;font-weight:900;
+  cursor:pointer;transition:all .2s;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),#0090cc);
+  color:#000;
+}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.38;cursor:not-allowed;transform:none}
+.btn-back {
+  background:none;border:1px solid var(--border);
+  color:var(--dim);font-size:14px;
+  padding:12px;margin-top:10px;
+}
+.btn-back:hover{border-color:var(--accent);color:var(--accent)}
+.btn-new {
+  background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);
+  color:var(--accent);font-size:14px;
+}
+.btn-new:hover{background:rgba(0,200,255,.18)}
+
+/* ── BTN ROW ── */
+.btn-row{display:flex;gap:10px;margin-top:4px}
+.btn-row .btn-back{flex:1;margin-top:0;padding:14px}
+.btn-row .btn-primary{flex:2}
+
+/* ── TOAST ── */
+.toast-wrap{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;
+}
+.toast{
+  padding:11px 20px;border-radius:10px;font-size:13px;font-weight:700;
+  color:#fff;pointer-events:auto;animation:toastIn .3s ease;white-space:nowrap;
+}
+.toast.success{background:#00a854;border:1px solid var(--green)}
+.toast.error{background:#cc1a2c;border:1px solid var(--red)}
+.toast.info{background:#005f7a;border:1px solid var(--accent)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<!-- HEADER -->
 <div class="hdr">
   <div class="logo">qlev<em>l</em></div>
-  <div class="step-indicator" id="stepInd">الشقة</div>
+  <div class="hdr-right" id="hdrRight">بوابة الحجز</div>
 </div>
 
-<div class="main">
+<!-- STEPS BAR -->
+<div class="steps-bar" id="stepsBar">
+  <div class="step-item active" id="si1">
+    <div class="step-dot">1</div>
+    <span class="step-lbl">الشقة</span>
+  </div>
+  <div class="step-line" id="sl1"></div>
+  <div class="step-item" id="si2">
+    <div class="step-dot">2</div>
+    <span class="step-lbl">المدة</span>
+  </div>
+  <div class="step-line" id="sl2"></div>
+  <div class="step-item" id="si3">
+    <div class="step-dot">3</div>
+    <span class="step-lbl">بياناتك</span>
+  </div>
+  <div class="step-line" id="sl3"></div>
+  <div class="step-item" id="si4">
+    <div class="step-dot">4</div>
+    <span class="step-lbl">التأكيد</span>
+  </div>
+  <div class="step-line" id="sl4"></div>
+  <div class="step-item" id="si5">
+    <div class="step-dot">5</div>
+    <span class="step-lbl">تم</span>
+  </div>
+</div>
 
-  <!-- شاشة التحميل -->
-  <div class="screen active" id="s-loading">
-    <div class="loading" style="margin-top:80px">
+<div class="main-wrap">
+<div class="card" id="mainCard">
+
+  <!-- ── SCREEN: LOADING ── -->
+  <div class="screen active" id="sLoading">
+    <div class="loading-wrap">
       <div class="spinner"></div>
-      جار تحميل بيانات الشقة…
+      <div class="loading-txt">جار تحميل بيانات الشقة…</div>
     </div>
   </div>
 
-  <!-- شاشة خطأ -->
-  <div class="screen" id="s-error">
-    <div class="error-screen">
-      <div class="ei">⚠️</div>
-      <div style="font-size:16px;font-weight:800;margin-bottom:8px">تعذّر تحميل الشقة</div>
-      <div id="errMsg" style="font-size:13px;line-height:1.7"></div>
+  <!-- ── SCREEN: ERROR ── -->
+  <div class="screen" id="sError">
+    <div class="error-wrap">
+      <div class="error-icon">⚠️</div>
+      <div class="error-txt" id="errTxt">تعذّر تحميل بيانات الشقة</div>
+      <button class="btn btn-back" style="max-width:200px;margin-top:16px" onclick="loadApartment()">إعادة المحاولة</button>
     </div>
   </div>
 
-  <!-- شاشة 1: الشقة -->
-  <div class="screen" id="s-apt">
+  <!-- ── SCREEN 1: الشقة ── -->
+  <div class="screen" id="s1">
     <div class="apt-hero">
-      <div class="apt-img">🏠</div>
-      <div class="apt-info">
-        <div class="apt-name" id="aptName">—</div>
-        <div class="apt-loc" id="aptLoc">—</div>
-        <div class="apt-prices">
-          <div class="price-box">
-            <div class="price-label">سعر الساعة</div>
-            <div class="price-val" id="priceHour">—</div>
-            <div class="price-unit">ريال سعودي</div>
-          </div>
-          <div class="price-box">
-            <div class="price-label">سعر اليوم</div>
-            <div class="price-val" id="priceDay">—</div>
-            <div class="price-unit">ريال سعودي</div>
-          </div>
+      <div class="hero-placeholder">
+        <div class="hero-icon">🏠</div>
+        <div class="hero-lbl">SMART APARTMENT</div>
+      </div>
+      <div class="apt-badge" id="aptBadge">APT-1</div>
+    </div>
+    <div class="card-body">
+      <div class="screen-title" id="aptTitle">—</div>
+      <div class="screen-sub" id="aptLoc">—</div>
+      <div class="apt-info-grid">
+        <div class="apt-cell">
+          <div class="ac-label">سعر الساعة</div>
+          <div class="ac-val price" id="aptHourly">—</div>
+        </div>
+        <div class="apt-cell">
+          <div class="ac-label">سعر اليوم</div>
+          <div class="ac-val price" id="aptDaily">—</div>
         </div>
       </div>
-    </div>
-    <button class="nav-btn btn-next" onclick="goTo('s-duration')">اختر المدة →</button>
-  </div>
-
-  <!-- شاشة 2: المدة -->
-  <div class="screen" id="s-duration">
-    <div class="sec-title">كم تبي تقيم؟</div>
-    <div class="duration-grid" id="durGrid"></div>
-    <div class="custom-dur">
-      <label>مخصص</label>
-      <input type="number" id="customHours" min="1" max="72" placeholder="—" oninput="onCustomHours()">
-      <span>ساعة</span>
-    </div>
-    <button class="nav-btn btn-next" id="btnDurNext" onclick="goTo('s-guest')" style="margin-top:16px" disabled>التالي →</button>
-    <button class="nav-btn btn-back" onclick="goTo('s-apt')">← رجوع</button>
-  </div>
-
-  <!-- شاشة 3: بيانات الضيف -->
-  <div class="screen" id="s-guest">
-    <div class="sec-title">بياناتك</div>
-    <div class="field">
-      <label>الاسم الكامل</label>
-      <input type="text" id="guestName" placeholder="أحمد محمد العمري" oninput="validateGuest()">
-    </div>
-    <div class="field">
-      <label>رقم الجوال (مع رمز الدولة)</label>
-      <input type="tel" id="guestPhone" placeholder="966501234567" oninput="validateGuest()">
-    </div>
-    <button class="nav-btn btn-next" id="btnGuestNext" onclick="goTo('s-summary')" disabled>مراجعة الحجز →</button>
-    <button class="nav-btn btn-back" onclick="goTo('s-duration')">← رجوع</button>
-  </div>
-
-  <!-- شاشة 4: الملخص -->
-  <div class="screen" id="s-summary">
-    <div class="sec-title">ملخص الحجز</div>
-    <div class="summary-card">
-      <div class="sum-row"><span class="sum-label">الشقة</span><span class="sum-val" id="sumApt">—</span></div>
-      <div class="sum-row"><span class="sum-label">الضيف</span><span class="sum-val" id="sumName">—</span></div>
-      <div class="sum-row"><span class="sum-label">الجوال</span><span class="sum-val" id="sumPhone" style="font-family:var(--mono);direction:ltr">—</span></div>
-      <div class="sum-row"><span class="sum-label">المدة</span><span class="sum-val" id="sumDur">—</span></div>
-      <div class="sum-row sum-total"><span class="sum-label">الإجمالي</span><span class="sum-val" id="sumTotal">—</span></div>
-    </div>
-    <button class="nav-btn btn-next" id="btnConfirm" onclick="confirmBooking()">تأكيد الحجز والدفع</button>
-    <button class="nav-btn btn-back" onclick="goTo('s-guest')">← رجوع</button>
-  </div>
-
-  <!-- شاشة تحميل الحجز -->
-  <div class="screen" id="s-booking">
-    <div class="loading" style="margin-top:100px;flex-direction:column;gap:14px">
-      <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
-      <div>جار تأكيد حجزك…</div>
+      <button class="btn btn-primary" onclick="goStep(2)">احجز الآن</button>
     </div>
   </div>
 
-  <!-- شاشة 5: النجاح -->
-  <div class="screen" id="s-success">
-    <div class="success-wrap">
-      <div class="success-icon">✅</div>
-      <div class="success-title">تم الحجز بنجاح!</div>
-      <div class="success-sub">استمتع بإقامتك. الكود أرسلناه على واتساب أيضاً.</div>
-      <div class="code-box">
-        <div class="code-label">كود الدخول</div>
-        <div class="code-val" id="successCode">——————</div>
-        <div class="code-time" id="successTime"></div>
+  <!-- ── SCREEN 2: المدة ── -->
+  <div class="screen" id="s2">
+    <div class="card-body">
+      <div class="screen-title">اختر المدة</div>
+      <div class="screen-sub">حدد مدة إقامتك — يمكنك التمديد لاحقاً من داخل الشقة</div>
+
+      <div class="dur-grid">
+        <button class="dur-btn" data-h="1" onclick="pickDur(this,1)">
+          <span class="dur-h">ساعة</span>
+          <span class="dur-p" id="dp1">—</span>
+        </button>
+        <button class="dur-btn" data-h="2" onclick="pickDur(this,2)">
+          <span class="dur-h">ساعتان</span>
+          <span class="dur-p" id="dp2">—</span>
+        </button>
+        <button class="dur-btn" data-h="3" onclick="pickDur(this,3)">
+          <span class="dur-h">٣ ساعات</span>
+          <span class="dur-p" id="dp3">—</span>
+        </button>
+        <button class="dur-btn full-day" data-h="24" onclick="pickDur(this,24)">
+          <span class="dur-h">يوم كامل</span>
+          <span class="dur-p" id="dp24">—</span>
+        </button>
       </div>
-      <div class="whatsapp-note">
+
+      <div class="divider">أو أدخل مدة مخصصة</div>
+
+      <div class="custom-wrap">
+        <div class="custom-label">عدد الساعات</div>
+        <div class="custom-row">
+          <input class="custom-input" type="number" id="customHours"
+            min="1" max="72" placeholder="مثال: 5"
+            oninput="onCustom(this.value)">
+          <span class="custom-unit">ساعة</span>
+        </div>
+        <div class="custom-price" id="customPrice"></div>
+      </div>
+
+      <div class="btn-row" style="margin-top:22px">
+        <button class="btn btn-back" onclick="goStep(1)">رجوع</button>
+        <button class="btn btn-primary" id="btnS2" onclick="goStep(3)" disabled>التالي</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 3: بيانات الضيف ── -->
+  <div class="screen" id="s3">
+    <div class="card-body">
+      <div class="screen-title">بياناتك</div>
+      <div class="screen-sub">سيُرسل كود الدخول على جوالك عبر واتساب فور تأكيد الحجز</div>
+
+      <div class="field">
+        <label class="field-lbl" for="inpName">الاسم الكريم</label>
+        <input class="field-input" type="text" id="inpName"
+          placeholder="مثال: أحمد العلي" oninput="validateS3()">
+        <div class="field-err" id="errName">الرجاء إدخال الاسم</div>
+      </div>
+
+      <div class="field">
+        <label class="field-lbl" for="inpPhone">رقم الجوال</label>
+        <input class="field-input" type="tel" id="inpPhone"
+          placeholder="05xxxxxxxx" maxlength="10" oninput="validateS3()">
+        <div class="field-hint">رقم سعودي يبدأ بـ 05</div>
+        <div class="field-err" id="errPhone">رقم الجوال غير صحيح</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-back" onclick="goStep(2)">رجوع</button>
+        <button class="btn btn-primary" id="btnS3" onclick="goStep(4)" disabled>التالي</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 4: الملخص ── -->
+  <div class="screen" id="s4">
+    <div class="card-body">
+      <div class="screen-title">ملخص الحجز</div>
+      <div class="screen-sub">راجع التفاصيل قبل تأكيد الحجز</div>
+
+      <div class="sum-rows">
+        <div class="sum-row">
+          <span class="sr-lbl">الشقة</span>
+          <span class="sr-val" id="sumApt">—</span>
+        </div>
+        <div class="sum-row">
+          <span class="sr-lbl">الاسم</span>
+          <span class="sr-val" id="sumName">—</span>
+        </div>
+        <div class="sum-row">
+          <span class="sr-lbl">رقم الجوال</span>
+          <span class="sr-val accent" id="sumPhone">—</span>
+        </div>
+        <div class="sum-row">
+          <span class="sr-lbl">مدة الحجز</span>
+          <span class="sr-val" id="sumDur">—</span>
+        </div>
+        <div class="sum-row total">
+          <span class="sr-lbl">المبلغ الإجمالي</span>
+          <span class="sr-val gold" id="sumTotal">—</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-back" onclick="goStep(3)">رجوع</button>
+        <button class="btn btn-primary" id="btnConfirm" onclick="confirmBooking()">تأكيد الحجز</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: BOOKING IN PROGRESS ── -->
+  <div class="screen" id="sBooking">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <div class="loading-txt">جار تأكيد حجزك…</div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 5: النجاح ── -->
+  <div class="screen" id="s5">
+    <div class="success-wrap">
+      <div class="suc-icon">✓</div>
+      <div class="suc-title">تم الحجز بنجاح!</div>
+      <div class="suc-sub">استخدم الكود أدناه للدخول إلى الشقة</div>
+
+      <div class="code-box">
+        <div class="code-lbl">كود الدخول</div>
+        <div class="code-val" id="sucCode">——</div>
+        <div class="code-hint">أدخل الكود على لوحة الباب الذكي</div>
+      </div>
+
+      <div class="info-chips">
+        <div class="chip">
+          <span class="chip-lbl">اسم الضيف</span>
+          <span class="chip-val" id="sucName">—</span>
+        </div>
+        <div class="chip">
+          <span class="chip-lbl">مدة الحجز</span>
+          <span class="chip-val" id="sucDur">—</span>
+        </div>
+        <div class="chip">
+          <span class="chip-lbl">وقت الانتهاء</span>
+          <span class="chip-val" id="sucEnd">—</span>
+        </div>
+        <div class="chip">
+          <span class="chip-lbl">المبلغ</span>
+          <span class="chip-val" style="color:var(--gold)" id="sucTotal">—</span>
+        </div>
+      </div>
+
+      <div class="wa-note">
         <span>💬</span>
         <span>تم إرسال الكود على واتساب</span>
       </div>
+
+      <button class="btn btn-new" onclick="resetFlow()">حجز جديد</button>
     </div>
   </div>
 
-</div>
+</div><!-- /card -->
+</div><!-- /main-wrap -->
 
 <script>
-// ─── CONFIG ──────────────────────────────────────────────────────────────────
-const API = localStorage.getItem('QLEVL_API') || window.location.origin;
-const APT_ID = new URLSearchParams(location.search).get('apt') || '1';
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const API_URL = localStorage.getItem('qlevl_server') || window.location.origin;
+const APT_ID  = new URLSearchParams(location.search).get('apt') || '1';
 
-// ─── STATE ───────────────────────────────────────────────────────────────────
-let apt = {};
-let selectedHours = 0;
-let bookingResult = {};
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let apt = { name: '', hourly_rate: 0, daily_rate: 0, location: '' };
+let sel = { hours: 0, total: 0 };
 
-const STEPS = ['s-loading','s-apt','s-duration','s-guest','s-summary','s-booking','s-success','s-error'];
-const STEP_LABELS = {
-  's-apt': 'الشقة',
-  's-duration': 'المدة',
-  's-guest': 'بياناتك',
-  's-summary': 'التأكيد',
-  's-success': 'تم ✓',
-};
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', loadApartment);
 
-// ─── NAVIGATION ──────────────────────────────────────────────────────────────
-function goTo(screen) {
-  STEPS.forEach(s => {
-    const el = document.getElementById(s);
-    if (el) el.classList.remove('active');
-  });
-  document.getElementById(screen).classList.add('active');
-  document.getElementById('stepInd').textContent = STEP_LABELS[screen] || '';
-  if (screen === 's-summary') fillSummary();
-  window.scrollTo(0,0);
-}
-
-// ─── LOAD APT ─────────────────────────────────────────────────────────────────
-async function loadApt() {
+async function loadApartment() {
+  showRaw('sLoading');
+  stepBarHide();
   try {
-    const res = await fetch(`${API}/api/tablet/${APT_ID}`);
-    const d = await res.json();
-    if (!res.ok) throw new Error(d.error || 'خطأ في تحميل الشقة');
-    apt = d.apartment;
-    document.getElementById('aptName').textContent  = apt.name || 'الشقة';
-    document.getElementById('aptLoc').textContent   = apt.location || '—';
-    document.getElementById('priceHour').textContent = apt.hourly_rate || '—';
-    document.getElementById('priceDay').textContent  = apt.daily_rate  || (apt.hourly_rate * 6) || '—';
-    buildDurGrid();
-    goTo('s-apt');
+    const res  = await fetch(`${API_URL}/api/tablet/${APT_ID}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const a    = data.apartment || data;
+
+    apt.name        = a.name        || `شقة ${APT_ID}`;
+    apt.hourly_rate = Number(a.hourly_rate) || 0;
+    apt.daily_rate  = Number(a.daily_rate)  || 0;
+    apt.location    = a.location    || 'الرياض، المملكة العربية السعودية';
+
+    renderApt();
+    stepBarShow();
+    goStep(1);
   } catch(e) {
-    document.getElementById('errMsg').textContent = e.message;
-    goTo('s-error');
+    document.getElementById('errTxt').textContent =
+      'تعذّر تحميل بيانات الشقة — تأكد من الاتصال بالشبكة';
+    showRaw('sError');
   }
 }
 
-// ─── DURATION GRID ────────────────────────────────────────────────────────────
-function buildDurGrid() {
-  const rate = apt.hourly_rate || 75;
-  const opts = [
-    {h:1,   label:'ساعة'},
-    {h:2,   label:'ساعتان'},
-    {h:3,   label:'٣ ساعات'},
-    {h:24,  label:'يوم كامل'},
-  ];
-  document.getElementById('durGrid').innerHTML = opts.map(o => `
-    <div class="dur-btn" onclick="selectDur(this,${o.h})">
-      <div class="dur-label">${o.label}</div>
-      <div class="dur-price">${Math.round(o.h * rate)} ر.س</div>
-    </div>
-  `).join('');
+// ── RENDER APT INFO ───────────────────────────────────────────────────────────
+function renderApt() {
+  document.getElementById('aptBadge').textContent  = `APT-${APT_ID}`;
+  document.getElementById('aptTitle').textContent  = apt.name;
+  document.getElementById('aptLoc').textContent    = apt.location;
+  document.getElementById('hdrRight').textContent  = apt.name;
+
+  const hr = apt.hourly_rate;
+  const dr = apt.daily_rate || hr * 24;
+
+  document.getElementById('aptHourly').textContent = fmt(hr);
+  document.getElementById('aptDaily').textContent  = fmt(dr);
+
+  // Duration button prices
+  document.getElementById('dp1').textContent  = fmt(hr);
+  document.getElementById('dp2').textContent  = fmt(hr * 2);
+  document.getElementById('dp3').textContent  = fmt(hr * 3);
+  document.getElementById('dp24').textContent = fmt(apt.daily_rate || hr * 24);
 }
 
-function selectDur(el, h) {
+// ── STEP NAVIGATION ───────────────────────────────────────────────────────────
+function goStep(n) {
+  const map = {1:'s1',2:'s2',3:'s3',4:'s4',5:'s5'};
+  showRaw(map[n]);
+  updateSteps(n);
+  if (n === 4) fillSummary();
+  window.scrollTo(0, 0);
+}
+
+function showRaw(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+function stepBarShow() { document.getElementById('stepsBar').style.display = 'flex'; }
+function stepBarHide() { document.getElementById('stepsBar').style.display = 'none'; }
+
+function updateSteps(active) {
+  for (let i = 1; i <= 5; i++) {
+    const si   = document.getElementById(`si${i}`);
+    const line = document.getElementById(`sl${i}`);
+    si.classList.remove('active','done');
+    if (line) line.classList.remove('done');
+    if (i < active)        { si.classList.add('done'); if (line) line.classList.add('done'); }
+    else if (i === active) { si.classList.add('active'); }
+  }
+}
+
+// ── DURATION SELECTION ────────────────────────────────────────────────────────
+function pickDur(btn, hours) {
   document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedHours = h;
+  btn.classList.add('selected');
+  sel.hours = hours;
+  sel.total = calcTotal(hours);
   document.getElementById('customHours').value = '';
-  document.getElementById('btnDurNext').disabled = false;
+  document.getElementById('customPrice').textContent = '';
+  document.getElementById('btnS2').disabled = false;
 }
 
-function onCustomHours() {
-  const v = parseFloat(document.getElementById('customHours').value);
-  if (v >= 1) {
-    document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
-    selectedHours = v;
-    document.getElementById('btnDurNext').disabled = false;
+function onCustom(val) {
+  const h = parseFloat(val);
+  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
+  if (h && h >= 1) {
+    sel.hours = h;
+    sel.total = calcTotal(h);
+    document.getElementById('customPrice').textContent = `المبلغ: ${fmt(sel.total)}`;
+    document.getElementById('btnS2').disabled = false;
   } else {
-    document.getElementById('btnDurNext').disabled = true;
+    sel.hours = 0;
+    sel.total = 0;
+    document.getElementById('customPrice').textContent = '';
+    document.getElementById('btnS2').disabled = true;
   }
 }
 
-// ─── GUEST VALIDATION ─────────────────────────────────────────────────────────
-function validateGuest() {
-  const name  = document.getElementById('guestName').value.trim();
-  const phone = document.getElementById('guestPhone').value.trim();
-  document.getElementById('btnGuestNext').disabled = !(name.length > 1 && phone.length >= 9);
+function calcTotal(hours) {
+  const dr = apt.daily_rate;
+  const hr = apt.hourly_rate;
+  if (hours >= 24 && dr > 0) {
+    const days = Math.floor(hours / 24);
+    const rem  = hours % 24;
+    return days * dr + rem * hr;
+  }
+  return hours * hr;
 }
 
-// ─── SUMMARY ─────────────────────────────────────────────────────────────────
+// ── STEP 3 VALIDATION ─────────────────────────────────────────────────────────
+function validateS3() {
+  const name  = document.getElementById('inpName').value.trim();
+  const phone = document.getElementById('inpPhone').value.trim();
+  const pOk   = /^05\d{8}$/.test(phone);
+
+  document.getElementById('errName').classList.toggle('show', name.length === 0);
+  document.getElementById('errPhone').classList.toggle('show', phone.length > 0 && !pOk);
+  document.getElementById('btnS3').disabled = !(name.length > 0 && pOk);
+}
+
+// ── SUMMARY ───────────────────────────────────────────────────────────────────
 function fillSummary() {
-  const rate  = apt.hourly_rate || 75;
-  const total = Math.round(selectedHours * rate);
-  const label = selectedHours === 24 ? 'يوم كامل' :
-                selectedHours === 1  ? 'ساعة' :
-                `${selectedHours} ساعات`;
-
-  document.getElementById('sumApt').textContent   = apt.name || '—';
-  document.getElementById('sumName').textContent  = document.getElementById('guestName').value.trim();
-  document.getElementById('sumPhone').textContent = document.getElementById('guestPhone').value.trim();
-  document.getElementById('sumDur').textContent   = label;
-  document.getElementById('sumTotal').textContent = `${total} ر.س`;
+  document.getElementById('sumApt').textContent   = apt.name;
+  document.getElementById('sumName').textContent  = document.getElementById('inpName').value.trim();
+  document.getElementById('sumPhone').textContent = document.getElementById('inpPhone').value.trim();
+  document.getElementById('sumDur').textContent   = fmtDur(sel.hours);
+  document.getElementById('sumTotal').textContent = fmt(sel.total);
 }
 
-// ─── CONFIRM ─────────────────────────────────────────────────────────────────
+// ── CONFIRM BOOKING ───────────────────────────────────────────────────────────
 async function confirmBooking() {
-  goTo('s-booking');
+  const btn = document.getElementById('btnConfirm');
+  btn.disabled = true;
+  btn.textContent = 'جار الإرسال…';
+  showRaw('sBooking');
+
+  const guestName  = document.getElementById('inpName').value.trim();
+  const guestPhone = document.getElementById('inpPhone').value.trim();
+
   try {
-    const res = await fetch(`${API}/api/book`, {
+    const res  = await fetch(`${API_URL}/api/book`, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        apartment_id:   parseInt(APT_ID),
-        guest_name:     document.getElementById('guestName').value.trim(),
-        guest_phone:    document.getElementById('guestPhone').value.trim(),
-        duration_hours: selectedHours,
+        apartment_id:   APT_ID,
+        guest_name:     guestName,
+        guest_phone:    guestPhone,
+        duration_hours: sel.hours,
       })
     });
-    const d = await res.json();
-    if (!res.ok) throw new Error(d.error || 'فشل الحجز');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `خطأ ${res.status}`);
 
-    document.getElementById('successCode').textContent = d.code;
-    document.getElementById('successTime').textContent =
-      `صالح حتى: ${fmtTime(d.end_time)}`;
-    goTo('s-success');
+    // Fill success screen
+    document.getElementById('sucCode').textContent  = data.code      || '——';
+    document.getElementById('sucName').textContent  = guestName;
+    document.getElementById('sucDur').textContent   = fmtDur(sel.hours);
+    document.getElementById('sucEnd').textContent   = fmtTime(data.end_time);
+    document.getElementById('sucTotal').textContent = fmt(data.total_amount ?? sel.total);
+
+    stepBarShow();
+    updateSteps(5);
+    showRaw('s5');
+    window.scrollTo(0, 0);
   } catch(e) {
-    toast(e.message, 'error');
-    goTo('s-summary');
+    toast(e.message || 'حدث خطأ في الحجز — حاول مرة أخرى', 'error');
+    showRaw('s4');
+    btn.disabled = false;
+    btn.textContent = 'تأكيد الحجز';
   }
 }
 
-// ─── UTILS ───────────────────────────────────────────────────────────────────
+// ── RESET ─────────────────────────────────────────────────────────────────────
+function resetFlow() {
+  sel = { hours: 0, total: 0 };
+  document.getElementById('inpName').value     = '';
+  document.getElementById('inpPhone').value    = '';
+  document.getElementById('customHours').value = '';
+  document.getElementById('customPrice').textContent = '';
+  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('btnS2').disabled = true;
+  document.getElementById('btnS3').disabled = true;
+  document.getElementById('errName').classList.remove('show');
+  document.getElementById('errPhone').classList.remove('show');
+  document.getElementById('btnConfirm').disabled    = false;
+  document.getElementById('btnConfirm').textContent = 'تأكيد الحجز';
+  goStep(1);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function fmt(amount) {
+  if (amount == null || amount === '') return '—';
+  return Number(amount).toLocaleString('ar-SA') + ' ر.س';
+}
+
+function fmtDur(hours) {
+  if (!hours) return '—';
+  if (hours >= 24) {
+    const d = Math.floor(hours / 24);
+    const h = hours % 24;
+    return h > 0 ? `${d} يوم و ${h} ساعة` : `${d} يوم كامل`;
+  }
+  const map = {1:'ساعة واحدة',2:'ساعتان',3:'ثلاث ساعات'};
+  return map[hours] || `${hours} ساعة`;
+}
+
 function fmtTime(dt) {
   if (!dt) return '—';
-  const d = new Date(dt + (dt.includes('Z') ? '' : 'Z'));
-  return d.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}) +
-         ' — ' + d.toLocaleDateString('ar-SA');
+  try {
+    const d = new Date(dt.includes('Z') ? dt : dt + 'Z');
+    return d.toLocaleString('ar-SA', {
+      hour:'2-digit', minute:'2-digit',
+      day:'numeric', month:'short'
+    });
+  } catch { return dt; }
 }
 
-function toast(msg, type='error', ms=4000) {
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
+function toast(msg, type='info', ms=3500) {
+  const wrap = document.getElementById('toastWrap');
+  const el   = document.createElement('div');
+  el.className   = `toast ${type}`;
   el.textContent = msg;
-  const w = document.getElementById('toastWrap');
-  w.appendChild(el);
+  wrap.appendChild(el);
   setTimeout(() => el.remove(), ms);
 }
-
-// ─── INIT ────────────────────────────────────────────────────────────────────
-loadApt();
 </script>
 </body>
 </html>
