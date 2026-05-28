@@ -244,7 +244,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 </div>
 
 <script>
-const SERVER = window.location.origin;
+const SERVER = localStorage.getItem('QLEVL_API') || window.location.origin;
 const APT_ID = new URLSearchParams(location.search).get('apt') || '1';
 let currentBooking = null;
 let selectedExtHours = 0.5;
