@@ -1,0 +1,111 @@
+{
+  "actions": [
+    {
+      "key": "set_ac",
+      "label_ar": "تعديل المكيف",
+      "icon": "❄️",
+      "params_schema": {
+        "device_id": "uuid",
+        "power": "on|off",
+        "temperature": 16,
+        "mode": "cool|heat|fan|auto",
+        "fan_speed": "low|medium|high|auto"
+      }
+    },
+    {
+      "key": "set_lights",
+      "label_ar": "تعديل الإضاءة",
+      "icon": "💡",
+      "params_schema": {
+        "device_id": "uuid",
+        "power": "on|off",
+        "brightness": 100
+      }
+    },
+    {
+      "key": "set_led_rgb",
+      "label_ar": "تغيير لون RGB",
+      "icon": "🌈",
+      "params_schema": {
+        "device_id": "uuid",
+        "power": "on|off",
+        "color": "#RRGGBB",
+        "brightness": 100,
+        "effect": "static|pulse|rainbow|strobe"
+      }
+    },
+    {
+      "key": "set_mode",
+      "label_ar": "تفعيل وضع",
+      "icon": "🎭",
+      "params_schema": {
+        "mode": "normal|cinema|sleep|match|relax|business"
+      }
+    },
+    {
+      "key": "show_notification",
+      "label_ar": "إظهار إشعار",
+      "icon": "🔔",
+      "params_schema": {
+        "title": "string",
+        "body": "string",
+        "duration_seconds": 5,
+        "target": "tablet|mobile_card|both"
+      }
+    },
+    {
+      "key": "show_nawaf_card",
+      "label_ar": "إظهار بطاقة نواف",
+      "icon": "🤖",
+      "params_schema": {
+        "message": "string",
+        "suggestions": [],
+        "target": "tablet|mobile_card|both"
+      }
+    },
+    {
+      "key": "send_whatsapp",
+      "label_ar": "إرسال واتساب",
+      "icon": "📲",
+      "params_schema": {
+        "recipient": "guest|host|founder",
+        "message_template": "string"
+      }
+    },
+    {
+      "key": "notify_host",
+      "label_ar": "تنبيه المضيف",
+      "icon": "👨‍💼",
+      "params_schema": {
+        "title": "string",
+        "body": "string"
+      }
+    },
+    {
+      "key": "log_event",
+      "label_ar": "تسجيل حدث",
+      "icon": "📝",
+      "params_schema": {
+        "event_type": "string",
+        "payload": {}
+      }
+    },
+    {
+      "key": "change_unit_status",
+      "label_ar": "تغيير حالة الشقة",
+      "icon": "🔄",
+      "params_schema": {
+        "status": "approved|suspended|inactive"
+      }
+    },
+    {
+      "key": "lock_door",
+      "label_ar": "قفل الباب",
+      "icon": "🔐",
+      "params_schema": {
+        "device_id": "uuid",
+        "action": "lock|unlock"
+      }
+    }
+  ]
+}
