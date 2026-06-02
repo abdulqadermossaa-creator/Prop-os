@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>QLVIN OS · Smart Guest Tablet</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&family=Instrument+Serif&display=swap');
+
+        *,*::before,*::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            height: 100%; overflow: hidden;
+            font-family: 'Inter', 'Tajawal', -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background: #000;
+            color: #fff;
+        }
+
+        /* ============================================
+           🎨 SAME DNA AS guest_smart_card_v3.html
+           ============================================ */
+        :root {
+            --mood-primary: #5ac8d3;
+            --mood-secondary: #1a4a5e;
+            --mood-accent: #fff;
+            --mood-bg-1: rgba(122, 220, 230, 0.55);
+            --mood-bg-2: rgba(90, 175, 215, 0.45);
+            --mood-bg-3: rgba(60, 120, 180, 0.35);
+            --mood-grad-1: #1a4a5e;
+            --mood-grad-2: #0d2a3e;
+            --mood-grad-3: #050b13;
+            --mood-glow: rgba(122, 220, 230, 0.4);
+        }
+
+        body[data-mood="cinema"] {
+            --mood-primary: #6B5BE0;
+            --mood-secondary: #4A3FB0;
+            --mood-accent: #B580DC;
+            --mood-bg-1: rgba(107, 91, 224, 0.4);
+            --mood-bg-2: rgba(74, 63, 176, 0.3);
+            --mood-bg-3: rgba(40, 20, 120, 0.5);
+            --mood-grad-1: #1a0e3e;
+            --mood-grad-2: #0a0518;
+            --mood-grad-3: #000;
+            --mood-glow: rgba(107, 91, 224, 0.5);
+        }
+
+        body[data-mood="match"][data-team="hilal"] {
+            --mood-primary: #1a73e8;
+            --mood-secondary: #0b4a99;
+            --mood-accent: #4a9ff5;
+            --mood-bg-1: rgba(26, 115, 232, 0.45);
+            --mood-bg-2: rgba(11, 74, 153, 0.35);
+            --mood-bg-3: rgba(5, 40, 90, 0.5);
+            --mood-grad-1: #062e5e;
+            --mood-grad-2: #021838;
+            --mood-grad-3: #000;
+            --mood-glow: rgba(26, 115, 232, 0.5);
+        }
+
+        body[data-mood="match"][data-team="nassr"] {
+            --mood-primary: #FFD93D;
+            --mood-secondary: #d4a82c;
+            --mood-accent: #fff3a8;
+            --mood-bg-1: rgba(255, 217, 61, 0.4);
+            --mood-bg-2: rgba(212, 168, 44, 0.3);
+            --mood-bg-3: rgba(120, 90, 20, 0.5);
+            --mood-grad-1: #3e2e08;
+            --mood-grad-2: #1e1805;
+            --mood-grad-3: #000;
+            --mood-glow: rgba(255, 217, 61, 0.5);
+        }
+
+        body[data-mood="match"][data-team="ittihad"] {
+            --mood-primary: #fbbf24;
+            --mood-secondary: #1f2937;
+            --mood-accent: #fde68a;
+            --mood-bg-1: rgba(251, 191, 36, 0.35);
+            --mood-bg-2: rgba(31, 41, 55, 0.6);
+            --mood-bg-3: rgba(10, 10, 20, 0.7);
+            --mood-grad-1: #2e2008;
+            --mood-grad-2: #181208;
+            --mood-grad-3: #000;
+            --mood-glow: rgba(251, 191, 36, 0.5);
+        }
+
+        body[data-mood="match"][data-team="ahli"] {
+            --mood-primary: #30D158;
+            --mood-secondary: #1FA040;
+            --mood-accent: #6EE881;
+            --mood-bg-1: rgba(48, 209, 88, 0.4);
+            --mood-bg-2: rgba(31, 160, 64, 0.3);
+            --mood-bg-3: rgba(10, 80, 30, 0.5);
+            --mood-grad-1: #052e18;
+            --mood-grad-2: #021808;
+            --mood-grad-3: #000;
+            --mood-glow: rgba(48, 209, 88, 0.5);
+        }
+
+        body[data-mood="relax"] {
+            --mood-primary: #B580DC;
+            --mood-secondary: #8C5DB8;
+            --mood-accent: #D9B8F0;
+            --mood-bg-1: rgba(181, 128, 220, 0.4);
+            --mood-bg-2: rgba(140, 93, 184, 0.3);
+            --mood-bg-3: rgba(60, 40, 100, 0.5);
+            --mood-grad-1: #2e0e3e;
+            --mood-grad-2: #180518;
+            --mood-grad-3: #000;
+            --mood-glow: rgba(181, 128, 220, 0.5);
+        }
+
+        body[data-alert="warning"] {
+            --mood-primary: #FF9F0A !important;
+            --mood-secondary: #FF6B00 !important;
+            --mood-glow: rgba(255, 159, 10, 0.5) !important;
+        }
+
+        body[data-alert="critical"] {
+            --mood-primary: #FF3B30 !important;
+            --mood-secondary: #C8281F !important;
+            --mood-glow: rgba(255, 59, 48, 0.6) !important;
+        }
+
+        /* ============================================
+           🌌 AMBIENT BG (same as V3)
+        ============================================ */
+        .ambient-bg {
+            position: fixed; inset: 0; z-index: 0;
+            transition: background 2s cubic-bezier(0.32, 0.72, 0, 1);
+            background:
+                radial-gradient(ellipse 90% 70% at 20% 10%, var(--mood-bg-1) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 60% at 80% 30%, var(--mood-bg-2) 0%, transparent 55%),
+                radial-gradient(ellipse 100% 80% at 50% 90%, var(--mood-bg-3) 0%, transparent 65%),
+                linear-gradient(180deg, var(--mood-grad-1) 0%, var(--mood-grad-2) 40%, var(--mood-grad-3) 100%);
+        }
+
+        .ambient-bg::after {
+            content: '';
+            position: absolute; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' /%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* ============================================
+           🎬 Animations
+        ============================================ */
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes cardEnter {
+            from { opacity: 0; transform: translateY(20px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.95; }
+            50% { transform: scale(1.06); opacity: 1; }
+        }
+        @keyframes pulsePoint {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.4); opacity: 0.4; }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes liquidFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes splashFadeOut {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.05); }
+        }
+        @keyframes logoZoomIn {
+            from { opacity: 0; transform: scale(0.6); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes warningPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* ============================================
+           🚀 SPLASH (same identity as V3)
+        ============================================ */
+        .splash {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .splash.fade-out {
+            opacity: 0;
+            transform: scale(1.05);
+            pointer-events: none;
+        }
+
+        .splash::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 50% at 50% 50%, rgba(74, 159, 245, 0.18) 0%, transparent 60%),
+                linear-gradient(180deg, #000814 0%, #000 100%);
+        }
+
+        .splash-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .splash-powered {
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 6px;
+            text-transform: uppercase;
+        }
+
+        .splash-logo-svg {
+            width: 160px;
+            height: 160px;
+            opacity: 0;
+            animation: logoZoomIn 1s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .splash-name {
+            font-size: 54px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 12px;
+            opacity: 0;
+            animation: slideUpFade 0.8s 0.9s forwards;
+        }
+        .splash-name .os-blue {
+            color: #4a9ff5;
+        }
+
+        .splash-line {
+            width: 0%;
+            max-width: 380px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #4a9ff5, transparent);
+            animation: splashLine 1s 1.3s forwards;
+        }
+        @keyframes splashLine {
+            0% { width: 0%; }
+            100% { width: 80%; }
+        }
+
+        .splash-tagline {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 5px;
+            opacity: 0;
+            animation: slideUpFade 0.8s 1.5s forwards;
+        }
+        .splash-tagline .blue { color: #4a9ff5; font-weight: 800; }
+
+        /* ============================================
+           📺 TABLET LANDSCAPE LAYOUT
+        ============================================ */
+        .tablet-frame {
+            position: relative;
+            z-index: 2;
+            width: 100vw;
+            height: 100vh;
+            opacity: 0;
+            animation: slideUpFade 0.8s 2.2s forwards;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top App Bar — wider for landscape */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 40px;
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+        }
+        .tb-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .tb-logo-svg {
+            width: 44px;
+            height: 44px;
+            filter: drop-shadow(0 2px 8px rgba(74, 159, 245, 0.3));
+        }
+        .tb-name {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: #fff;
+        }
+        .tb-name .os-blue { color: #4a9ff5; }
+        .tb-sub {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .tb-center {
+            font-family: 'Instrument Serif', 'Tajawal', serif;
+            font-size: 22px;
+            color: rgba(255, 255, 255, 0.65);
+            letter-spacing: 0.5px;
+        }
+
+        .tb-right {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .tb-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 1px;
+        }
+        .tb-status::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: #30D158;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(48, 209, 88, 0.6);
+        }
+        .tb-unit-code {
+            font-family: 'Inter';
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        /* ============================================
+           🎴 MAIN LAYOUT (3-column landscape)
+        ============================================ */
+        .main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 32px;
+            padding: 32px 40px;
+            overflow: hidden;
+        }
+
+        /* ============================================
+           📊 LEFT — Environment readout (slim)
+        ============================================ */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: cardEnter 0.7s 0.3s both;
+        }
+
+        .panel-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            padding: 0 4px;
+        }
+
+        .env-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 22px;
+            padding: 18px 20px;
+            transition: all 0.4s;
+            box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .env-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
+        }
+        .env-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .env-icon {
+            width: 26px; height: 26px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+        .env-value {
+            font-family: 'Instrument Serif', serif;
+            font-size: 42px;
+            font-weight: 400;
+            color: #fff;
+            line-height: 1;
+            letter-spacing: -1px;
+            margin-top: 4px;
+        }
+        .env-value small {
+            font-family: 'Inter';
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.45);
+            font-weight: 500;
+            margin-right: 4px;
+        }
+        .env-trend {
+            font-size: 10px;
+            color: var(--mood-primary);
+            font-weight: 600;
+            margin-top: 6px;
+            letter-spacing: 0.5px;
+        }
+        .env-card.accent .env-value {
+            color: var(--mood-primary);
+        }
+
+        /* ============================================
+           🎯 CENTER — Hero stage
+        ============================================ */
+        .center-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Guest welcome */
+        .guest-block {
+            text-align: center;
+            margin-bottom: 28px;
+            animation: cardEnter 0.7s 0.4s both;
+        }
+        .guest-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .guest-name {
+            font-family: 'Instrument Serif', serif;
+            font-size: 48px;
+            font-weight: 400;
+            color: #fff;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+        .guest-unit {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        /* Time Ring (BIGGER than mobile V3) */
+        .time-ring-wrap {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            animation: cardEnter 0.8s 0.5s both;
+        }
+        .time-ring-svg {
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+        }
+        .ring-bg-circle {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.06);
+            stroke-width: 10;
+        }
+        .ring-progress-circle {
+            fill: none;
+            stroke: var(--mood-primary);
+            stroke-width: 10;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s cubic-bezier(0.32, 0.72, 0, 1), stroke 0.8s;
+            filter: drop-shadow(0 0 16px var(--mood-glow));
+        }
+        body[data-alert="critical"] .ring-progress-circle {
+            animation: warningPulse 1.5s ease-in-out infinite;
+        }
+        .ring-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .ring-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .ring-hours {
+            font-family: 'Instrument Serif', serif;
+            font-size: 110px;
+            font-weight: 400;
+            letter-spacing: -4px;
+            line-height: 1;
+            color: #fff;
+            transition: color 0.8s;
+        }
+        body[data-alert="warning"] .ring-hours,
+        body[data-alert="critical"] .ring-hours {
+            color: var(--mood-primary);
+        }
+        .ring-minutes {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+        .ring-checkout {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 500;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        /* Bottom hint */
+        .stage-hint {
+            margin-top: 32px;
+            font-family: 'Instrument Serif', 'Tajawal', serif;
+            font-style: italic;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.5);
+            animation: cardEnter 0.7s 0.7s both;
+        }
+        .stage-hint .accent {
+            color: var(--mood-primary);
+            font-style: normal;
+            font-weight: 700;
+            transition: color 0.6s;
+        }
+
+        /* ============================================
+           🎭 RIGHT — Ambience modes
+        ============================================ */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            animation: cardEnter 0.7s 0.3s both;
+        }
+
+        .mode-row {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .mode-row:active { transform: scale(0.97); }
+        .mode-row.active {
+            background: linear-gradient(135deg, var(--mood-bg-1), rgba(255,255,255,0.03));
+            border-color: var(--mood-primary);
+            box-shadow:
+                0 8px 24px var(--mood-glow),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
+        }
+        .mode-row.active::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+            background-size: 200% 100%;
+            animation: shimmer 4s infinite;
+        }
+
+        .mode-num {
+            font-family: 'Instrument Serif', serif;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.35);
+            font-style: italic;
+            width: 28px;
+            transition: color 0.4s;
+        }
+        .mode-row.active .mode-num {
+            color: var(--mood-primary);
+        }
+
+        .mode-icon-large {
+            width: 38px; height: 38px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 19px;
+        }
+
+        .mode-meta { flex: 1; }
+        .mode-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.3px;
+            margin-bottom: 1px;
+        }
+        .mode-desc {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: 'Tajawal';
+        }
+
+        .mode-indicator {
+            width: 4px;
+            height: 24px;
+            background: var(--mood-primary);
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.4s;
+            box-shadow: 0 0 8px var(--mood-glow);
+        }
+        .mode-row.active .mode-indicator { opacity: 1; }
+
+        /* ============================================
+           🎚️ BOTTOM CONTROLS (sliders)
+        ============================================ */
+        .bottom-controls {
+            padding: 0 40px 28px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            animation: cardEnter 0.7s 0.6s both;
+        }
+        .control-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 16px 18px;
+            box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+        }
+        .cc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .cc-label-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .cc-icon {
+            width: 30px; height: 30px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+        .cc-label {
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Tajawal';
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .cc-value {
+            font-family: 'Instrument Serif', serif;
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--mood-primary);
+            letter-spacing: -0.5px;
+            transition: color 0.5s;
+        }
+        .cc-value small {
+            font-family: 'Inter';
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 500;
+            margin-right: 2px;
+        }
+
+        /* Smooth iOS slider (same as V3) */
+        .ios-slider {
+            position: relative;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 0.5px solid rgba(255, 255, 255, 0.06);
+            touch-action: none;
+        }
+        .ios-slider-fill {
+            position: absolute;
+            top: 0; bottom: 0; right: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.85) 100%);
+            border-radius: 14px;
+            transition: width 0.05s linear;
+            box-shadow:
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.5),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.1);
+        }
+        body[data-mood="cinema"] .ios-slider-fill,
+        body[data-mood="match"] .ios-slider-fill,
+        body[data-mood="relax"] .ios-slider-fill {
+            background: linear-gradient(180deg, var(--mood-primary), var(--mood-secondary));
+        }
+
+        /* ============================================
+           🤖 Nawaf Floating Card
+        ============================================ */
+        .nawaf-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            z-index: 300;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s, transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+            max-width: 480px;
+            width: 90%;
+        }
+        .nawaf-card.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: all;
+        }
+
+        .nawaf-inner {
+            background: linear-gradient(180deg, rgba(40, 40, 50, 0.92), rgba(20, 20, 30, 0.98));
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 28px;
+            padding: 26px;
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.15);
+        }
+        .nawaf-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+        .nawaf-avatar {
+            width: 50px; height: 50px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #4a9ff5, #1a73e8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(74, 159, 245, 0.4);
+        }
+        .nawaf-avatar svg { width: 28px; height: 28px; }
+        .nawaf-id {
+            font-size: 10px;
+            font-weight: 700;
+            color: #4a9ff5;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nawaf-id::before {
+            content: '';
+            width: 5px; height: 5px;
+            background: #4a9ff5;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(74, 159, 245, 0.8);
+        }
+        .nawaf-name {
+            font-family: 'Instrument Serif', serif;
+            font-size: 24px;
+            color: #fff;
+            margin-top: 2px;
+        }
+        .nawaf-msg {
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.6;
+            font-family: 'Tajawal';
+            margin-bottom: 18px;
+        }
+        .nawaf-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .nawaf-opt {
+            background: rgba(255, 255, 255, 0.06);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-family: 'Tajawal';
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: right;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nawaf-opt:active { transform: scale(0.97); }
+        .nawaf-opt:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .nawaf-opt-arrow {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
+        }
+        .nawaf-close {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            width: 28px; height: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .nawaf-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 299;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+        }
+        .nawaf-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* ============================================
+           🔔 Notif
+        ============================================ */
+        .liquid-notif {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px) scale(0.85);
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(30px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.25);
+            padding: 14px 24px;
+            border-radius: 28px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s;
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            font-family: 'Tajawal';
+        }
+        .liquid-notif.show {
+            transform: translateX(-50%) translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        /* ============================================
+           🪞 SYNC INDICATOR (شريك جوال متصل)
+        ============================================ */
+        .sync-pill {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(74, 159, 245, 0.1);
+            backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(74, 159, 245, 0.3);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(74, 159, 245, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter';
+            letter-spacing: 0.5px;
+            opacity: 0;
+            animation: cardEnter 0.8s 2.6s forwards;
+            z-index: 50;
+        }
+        .sync-pill svg {
+            width: 12px; height: 12px;
+        }
+        .sync-pill .pulse {
+            width: 6px; height: 6px;
+            background: #4a9ff5;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(74, 159, 245, 0.8);
+            animation: pulsePoint 2s infinite;
+        }
+
+        /* ============================================
+           🌗 IDLE MODE (when no interaction)
+        ============================================ */
+        .idle-corner {
+            position: fixed;
+            bottom: 22px;
+            right: 32px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            opacity: 0;
+            animation: cardEnter 0.8s 2.6s forwards;
+            z-index: 50;
+        }
+        .idle-time {
+            font-family: 'Instrument Serif', serif;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: -0.5px;
+        }
+        .idle-sep {
+            width: 1px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .idle-weather {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+            font-family: 'Inter';
+        }
+
+        /* Small screens fallback */
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 200px 1fr 200px;
+                gap: 20px;
+                padding: 24px;
+            }
+            .bottom-controls {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 12px;
+                padding: 0 24px 20px;
+            }
+            .guest-name { font-size: 36px; }
+            .ring-hours { font-size: 84px; }
+            .time-ring-wrap { width: 260px; height: 260px; }
+        }
+    </style>
+</head>
+<body data-mood="default">
+
+<!-- ============================================
+     🚀 SPLASH SCREEN
+============================================ -->
+<div class="splash" id="splash">
+    <div class="splash-content">
+        <div class="splash-powered">Powered by</div>
+        <svg class="splash-logo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="qGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="100%" stop-color="#a8a8b3"/>
+                </linearGradient>
+                <linearGradient id="qInner" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#4a9ff5"/>
+                    <stop offset="100%" stop-color="#1a73e8"/>
+                </linearGradient>
+            </defs>
+            <circle cx="100" cy="100" r="80" stroke="url(#qGradient)" stroke-width="6" fill="none"/>
+            <line x1="155" y1="155" x2="180" y2="180" stroke="url(#qGradient)" stroke-width="6" stroke-linecap="round"/>
+            <path d="M 75 110 L 100 90 L 125 110 L 125 135 L 75 135 Z" fill="url(#qInner)"/>
+            <path d="M 100 80 L 110 90 L 105 90 L 105 105 L 95 105 L 95 90 L 90 90 Z" fill="#ffffff"/>
+        </svg>
+        <div class="splash-name">QLVIN <span class="os-blue">OS</span></div>
+        <div class="splash-line"></div>
+        <div class="splash-tagline">WELCOME TO THE <span class="blue">NXT LVL</span></div>
+    </div>
+</div>
+
+<!-- 🌌 Ambient BG -->
+<div class="ambient-bg"></div>
+
+<!-- 🔔 Notification -->
+<div class="liquid-notif" id="notif">
+    <span id="notif-icon">✓</span>
+    <span id="notif-text">تم</span>
+</div>
+
+<!-- 📺 Tablet Frame -->
+<div class="tablet-frame">
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="tb-left">
+            <svg class="tb-logo-svg" viewBox="0 0 200 200">
+                <defs>
+                    <linearGradient id="qGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="100%" stop-color="#a8a8b3"/>
+                    </linearGradient>
+                    <linearGradient id="qInner2" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#4a9ff5"/>
+                        <stop offset="100%" stop-color="#1a73e8"/>
+                    </linearGradient>
+                </defs>
+                <circle cx="100" cy="100" r="80" stroke="url(#qGradient2)" stroke-width="8" fill="none"/>
+                <line x1="155" y1="155" x2="180" y2="180" stroke="url(#qGradient2)" stroke-width="8" stroke-linecap="round"/>
+                <path d="M 75 110 L 100 90 L 125 110 L 125 135 L 75 135 Z" fill="url(#qInner2)"/>
+                <path d="M 100 80 L 110 90 L 105 90 L 105 105 L 95 105 L 95 90 L 90 90 Z" fill="#ffffff"/>
+            </svg>
+            <div>
+                <div class="tb-name">QLVIN <span class="os-blue">OS</span></div>
+                <div class="tb-sub">In-Suite Tablet · v1.0</div>
+            </div>
+        </div>
+
+        <div class="tb-center" id="tb-greeting">
+            مساء الخير
+        </div>
+
+        <div class="tb-right">
+            <div class="tb-unit-code">QLVN-1042</div>
+            <div class="tb-status">SYNCED</div>
+        </div>
+    </div>
+
+    <!-- Main 3-Column -->
+    <div class="main">
+
+        <!-- LEFT: Environment -->
+        <div class="left-panel">
+            <div class="panel-label">Environment</div>
+
+            <div class="env-card">
+                <div class="env-header">
+                    <span class="env-name">Climate</span>
+                    <div class="env-icon">❄</div>
+                </div>
+                <div class="env-value">22<small>°C</small></div>
+                <div class="env-trend">↓ cooling</div>
+            </div>
+
+            <div class="env-card accent">
+                <div class="env-header">
+                    <span class="env-name">Outside</span>
+                    <div class="env-icon">☀</div>
+                </div>
+                <div class="env-value">38<small>°C</small></div>
+                <div class="env-trend">↑ warm afternoon</div>
+            </div>
+
+            <div class="env-card">
+                <div class="env-header">
+                    <span class="env-name">Humidity</span>
+                    <div class="env-icon">≈</div>
+                </div>
+                <div class="env-value">45<small>%</small></div>
+                <div class="env-trend">— optimal</div>
+            </div>
+        </div>
+
+        <!-- CENTER: Hero Stage -->
+        <div class="center-stage">
+            <div class="guest-block">
+                <div class="guest-label">Welcome back</div>
+                <div class="guest-name">Mohammed Al-Otaibi</div>
+                <div class="guest-unit">شقة الراكة · ALRAKAH</div>
+            </div>
+
+            <div class="time-ring-wrap">
+                <svg class="time-ring-svg" viewBox="0 0 320 320">
+                    <circle class="ring-bg-circle" cx="160" cy="160" r="148"></circle>
+                    <circle class="ring-progress-circle" id="time-ring-fill"
+                            cx="160" cy="160" r="148"
+                            stroke-dasharray="929.91"
+                            stroke-dashoffset="0"></circle>
+                </svg>
+                <div class="ring-center">
+                    <div class="ring-label">Remaining</div>
+                    <div class="ring-hours" id="ring-hours">05</div>
+                    <div class="ring-minutes" id="ring-minutes">hours · 12 min</div>
+                    <div class="ring-checkout">checkout · 14:00</div>
+                </div>
+            </div>
+
+            <div class="stage-hint" id="stage-hint">
+                اختر <span class="accent">مزاجك</span> من اليمين
+            </div>
+        </div>
+
+        <!-- RIGHT: Modes -->
+        <div class="right-panel">
+            <div class="panel-label">Ambience</div>
+
+            <div class="mode-row" onclick="selectMode('cinema')">
+                <div class="mode-num">01</div>
+                <div class="mode-icon-large">🎬</div>
+                <div class="mode-meta">
+                    <div class="mode-name">CINEMA</div>
+                    <div class="mode-desc">سينما</div>
+                </div>
+                <div class="mode-indicator"></div>
+            </div>
+
+            <div class="mode-row" onclick="selectMode('match')">
+                <div class="mode-num">02</div>
+                <div class="mode-icon-large">⚽</div>
+                <div class="mode-meta">
+                    <div class="mode-name">MATCH</div>
+                    <div class="mode-desc">الهلال · مباشر</div>
+                </div>
+                <div class="mode-indicator"></div>
+            </div>
+
+            <div class="mode-row" onclick="selectMode('coffee')">
+                <div class="mode-num">03</div>
+                <div class="mode-icon-large">☕</div>
+                <div class="mode-meta">
+                    <div class="mode-name">COFFEE</div>
+                    <div class="mode-desc">قهوة وضيافة</div>
+                </div>
+                <div class="mode-indicator"></div>
+            </div>
+
+            <div class="mode-row" onclick="selectMode('relax')">
+                <div class="mode-num">04</div>
+                <div class="mode-icon-large">🌙</div>
+                <div class="mode-meta">
+                    <div class="mode-name">RELAX</div>
+                    <div class="mode-desc">استرخاء</div>
+                </div>
+                <div class="mode-indicator"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="bottom-controls">
+        <div class="control-card">
+            <div class="cc-header">
+                <div class="cc-label-wrap">
+                    <div class="cc-icon">💡</div>
+                    <div class="cc-label">الإضاءة</div>
+                </div>
+                <div class="cc-value" id="light-val">60<small>%</small></div>
+            </div>
+            <div class="ios-slider" data-slider="light" data-value="60">
+                <div class="ios-slider-fill" style="width: 60%;"></div>
+            </div>
+        </div>
+
+        <div class="control-card">
+            <div class="cc-header">
+                <div class="cc-label-wrap">
+                    <div class="cc-icon">🔊</div>
+                    <div class="cc-label">الصوت</div>
+                </div>
+                <div class="cc-value" id="sound-val">45<small>%</small></div>
+            </div>
+            <div class="ios-slider" data-slider="sound" data-value="45">
+                <div class="ios-slider-fill" style="width: 45%;"></div>
+            </div>
+        </div>
+
+        <div class="control-card">
+            <div class="cc-header">
+                <div class="cc-label-wrap">
+                    <div class="cc-icon">🌈</div>
+                    <div class="cc-label">LED RGB</div>
+                </div>
+                <div class="cc-value" id="rgb-val">30<small>%</small></div>
+            </div>
+            <div class="ios-slider" data-slider="rgb" data-value="30">
+                <div class="ios-slider-fill" style="width: 30%;"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 🪞 Sync indicator (شريك الجوال) -->
+<div class="sync-pill">
+    <div class="pulse"></div>
+    <span>متصل ببطاقة الضيف · iPhone</span>
+</div>
+
+<!-- 🕐 Idle corner -->
+<div class="idle-corner">
+    <div class="idle-time" id="idle-time">9:42</div>
+    <div class="idle-sep"></div>
+    <div class="idle-weather">38° · صافي</div>
+</div>
+
+<!-- 🤖 Nawaf Card -->
+<div class="nawaf-overlay" id="nawaf-overlay" onclick="closeNawaf()"></div>
+<div class="nawaf-card" id="nawaf-card">
+    <div class="nawaf-inner">
+        <button class="nawaf-close" onclick="closeNawaf()">×</button>
+        <div class="nawaf-head">
+            <div class="nawaf-avatar">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="white"/>
+                    <circle cx="6" cy="18" r="2" fill="white"/>
+                    <circle cx="18" cy="18" r="2" fill="white"/>
+                </svg>
+            </div>
+            <div>
+                <div class="nawaf-id">QLVIN AI · NAWAF</div>
+                <div class="nawaf-name">نواف</div>
+            </div>
+        </div>
+        <div class="nawaf-msg" id="nawaf-msg">
+            شكلك حاير، خل أوصي لك:
+        </div>
+        <div class="nawaf-options" id="nawaf-options">
+            <!-- Filled dynamically -->
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================
+// 🎯 State
+// ============================================
+const state = {
+    mode: 'default',
+    selectedTeam: 'hilal',
+    light: 60,
+    sound: 45,
+    rgb: 30,
+    totalMinutes: 5 * 60 + 12,
+    remainingMinutes: 5 * 60 + 12,
+    alertLevel: 'none'
+};
+
+// ============================================
+// 🚀 Splash
+// ============================================
+setTimeout(() => {
+    document.getElementById('splash').classList.add('fade-out');
+}, 2200);
+
+// ============================================
+// 🕐 Clock + Greeting
+// ============================================
+function updateClock() {
+    const now = new Date();
+    let h = now.getHours();
+    const m = now.getMinutes().toString().padStart(2, '0');
+    document.getElementById('idle-time').textContent =
+        `${h % 12 || 12}:${m}`;
+
+    // Greeting by time
+    let greet;
+    if (h >= 5 && h < 12) greet = 'صباح الخير';
+    else if (h >= 12 && h < 17) greet = 'يا هلا والله';
+    else if (h >= 17 && h < 21) greet = 'مساء الخير';
+    else greet = 'تصبح على خير';
+    document.getElementById('tb-greeting').textContent = greet;
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+// ============================================
+// ⏱️ Time Ring
+// ============================================
+function updateTimeRing() {
+    const total = 5 * 60 + 12; // ساعات الإقامة الأصلية
+    const remaining = state.remainingMinutes;
+    const progress = remaining / total;
+
+    const ring = document.getElementById('time-ring-fill');
+    const circumference = 929.91; // 2 * π * 148
+    const offset = circumference * (1 - progress);
+    ring.setAttribute('stroke-dashoffset', offset);
+
+    const hours = Math.floor(remaining / 60);
+    const minutes = remaining % 60;
+    document.getElementById('ring-hours').textContent =
+        hours.toString().padStart(2, '0');
+    document.getElementById('ring-minutes').textContent =
+        `hours · ${minutes} min`;
+
+    const previousAlert = state.alertLevel;
+    if (hours < 1) state.alertLevel = 'critical';
+    else if (hours < 2) state.alertLevel = 'warning';
+    else state.alertLevel = 'none';
+
+    if (state.alertLevel === 'none') {
+        document.body.removeAttribute('data-alert');
+    } else {
+        document.body.setAttribute('data-alert', state.alertLevel);
+    }
+}
+updateTimeRing();
+
+// ============================================
+// 🎭 Mode Selection (synced with mobile guest card)
+// ============================================
+function selectMode(mode) {
+    haptic();
+    state.mode = mode;
+
+    // Update body mood
+    if (mode === 'match') {
+        document.body.setAttribute('data-mood', 'match');
+        document.body.setAttribute('data-team', state.selectedTeam);
+    } else {
+        document.body.setAttribute('data-mood', mode);
+        document.body.removeAttribute('data-team');
+    }
+
+    // Update active mode UI
+    document.querySelectorAll('.mode-row').forEach(r => r.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    const modeNames = {
+        cinema: 'وضع السينما',
+        match: 'وضع المباراة · يا هلال',
+        coffee: 'استراحة القهوة',
+        relax: 'وضع الاسترخاء'
+    };
+    showNotif('✓', modeNames[mode]);
+
+    // Update stage hint based on mode
+    updateStageHint(mode);
+
+    // TODO: when Supabase is connected
+    // supabase.from('units').update({ active_mode: mode }).eq('id', UNIT_ID)
+    // This will trigger Realtime sync → guest_smart_card_v3.html updates automatically
+}
+
+function updateStageHint(mode) {
+    const hints = {
+        cinema: 'استمتع <span class="accent">بالسينما</span>',
+        match: '<span class="accent">يا هلال</span> · مباشر الآن',
+        coffee: '<span class="accent">قهوة</span> دافئة في انتظارك',
+        relax: 'وقت <span class="accent">الاسترخاء</span>'
+    };
+    document.getElementById('stage-hint').innerHTML = hints[mode] || 'اختر <span class="accent">مزاجك</span> من اليمين';
+}
+
+// ============================================
+// 🎚️ Smooth iOS Sliders
+// ============================================
+function setupSliders() {
+    document.querySelectorAll('.ios-slider').forEach(slider => {
+        let isDragging = false;
+        const fill = slider.querySelector('.ios-slider-fill');
+        const sliderName = slider.dataset.slider;
+        const valueEl = document.getElementById(sliderName + '-val');
+
+        function updateValue(clientX) {
+            const rect = slider.getBoundingClientRect();
+            // RTL slider — direction is from right
+            const x = rect.right - clientX;
+            let percent = (x / rect.width) * 100;
+            percent = Math.max(0, Math.min(100, percent));
+            const rounded = Math.round(percent);
+
+            fill.style.width = percent + '%';
+            slider.dataset.value = rounded;
+            state[sliderName] = rounded;
+
+            if (valueEl) {
+                valueEl.innerHTML = `${rounded}<small>%</small>`;
+            }
+
+            // TODO: sync to Supabase
+            // supabase.from('units').update({ [sliderName + '_level']: rounded }).eq('id', UNIT_ID)
+        }
+
+        function start(e) {
+            isDragging = true;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            updateValue(clientX);
+            haptic();
+            e.preventDefault();
+        }
+
+        function move(e) {
+            if (!isDragging) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            updateValue(clientX);
+            e.preventDefault();
+        }
+
+        function end() {
+            if (isDragging) {
+                isDragging = false;
+                haptic();
+            }
+        }
+
+        slider.addEventListener('mousedown', start);
+        slider.addEventListener('touchstart', start, { passive: false });
+        document.addEventListener('mousemove', move);
+        document.addEventListener('touchmove', move, { passive: false });
+        document.addEventListener('mouseup', end);
+        document.addEventListener('touchend', end);
+    });
+}
+setupSliders();
+
+// ============================================
+// 🤖 Nawaf Card (smart suggestions)
+// ============================================
+function showNawaf(message, options) {
+    document.getElementById('nawaf-msg').innerHTML = message;
+    const optsHTML = options.map(opt =>
+        `<button class="nawaf-opt" onclick="handleNawafOption('${opt.action}')">
+            <span>${opt.label}</span>
+            <span class="nawaf-opt-arrow">←</span>
+        </button>`
+    ).join('');
+    document.getElementById('nawaf-options').innerHTML = optsHTML;
+    document.getElementById('nawaf-card').classList.add('show');
+    document.getElementById('nawaf-overlay').classList.add('show');
+}
+
+function closeNawaf() {
+    document.getElementById('nawaf-card').classList.remove('show');
+    document.getElementById('nawaf-overlay').classList.remove('show');
+}
+
+function handleNawafOption(action) {
+    haptic();
+    closeNawaf();
+
+    if (action.startsWith('mode:')) {
+        const mode = action.split(':')[1];
+        document.querySelector(`.mode-row:nth-child(${
+            ['cinema','match','coffee','relax'].indexOf(mode) + 2
+        })`)?.click();
+    } else if (action === 'order_coffee') {
+        showNotif('☕', 'قهوة عربية · جايتك خلال 10 دقائق');
+    } else if (action === 'order_popcorn') {
+        showNotif('🍿', 'فشار طازج · جايك');
+    }
+}
+
+// Demo: trigger Nawaf after 4 seconds (simulating Netflix confusion)
+setTimeout(() => {
+    if (state.mode === 'default') {
+        showNawaf(
+            'المساء جميل لفيلم سينمائي. اقترحت لك:',
+            [
+                { label: '🔥 Top Trending · Dune', action: 'mode:cinema' },
+                { label: '⭐ Top Rated · The Crown', action: 'mode:cinema' },
+                { label: '✨ Qlvin AI · Squid Game', action: 'mode:cinema' }
+            ]
+        );
+    }
+}, 5500);
+
+// ============================================
+// 🔔 Helpers
+// ============================================
+function showNotif(icon, text) {
+    const notif = document.getElementById('notif');
+    document.getElementById('notif-icon').textContent = icon;
+    document.getElementById('notif-text').textContent = text;
+    notif.classList.add('show');
+    setTimeout(() => notif.classList.remove('show'), 2800);
+}
+
+function haptic() {
+    if (navigator.vibrate) navigator.vibrate(15);
+}
+
+// ============================================
+// 🪞 SUPABASE REALTIME PLACEHOLDER
+// ============================================
+// When Claude Code wires Supabase, this is where the magic happens:
+//
+// const channel = supabase
+//   .channel(`unit:${UNIT_ID}`)
+//   .on('postgres_changes', {
+//       event: 'UPDATE',
+//       schema: 'public',
+//       table: 'units',
+//       filter: `id=eq.${UNIT_ID}`
+//   }, (payload) => {
+//       // Mobile guest card changed something → update tablet
+//       const u = payload.new;
+//       if (u.active_mode && u.active_mode !== state.mode) {
+//           selectMode(u.active_mode);
+//       }
+//       if (u.light_level !== state.light) {
+//           updateSliderFromExternal('light', u.light_level);
+//       }
+//       // ... etc
+//   })
+//   .subscribe();
+
+console.log('🪞 QLVIN OS Tablet ready · awaiting Supabase Realtime hook');
+</script>
+</body>
+</html>
