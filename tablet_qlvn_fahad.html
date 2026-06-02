@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>QLVIN OS · Tablet Experience</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@500;700;800;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; overflow: hidden; font-family: 'Tajawal', 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        
+        body {
+            background: #000;
+            color: #fff;
+            position: relative;
+        }
+
+        /* ========================================
+           Wallpaper - متغير حسب الوقت
+        ======================================== */
+        .wallpaper {
+            position: fixed; inset: 0; z-index: 0;
+            transition: background 2s ease;
+            background:
+                radial-gradient(ellipse 80% 60% at 30% 20%, rgba(122, 220, 230, 0.55) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 50% at 75% 35%, rgba(90, 175, 215, 0.45) 0%, transparent 55%),
+                radial-gradient(ellipse 90% 70% at 50% 75%, rgba(60, 120, 180, 0.35) 0%, transparent 60%),
+                linear-gradient(160deg, #2a5a6e 0%, #1a3a4e 30%, #0d1f2f 60%, #050b13 100%);
+        }
+        .wallpaper.evening {
+            background:
+                radial-gradient(ellipse 80% 60% at 30% 20%, rgba(255, 140, 90, 0.4) 0%, transparent 55%),
+                radial-gradient(ellipse 70% 50% at 75% 35%, rgba(180, 90, 130, 0.4) 0%, transparent 55%),
+                radial-gradient(ellipse 90% 70% at 50% 75%, rgba(80, 50, 110, 0.5) 0%, transparent 60%),
+                linear-gradient(160deg, #3a1a2e 0%, #1a0d2e 30%, #0d0a1f 60%, #050308 100%);
+        }
+        .wallpaper.night {
+            background:
+                radial-gradient(ellipse 80% 60% at 30% 20%, rgba(60, 80, 150, 0.5) 0%, transparent 55%),
+                radial-gradient(ellipse 70% 50% at 75% 35%, rgba(80, 100, 200, 0.4) 0%, transparent 55%),
+                radial-gradient(ellipse 90% 70% at 50% 75%, rgba(40, 50, 120, 0.5) 0%, transparent 60%),
+                linear-gradient(160deg, #0a0e2e 0%, #08081e 30%, #050513 60%, #02020a 100%);
+        }
+        .wallpaper.action {
+            background:
+                radial-gradient(ellipse 90% 70% at 50% 30%, rgba(255, 100, 100, 0.3) 0%, transparent 60%),
+                radial-gradient(ellipse 70% 50% at 30% 80%, rgba(255, 179, 64, 0.25) 0%, transparent 55%),
+                linear-gradient(160deg, #1a0a14 0%, #0a0508 60%, #000 100%);
+        }
+
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes scaleIn { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+        @keyframes breathe { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.1);opacity:1} }
+        @keyframes orbWave { 0%,100%{transform:scale(1) rotate(0deg)} 50%{transform:scale(1.05) rotate(180deg)} }
+        @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.4)} 100%{box-shadow:0 0 0 40px rgba(255,255,255,0)} }
+        @keyframes voiceWave {
+            0% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
+            100% { transform: scaleY(0.3); }
+        }
+        @keyframes typing { 0%,60%,100%{opacity:.3;transform:translateY(0)} 30%{opacity:1;transform:translateY(-4px)} }
+        @keyframes slideUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+
+        /* ========================================
+           Status Bar
+        ======================================== */
+        .status-bar {
+            position: fixed; top: 0; left: 0; right: 0;
+            padding: 16px 30px 0;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; pointer-events: none;
+        }
+        .sb-time { font-family: 'Inter'; font-size: 17px; font-weight: 600; letter-spacing: -0.5px; }
+        .sb-right { display: flex; gap: 6px; align-items: center; font-size: 14px; }
+
+        /* Dynamic Island */
+        .dynamic-island {
+            position: fixed; top: 11px; left: 50%;
+            transform: translateX(-50%);
+            background: #000; border-radius: 100px;
+            width: 126px; height: 37px;
+            z-index: 200;
+            transition: all 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        .dynamic-island.expanded {
+            width: 340px; height: 56px; border-radius: 28px;
+            padding: 0 18px; justify-content: flex-start; gap: 10px;
+        }
+        .di-content { display: flex; align-items: center; gap: 10px; opacity: 0; transition: opacity .3s; color: #fff; }
+        .dynamic-island.expanded .di-content { opacity: 1; transition-delay: .2s; }
+        .di-icon-wrap {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; flex-shrink: 0;
+        }
+        .di-icon-wrap.gold { background: #FFB340; }
+        .di-icon-wrap.green { background: #30D158; }
+        .di-icon-wrap.blue { background: #0A84FF; }
+        .di-text { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* ========================================
+           Container - 5 شاشات
+        ======================================== */
+        .container { position: relative; z-index: 1; height: 100vh; overflow: hidden; }
+        .screen {
+            position: absolute; inset: 0;
+            padding: 60px 24px 30px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .screen.active { opacity: 1; pointer-events: all; }
+        .screen::-webkit-scrollbar { display: none; }
+
+        /* ========================================
+           Liquid Glass Base
+        ======================================== */
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.18);
+            border-radius: 28px;
+            box-shadow:
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -0.5px 0 rgba(0, 0, 0, 0.15),
+                0 4px 16px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 28px 28px 0 0;
+            pointer-events: none;
+        }
+
+        /* ========================================
+           SCREEN 1: AWAKE - الاستيقاظ
+        ======================================== */
+        #screen-awake {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .awake-content {
+            animation: fadeIn 1.5s ease;
+        }
+        .awake-orb {
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.05) 70%);
+            backdrop-filter: blur(40px);
+            border: 0.5px solid rgba(255,255,255,0.2);
+            margin: 0 auto 30px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 80px;
+            animation: breathe 3s ease-in-out infinite;
+            cursor: pointer;
+        }
+        .awake-title {
+            font-size: 28px; font-weight: 800;
+            letter-spacing: -0.5px; margin-bottom: 10px;
+            color: #fff;
+        }
+        .awake-sub {
+            font-size: 15px; font-weight: 500;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 30px;
+        }
+        .awake-tap-hint {
+            display: inline-flex;
+            align-items: center; gap: 8px;
+            padding: 10px 22px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 100px;
+            border: 0.5px solid rgba(255,255,255,0.2);
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* ========================================
+           SCREEN 2: GREETING - فهد يرحب
+        ======================================== */
+        #screen-greeting {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .fahad-orb {
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFB340 0%, #FF8B40 100%);
+            margin: 0 auto 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 60px;
+            box-shadow:
+                0 0 60px rgba(255, 179, 64, 0.4),
+                inset 0 -10px 30px rgba(0,0,0,0.2);
+            animation: breathe 3s ease-in-out infinite;
+            position: relative;
+        }
+        .fahad-orb.speaking {
+            animation: orbWave 2s ease-in-out infinite;
+        }
+        .fahad-orb::after {
+            content: '';
+            position: absolute; inset: -8px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 179, 64, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .greeting-name {
+            font-size: 13px; font-weight: 600;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .greeting-title {
+            font-size: 24px; font-weight: 800;
+            margin-bottom: 18px;
+            letter-spacing: -0.5px;
+        }
+        .greeting-bubble {
+            max-width: 90%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(30px);
+            border: 0.5px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+            padding: 18px 22px;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.6;
+            color: #fff;
+            margin-bottom: 30px;
+            animation: scaleIn 0.6s ease;
+            box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.2);
+        }
+        .greeting-bubble strong {
+            color: #FFB340;
+            font-weight: 800;
+        }
+
+        /* Voice Wave */
+        .voice-wave {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            align-items: center;
+            height: 50px;
+            margin-bottom: 24px;
+        }
+        .voice-wave.listening .wave-bar {
+            animation: voiceWave 0.8s ease-in-out infinite;
+        }
+        .wave-bar {
+            width: 4px;
+            background: linear-gradient(180deg, #FFB340, #FF8B40);
+            border-radius: 2px;
+            height: 30%;
+            transform-origin: center;
+        }
+        .wave-bar:nth-child(1) { animation-delay: 0s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(6) { animation-delay: 0.5s; }
+
+        /* Greeting Buttons */
+        .greeting-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 90%;
+        }
+        .voice-btn {
+            background: linear-gradient(135deg, #FFB340, #FF8B40);
+            color: #000;
+            border: none;
+            padding: 16px 28px;
+            border-radius: 100px;
+            font-family: 'Tajawal';
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 20px rgba(255, 179, 64, 0.4);
+            transition: all 0.2s;
+        }
+        .voice-btn:active { transform: scale(0.95); }
+        .voice-btn.listening {
+            background: linear-gradient(135deg, #FF3B30, #FF6B40);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .text-btn {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            color: #fff;
+            border: 0.5px solid rgba(255,255,255,0.2);
+            padding: 16px 24px;
+            border-radius: 100px;
+            font-family: 'Tajawal';
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .text-btn:active { transform: scale(0.95); }
+
+        /* ========================================
+           SCREEN 3: CONVERSATION - المحادثة
+        ======================================== */
+        #screen-conversation {
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 100px;
+        }
+        .conv-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 8px 16px;
+            margin-bottom: 12px;
+        }
+        .conv-fahad {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFB340, #FF8B40);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(255, 179, 64, 0.3);
+            flex-shrink: 0;
+        }
+        .conv-fahad.speaking { animation: breathe 1.5s ease-in-out infinite; }
+        .conv-info { flex: 1; }
+        .conv-name { font-size: 16px; font-weight: 800; }
+        .conv-status { font-size: 11px; color: #30D158; font-weight: 600; }
+        .conv-status::before { content: '●'; margin-left: 4px; }
+        .conv-toggle {
+            background: rgba(255,255,255,0.1);
+            border: 0.5px solid rgba(255,255,255,0.15);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 100px;
+            font-family: 'Tajawal';
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .conv-messages {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 8px 4px;
+        }
+        .msg {
+            max-width: 80%;
+            padding: 14px 18px;
+            border-radius: 22px;
+            font-size: 14.5px;
+            font-weight: 500;
+            line-height: 1.55;
+            animation: slideUp 0.4s ease;
+        }
+        .msg.fahad {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255,255,255,0.15);
+            border-bottom-right-radius: 8px;
+            color: #fff;
+        }
+        .msg.fahad strong { color: #FFB340; font-weight: 800; }
+        .msg.guest {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #FFB340, #FF8B40);
+            color: #000;
+            border-bottom-left-radius: 8px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(255, 179, 64, 0.3);
+        }
+
+        /* Suggestion Chips */
+        .msg-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 0 4px;
+        }
+        .suggestion-chip {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255,255,255,0.15);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 100px;
+            font-family: 'Tajawal';
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            animation: slideUp 0.4s ease;
+        }
+        .suggestion-chip:active { transform: scale(0.95); background: rgba(255,255,255,0.15); }
+
+        /* Typing indicator */
+        .typing-indicator {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255,255,255,0.15);
+            padding: 14px 18px;
+            border-radius: 22px;
+            border-bottom-right-radius: 8px;
+            display: flex;
+            gap: 5px;
+        }
+        .typing-indicator span {
+            width: 7px; height: 7px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            animation: typing 1.4s ease-in-out infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Input Bar */
+        .conv-input-bar {
+            position: fixed;
+            bottom: 18px;
+            left: 16px; right: 16px;
+            height: 56px;
+            background: rgba(40, 45, 55, 0.7);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid rgba(255,255,255,0.15);
+            border-radius: 28px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 90;
+            box-shadow:
+                inset 0 0.5px 0 rgba(255,255,255,0.2),
+                0 8px 32px rgba(0,0,0,0.25);
+        }
+        .conv-input-bar.hidden { display: none; }
+        .conv-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+            padding: 0 14px;
+            outline: none;
+            font-weight: 500;
+        }
+        .conv-input::placeholder { color: rgba(255,255,255,0.5); }
+        .send-btn {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, #FFB340, #FF8B40);
+            border-radius: 50%;
+            border: none;
+            color: #000;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(255, 179, 64, 0.3);
+        }
+        .send-btn:active { transform: scale(0.9); }
+        .mic-btn {
+            width: 44px; height: 44px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 50%;
+            border: 0.5px solid rgba(255,255,255,0.15);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .mic-btn.listening {
+            background: #FF3B30;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Voice Mode Overlay */
+        .voice-overlay {
+            position: fixed;
+            bottom: 18px;
+            left: 16px; right: 16px;
+            background: rgba(40, 45, 55, 0.85);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid rgba(255,255,255,0.15);
+            border-radius: 28px;
+            padding: 16px 20px;
+            display: none;
+            align-items: center;
+            gap: 14px;
+            z-index: 91;
+        }
+        .voice-overlay.active { display: flex; animation: slideUp 0.4s ease; }
+        .voice-overlay .voice-wave {
+            flex: 1;
+            margin: 0;
+            justify-content: flex-start;
+        }
+        .voice-overlay-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* ========================================
+           SCREEN 4: ACTION - تنفيذ الطلب
+        ======================================== */
+        #screen-action {
+            padding-top: 60px;
+        }
+        .action-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255,255,255,0.15);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 100px;
+            font-family: 'Tajawal';
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+        .action-back:active { transform: scale(0.95); }
+
+        /* Match Card */
+        .match-hero {
+            padding: 22px;
+            background: linear-gradient(135deg, rgba(255, 100, 100, 0.15), rgba(255, 179, 64, 0.1));
+            border-color: rgba(255, 179, 64, 0.25);
+            margin-bottom: 14px;
+            text-align: center;
+        }
+        .match-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #FF3B30;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            margin-bottom: 14px;
+        }
+        .match-status::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            animation: breathe 1.5s ease-in-out infinite;
+        }
+        .match-teams {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .team {
+            text-align: center;
+        }
+        .team-logo {
+            width: 70px; height: 70px;
+            margin: 0 auto 10px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+        .team-name {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .team-score {
+            font-size: 38px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -2px;
+            color: #fff;
+            font-family: 'Inter';
+        }
+        .match-vs {
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.5);
+        }
+        .match-time {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        /* Match Actions */
+        .match-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .match-action {
+            background: rgba(255,255,255,0.06);
+            border: 0.5px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            color: #fff;
+            font-family: 'Tajawal';
+            transition: all 0.2s;
+        }
+        .match-action:active { transform: scale(0.95); background: rgba(255,255,255,0.12); }
+        .ma-icon { font-size: 24px; margin-bottom: 5px; }
+        .ma-label { font-size: 12px; font-weight: 700; }
+
+        /* Stats */
+        .match-stats {
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+        .stats-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 14px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .stat-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .stat-row:last-child { margin-bottom: 0; }
+        .stat-val {
+            font-weight: 900;
+            font-family: 'Inter';
+            font-size: 16px;
+        }
+        .stat-val.left { text-align: left; color: #5ac8d3; }
+        .stat-val.right { text-align: right; color: #FFD93D; }
+        .stat-bar {
+            grid-column: 1 / -1;
+            height: 5px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            display: flex;
+            margin-top: -4px;
+            margin-bottom: 4px;
+        }
+        .stat-bar > div:first-child { background: #5ac8d3; }
+        .stat-bar > div:last-child { background: #FFD93D; }
+        .stat-label {
+            text-align: center;
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 600;
+        }
+
+        /* Action Suggestions */
+        .action-suggestions {
+            padding: 18px;
+        }
+        .as-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        .as-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 9px;
+        }
+        .as-item {
+            background: rgba(255,255,255,0.06);
+            border: 0.5px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 14px 12px;
+            text-align: center;
+            cursor: pointer;
+            color: #fff;
+            transition: all 0.2s;
+        }
+        .as-item:active { transform: scale(0.94); }
+        .as-emoji { font-size: 26px; margin-bottom: 5px; }
+        .as-name { font-size: 12px; font-weight: 800; margin-bottom: 2px; font-family: 'Tajawal'; }
+        .as-price { font-size: 10px; color: #FFB340; font-weight: 700; font-family: 'Inter'; }
+
+        /* ========================================
+           SCREEN 5: AMBIENT - الوضع الخامل
+        ======================================== */
+        #screen-ambient {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 24px 24px;
+        }
+        .ambient-top {
+            text-align: center;
+        }
+        .ambient-time {
+            font-size: 90px;
+            font-weight: 200;
+            line-height: 1;
+            letter-spacing: -4px;
+            font-family: 'Inter';
+            margin-bottom: 8px;
+            text-shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        .ambient-date {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            font-weight: 600;
+        }
+        .ambient-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .ambient-card {
+            padding: 16px;
+            text-align: center;
+        }
+        .ac-icon { font-size: 22px; margin-bottom: 8px; }
+        .ac-val {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #fff;
+            font-family: 'Inter';
+        }
+        .ac-val small { font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 600; margin-right: 2px; }
+        .ac-lbl { font-size: 10px; color: rgba(255,255,255,0.55); font-weight: 600; margin-top: 4px; }
+
+        .ambient-hey {
+            background: linear-gradient(135deg, rgba(255, 179, 64, 0.2), rgba(255, 139, 64, 0.1));
+            border-color: rgba(255, 179, 64, 0.3);
+            padding: 16px 22px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        .ambient-hey:active { transform: scale(0.97); }
+        .ahey-orb {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFB340, #FF8B40);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 0 20px rgba(255, 179, 64, 0.4);
+            animation: breathe 3s ease-in-out infinite;
+        }
+        .ahey-text { flex: 1; }
+        .ahey-title { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
+        .ahey-sub { font-size: 11px; color: rgba(255,255,255,0.65); font-weight: 500; }
+
+        /* Settings Toggle (للـ Real Gemini) */
+        .settings-fab {
+            position: fixed;
+            top: 60px;
+            right: 16px;
+            width: 36px; height: 36px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 150;
+        }
+        .settings-fab:active { transform: scale(0.9); }
+
+        .settings-panel {
+            position: fixed;
+            top: 100px;
+            right: 16px;
+            background: rgba(28, 32, 40, 0.95);
+            backdrop-filter: blur(40px);
+            border: 0.5px solid rgba(255,255,255,0.15);
+            border-radius: 18px;
+            padding: 14px;
+            min-width: 240px;
+            z-index: 150;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .settings-panel.open { display: block; animation: slideUp 0.3s ease; }
+        .settings-title {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-top: 0.5px solid rgba(255,255,255,0.08);
+        }
+        .settings-row:first-of-type { border-top: none; }
+        .settings-label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .toggle-switch {
+            width: 38px; height: 22px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 100px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.on { background: #30D158; }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 18px; height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.on::after {
+            transform: translateX(-16px);
+        }
+        .settings-hint {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 8px;
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        /* Liquid Notification */
+        .notif {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px) scale(0.8);
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(30px) saturate(180%);
+            border: 0.5px solid rgba(255,255,255,0.25);
+            padding: 14px 22px;
+            border-radius: 32px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            display: flex; align-items: center; gap: 10px;
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s;
+            z-index: 250;
+            opacity: 0;
+            pointer-events: none;
+            box-shadow:
+                inset 0 0.5px 0 rgba(255,255,255,0.3),
+                0 8px 32px rgba(0,0,0,0.4);
+        }
+        .notif.show { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div class="wallpaper" id="wallpaper"></div>
+
+<!-- Status Bar -->
+<div class="status-bar">
+    <div class="sb-time" id="status-time">9:41</div>
+    <div class="sb-right">📶 🔋 100%</div>
+</div>
+
+<!-- Dynamic Island -->
+<div class="dynamic-island" id="island">
+    <div class="di-content">
+        <div class="di-icon-wrap gold" id="di-icon-wrap">🏠</div>
+        <div class="di-text" id="di-text">QLVIN</div>
+    </div>
+</div>
+
+<!-- Settings FAB -->
+<div class="settings-fab" onclick="toggleSettings()">⚙️</div>
+<div class="settings-panel" id="settings-panel">
+    <div class="settings-title">إعدادات Qlvn</div>
+    <div class="settings-row">
+        <div class="settings-label">🎤 صوت Apple TTS</div>
+        <div class="toggle-switch on" id="tts-toggle" onclick="toggleTTS()"></div>
+    </div>
+    <div class="settings-row">
+        <div class="settings-label">🤖 Gemini حقيقي</div>
+        <div class="toggle-switch" id="gemini-toggle" onclick="toggleGemini()"></div>
+    </div>
+    <div class="settings-hint">
+        وضع Smart Mock يعطي ردود محبوكة بدون إنترنت. شغّل Gemini الحقيقي بعد ربط Supabase.
+    </div>
+</div>
+
+<!-- Notification -->
+<div class="notif" id="notif">
+    <span id="notif-icon">✓</span>
+    <span id="notif-text">تم</span>
+</div>
+
+<div class="container">
+
+    <!-- ============ SCREEN 1: AWAKE ============ -->
+    <div class="screen active" id="screen-awake">
+        <div class="awake-content">
+            <div class="awake-orb" onclick="startGreeting()">👋</div>
+            <div class="awake-title">QLVIN</div>
+            <div class="awake-sub">تجربة الإقامة الذكية</div>
+            <div class="awake-tap-hint">
+                <span>اضغط للبدء</span>
+                <span>👆</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SCREEN 2: GREETING ============ -->
+    <div class="screen" id="screen-greeting">
+        <div style="text-align: center; max-width: 480px; margin: 0 auto;">
+            <div class="fahad-orb" id="fahad-orb-greeting">🧑‍💼</div>
+            <div class="greeting-name">موظف الاستقبال</div>
+            <div class="greeting-title">فهد</div>
+
+            <div class="greeting-bubble" id="greeting-bubble">
+                هلا والله بـ <strong>محمد</strong> 👋<br>
+                نوّرت Qlvin. الجو اليوم <strong>38°</strong>،
+                جهّزت لك المكيف على <strong>22°</strong>.
+                <br><br>
+                إيش تحب نسوي اليوم؟
+            </div>
+
+            <div class="voice-wave" id="greeting-wave">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+            </div>
+
+            <div class="greeting-actions">
+                <button class="voice-btn" onclick="startVoiceMode()">
+                    🎤 تكلّم مع فهد
+                </button>
+                <button class="text-btn" onclick="startTextMode()">
+                    💬 محادثة نصية
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SCREEN 3: CONVERSATION ============ -->
+    <div class="screen" id="screen-conversation">
+        <div class="conv-header">
+            <div class="conv-fahad" id="conv-fahad">🧑‍💼</div>
+            <div class="conv-info">
+                <div class="conv-name">فهد</div>
+                <div class="conv-status" id="conv-status">متصل</div>
+            </div>
+            <button class="conv-toggle" onclick="toggleVoiceText()">
+                <span id="mode-icon">💬</span>
+                <span id="mode-label">نصي</span>
+            </button>
+        </div>
+
+        <div class="conv-messages" id="conv-messages"></div>
+    </div>
+
+    <!-- ============ SCREEN 4: ACTION (Match) ============ -->
+    <div class="screen" id="screen-action">
+        <button class="action-back" onclick="backToConversation()">← العودة لفهد</button>
+
+        <div class="glass match-hero" id="match-hero">
+            <!-- يُملأ ديناميكياً -->
+        </div>
+
+        <div class="glass match-stats" id="match-stats">
+            <!-- إحصائيات -->
+        </div>
+
+        <div class="glass action-suggestions">
+            <div class="as-title">🎁 اقتراحات فهد لمزاج المباراة</div>
+            <div class="as-grid">
+                <div class="as-item" onclick="orderItem('قهوة مختصة', 15)">
+                    <div class="as-emoji">☕</div>
+                    <div class="as-name">قهوة مختصة</div>
+                    <div class="as-price">15 ر.س</div>
+                </div>
+                <div class="as-item" onclick="orderItem('فشار طازج', 10)">
+                    <div class="as-emoji">🍿</div>
+                    <div class="as-name">فشار طازج</div>
+                    <div class="as-price">10 ر.س</div>
+                </div>
+                <div class="as-item" onclick="orderItem('مشروب بارد', 8)">
+                    <div class="as-emoji">🥤</div>
+                    <div class="as-name">مشروب بارد</div>
+                    <div class="as-price">8 ر.س</div>
+                </div>
+                <div class="as-item" onclick="orderItem('عشاء سعودي', 35)">
+                    <div class="as-emoji">🍽</div>
+                    <div class="as-name">عشاء سعودي</div>
+                    <div class="as-price">35 ر.س</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SCREEN 5: AMBIENT ============ -->
+    <div class="screen" id="screen-ambient">
+        <div class="ambient-top">
+            <div class="ambient-time" id="ambient-time">9:41</div>
+            <div class="ambient-date" id="ambient-date">السبت، 30 سبتمبر</div>
+        </div>
+
+        <div class="ambient-info">
+            <div class="glass ambient-card">
+                <div class="ac-icon">🌡️</div>
+                <div class="ac-val">38<small>°</small></div>
+                <div class="ac-lbl">الجو خارج · الخبر</div>
+            </div>
+            <div class="glass ambient-card">
+                <div class="ac-icon">🔐</div>
+                <div class="ac-val">4321</div>
+                <div class="ac-lbl">رمز الدخول</div>
+            </div>
+            <div class="glass ambient-card">
+                <div class="ac-icon">❄️</div>
+                <div class="ac-val">22<small>°</small></div>
+                <div class="ac-lbl">المكيف داخل</div>
+            </div>
+            <div class="glass ambient-card">
+                <div class="ac-icon">⏱</div>
+                <div class="ac-val">5<small>س</small></div>
+                <div class="ac-lbl">المتبقي للمغادرة</div>
+            </div>
+        </div>
+
+        <div class="glass ambient-hey" onclick="goBackToConv()">
+            <div class="ahey-orb">🧑‍💼</div>
+            <div class="ahey-text">
+                <div class="ahey-title">قول "هاي فهد"</div>
+                <div class="ahey-sub">ولا اضغط هنا لإعادة المحادثة</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Voice Overlay (لما يكون mode = voice) -->
+<div class="voice-overlay" id="voice-overlay">
+    <div class="voice-wave listening">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+    </div>
+    <div class="voice-overlay-text">جاري الاستماع...</div>
+    <button class="mic-btn listening" onclick="stopListening()">🛑</button>
+</div>
+
+<!-- Input Bar (لما يكون mode = text) -->
+<div class="conv-input-bar hidden" id="conv-input-bar">
+    <button class="mic-btn" onclick="toggleListening()">🎤</button>
+    <input type="text" class="conv-input" id="conv-input"
+           placeholder="اكتب لفهد..."
+           onkeypress="if(event.key==='Enter')sendUserMessage()">
+    <button class="send-btn" onclick="sendUserMessage()">←</button>
+</div>
+
+<script>
+// ========================================
+// 🧠 STATE - الحالة العامة
+// ========================================
+const state = {
+    guestName: 'محمد',
+    fahadName: 'فهد',
+    favoriteTeam: null,
+    mode: 'text', // text | voice
+    ttsEnabled: true,
+    geminiEnabled: false, // false = Smart Mock
+    isListening: false,
+    isSpeaking: false,
+};
+
+// ========================================
+// ⚽ بيانات المباريات (Mock - أندية سعودية)
+// ========================================
+const matches = {
+    'الهلال': {
+        opponent: 'النصر',
+        time: 'اليوم 9:00 PM',
+        score: { home: 2, away: 1 },
+        homeLogo: '🔵',
+        awayLogo: '🟡',
+        homeColor: '#5ac8d3',
+        awayColor: '#FFD93D',
+        stats: {
+            possession: [62, 38],
+            shots: [14, 7],
+            corners: [8, 3],
+        },
+        currentMin: '67',
+        status: 'LIVE',
+        joke: 'الديربي السعودي على أشده 🔥'
+    },
+    'النصر': {
+        opponent: 'الاتحاد',
+        time: 'اليوم 6:30 PM',
+        score: { home: 3, away: 2 },
+        homeLogo: '🟡',
+        awayLogo: '⚫',
+        homeColor: '#FFD93D',
+        awayColor: '#999',
+        stats: {
+            possession: [55, 45],
+            shots: [11, 9],
+            corners: [6, 5],
+        },
+        currentMin: '82',
+        status: 'LIVE',
+        joke: 'CR7 بيشتغل اليوم 💪'
+    },
+    'الاتحاد': {
+        opponent: 'الأهلي',
+        time: 'بكره 8:00 PM',
+        score: { home: 0, away: 0 },
+        homeLogo: '⚫',
+        awayLogo: '🟢',
+        homeColor: '#999',
+        awayColor: '#30D158',
+        stats: {
+            possession: [50, 50],
+            shots: [0, 0],
+            corners: [0, 0],
+        },
+        currentMin: '--',
+        status: 'قادمة',
+        joke: 'ديربي جدة، استعد لإثارة!'
+    },
+    'الأهلي': {
+        opponent: 'الاتحاد',
+        time: 'بكره 8:00 PM',
+        score: { home: 0, away: 0 },
+        homeLogo: '🟢',
+        awayLogo: '⚫',
+        homeColor: '#30D158',
+        awayColor: '#999',
+        stats: {
+            possession: [50, 50],
+            shots: [0, 0],
+            corners: [0, 0],
+        },
+        currentMin: '--',
+        status: 'قادمة',
+        joke: 'ديربي جدة، استعد!'
+    }
+};
+
+// ========================================
+// 🎙️ Web Speech API Setup
+// ========================================
+let recognition = null;
+let arabicVoice = null;
+
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SR();
+    recognition.lang = 'ar-SA';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('🎤 سمعت:', transcript);
+        stopListening();
+        addMessage('guest', transcript);
+        processFahadReply(transcript);
+    };
+
+    recognition.onerror = (e) => {
+        console.error('Voice error:', e);
+        stopListening();
+        showNotif('🎤', 'تعذّر السماع، جرب نصياً');
+    };
+
+    recognition.onend = () => {
+        stopListening();
+    };
+}
+
+// تحميل أصوات Apple TTS
+function loadVoices() {
+    const voices = speechSynthesis.getVoices();
+    arabicVoice = voices.find(v =>
+        v.lang.startsWith('ar') && (v.name.includes('Maged') || v.name.includes('Hoda'))
+    ) || voices.find(v => v.lang.startsWith('ar')) || null;
+    console.log('🔊 Voice:', arabicVoice?.name || 'default');
+}
+loadVoices();
+if (typeof speechSynthesis !== 'undefined') {
+    speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function speak(text) {
+    if (!state.ttsEnabled) return;
+    if (!('speechSynthesis' in window)) return;
+
+    // إيقاف أي صوت سابق
+    speechSynthesis.cancel();
+
+    const cleanText = text.replace(/<[^>]+>/g, '').replace(/[👋🔥💪😊⚽☕🍿🥤🍽🤖✓✨🎉]/g, '');
+
+    const utter = new SpeechSynthesisUtterance(cleanText);
+    utter.lang = 'ar-SA';
+    utter.rate = 0.95;
+    utter.pitch = 1.0;
+    if (arabicVoice) utter.voice = arabicVoice;
+
+    state.isSpeaking = true;
+    document.getElementById('conv-fahad')?.classList.add('speaking');
+    document.getElementById('fahad-orb-greeting')?.classList.add('speaking');
+
+    utter.onend = () => {
+        state.isSpeaking = false;
+        document.getElementById('conv-fahad')?.classList.remove('speaking');
+        document.getElementById('fahad-orb-greeting')?.classList.remove('speaking');
+    };
+
+    speechSynthesis.speak(utter);
+}
+
+// ========================================
+// 🧠 عقل فهد المتطور - Scripted Intelligence
+// 40+ سيناريو + Pattern Matching + Variations
+// ========================================
+
+// 📚 قاموس مرادفات (يربط كلمات مختلفة بنفس النية)
+const intents = {
+    // ⚽ المباريات
+    match_general: ['مباراة', 'مباري', 'كورة', 'كرة', 'فريق', 'تشجع', 'الدوري', 'الديربي', 'يلعب'],
+    
+    // 🍔 الطعام
+    food: ['أكل', 'طعام', 'جوعان', 'جايع', 'عشاء', 'غداء', 'فطور', 'وجبة', 'سفرة', 'مطبخ', 'مطعم'],
+    food_saudi: ['كبسة', 'مندي', 'جريش', 'مطازيز', 'سعودي', 'تقليدي'],
+    food_fast: ['برجر', 'بيتزا', 'سريع', 'دجاج', 'شاورما'],
+    
+    // ☕ القهوة
+    coffee: ['قهوة', 'كافيه', 'اسبريسو', 'لاتيه', 'كابتشينو', 'فلات', 'مختصة', 'محمصة'],
+    
+    // 🌡️ المكيف
+    cold: ['برد', 'مكيف', 'تبريد', 'كييف', 'مبرد'],
+    hot: ['حار', 'حر', 'سخن', 'دافي', 'دفء', 'حراره', 'حرارة'],
+    
+    // 💡 الإضاءة
+    light: ['إضاءة', 'اضاءة', 'نور', 'ضوء', 'لمبة', 'لمبه', 'ضو'],
+    light_high: ['أعلى', 'أكثر', 'زيد', 'أقوى', 'فاتح'],
+    light_low: ['أخفض', 'أقل', 'هادي', 'خافت', 'نقص'],
+    light_off: ['طفي', 'اطفي', 'إطفاء', 'سكر', 'أغلق'],
+    
+    // 📶 الواي فاي
+    wifi: ['واي فاي', 'wifi', 'wi-fi', 'انترنت', 'إنترنت', 'نت', 'شبكة', 'باسوورد'],
+    
+    // ⏳ التمديد
+    extend: ['تمديد', 'مدد', 'أبقى', 'أزيد', 'وقت إضافي', 'ساعتين زياده', 'أطول'],
+    
+    // 🎬 الترفيه
+    entertainment: ['فيلم', 'أفلام', 'مسلسل', 'ترفيه', 'netflix', 'نتفلكس', 'شاهد', 'iptv', 'يوتيوب'],
+    
+    // 🌡️ الجو
+    weather: ['جو', 'طقس', 'الجو خارج', 'برا', 'الشمس'],
+    
+    // 🧹 خدمات
+    cleaning: ['تنظيف', 'نظافة', 'مكنسة', 'منظف', 'وسخ', 'متسخ'],
+    towels: ['مناشف', 'منشفة', 'فوط', 'حمام'],
+    
+    // 💬 تواصل
+    support: ['ساعد', 'مساعد', 'مشكلة', 'عطل', 'خراب', 'تعطل', 'لا يشتغل', 'مايشتغل'],
+    
+    // 👋 اجتماعيات
+    greeting: ['هلا', 'مرحبا', 'مرحباً', 'سلام', 'السلام', 'صباح', 'مساء', 'هاي'],
+    thanks: ['شكر', 'شكراً', 'مشكور', 'يعطيك', 'تسلم', 'الله يعطيك'],
+    bye: ['وداع', 'باي', 'الى اللقاء', 'مع السلامة', 'تصبح على خير'],
+    
+    // 🛌 الراحة
+    relax: ['أرتاح', 'ارتاح', 'استرخاء', 'هدوء', 'نوم', 'تعبان', 'مرهق', 'استرخي'],
+    
+    // 🎵 الموسيقى
+    music: ['موسيقى', 'أغاني', 'أغنية', 'صوت', 'تشغيل', 'سبوتيفاي', 'spotify'],
+    
+    // 💸 السعر / الفلوس
+    price: ['سعر', 'كم', 'بكم', 'تكلفة', 'فلوس'],
+    
+    // 🔑 الكود
+    code: ['كود', 'رمز', 'باسوورد', 'باب', 'دخول', 'قفل'],
+    
+    // 🚪 خروج
+    checkout: ['خروج', 'مغادرة', 'أطلع', 'باطلع', 'انهي'],
+    
+    // 🏠 معلومات الشقة
+    apartment_info: ['شقة', 'وحدة', 'الشقه', 'مين', 'صاحب', 'عنوان', 'موقع'],
+    
+    // 🤔 من أنت
+    who_are_you: ['من أنت', 'مين أنت', 'تعرف', 'فهد', 'وش اسمك'],
+};
+
+// 🎯 دالة كشف النية - تتحقق إذا النص يحوي أي كلمة من قائمة معينة
+function matchIntent(txt, words) {
+    return words.some(w => txt.includes(w));
+}
+
+// 🎲 اختيار عشوائي من مصفوفة (للتنويع)
+function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// 🕐 معرفة وقت اليوم
+function getTimeContext() {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return 'morning';   // صباح
+    if (h >= 12 && h < 17) return 'noon';     // ظهر
+    if (h >= 17 && h < 21) return 'evening';  // مغرب
+    return 'night';                            // ليل
+}
+
+// 💬 ردود متعددة لكل سيناريو (عشان ما يكرر نفسه)
+const responses = {
+    morning_greeting: [
+        'صباح الخير يا {name} 🌞',
+        'صباح النور والسرور 🌅',
+        'صباح الفل يا {name} ☕'
+    ],
+    evening_greeting: [
+        'مسا الخير يا {name} 🌙',
+        'مسا النور 🌃',
+        'مساك الله بالخير ✨'
+    ],
+    thanks_reply: [
+        'العفو والله 🌹',
+        'لا شكر على واجب 💚',
+        'حياك الله يا {name} 🙏',
+        'الله يسلمك، أنا هنا لخدمتك 🌟'
+    ],
+    bye_reply: [
+        'الله يحفظك، تصبح على خير 🌙',
+        'مع السلامة، أتمنى أعجبتك إقامتك ✨',
+        'الله معك، نتشرف بزيارتك مرة ثانية 💚'
+    ],
+    not_understood: [
+        'سمعتك يا {name} 👂 بس خلني أرتب لك خياراتك:',
+        'أبشر، خل أوريك إيش أقدر أساعدك فيه:',
+        'فهمت 🤔 اختر من اللي تحت:'
+    ]
+};
+
+// 🧠 العقل الرئيسي - يحلل ويرد
+function getSmartReply(userText) {
+    const txt = userText.toLowerCase()
+        .replace(/[؟?!.,،:;'"]/g, '')
+        .replace(/أ|إ|آ/g, 'ا') // توحيد الألف
+        .trim();
+    
+    const name = state.guestName;
+    const time = getTimeContext();
+
+    // ═══════════════════════════════════════
+    // 1️⃣ اكتشاف الفريق المفضل (أولوية عالية)
+    // ═══════════════════════════════════════
+    const teams = ['الهلال', 'النصر', 'الاتحاد', 'الأهلي'];
+    for (const team of teams) {
+        if (txt.includes(team) || txt.includes(team.replace('ال', ''))) {
+            state.favoriteTeam = team;
+            const match = matches[team];
+            
+            // تعليقات محبوكة حسب الفريق
+            const teamComments = {
+                'الهلال': ['الزعيم! 💙', 'هلالي حتى النخاع 🔵', 'العالمي 🌍'],
+                'النصر': ['نصراوي شريف! 💛', 'العالمي 🌟', 'يا هلا برونالدو 🐐'],
+                'الاتحاد': ['عميد الأندية! 🖤', 'الكبير 💪', 'تاريخ كبير 👑'],
+                'الأهلي': ['الراقي! 💚', 'فريق المدينة 🌃', 'الأخضر يفرح 🌿']
+            };
+            
+            return {
+                text: `${pick(teamComments[team])}<br>` +
+                      `أنا أيضاً متحمس لمباراة <strong>${team}</strong>! ${match.joke}<br><br>` +
+                      `📅 ${match.status === 'LIVE' ? '🔴 الآن مباشر · الدقيقة ' + match.currentMin : match.time}<br>` +
+                      `🆚 ضد <strong>${match.opponent}</strong><br><br>` +
+                      `جهزت لك القناة، تحب أعرض الإحصائيات؟ 📊`,
+                action: 'showMatch',
+                suggestions: ['شغّل المباراة 📺', 'احجز قهوة ☕', 'إيش رأيك بالنتيجة؟']
+            };
+        }
+    }
+
+    // ═══════════════════════════════════════
+    // 2️⃣ من أنت / تعريف
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.who_are_you)) {
+        return {
+            text: `أنا <strong>فهد</strong> 🧑‍💼<br>موظف الاستقبال الذكي في <strong>Qlvin OS</strong>.<br><br>` +
+                  `موجود لخدمتك على مدار الساعة - من الترحيب لتجهيز القهوة، التحكم بالغرفة، حجز المباريات، وأي شي تحتاجه يا ${name} 🌟`,
+            suggestions: ['إيش تقدر تسوي؟', 'تحكم بالغرفة', 'احجز قهوة']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 3️⃣ التحيات
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.greeting)) {
+        let greet;
+        if (time === 'morning') greet = pick(responses.morning_greeting);
+        else if (time === 'evening' || time === 'night') greet = pick(responses.evening_greeting);
+        else greet = `هلا والله بـ <strong>${name}</strong> 👋`;
+        
+        return {
+            text: `${greet.replace('{name}', name)}<br>كيف أقدر أساعدك اليوم؟`,
+            suggestions: ['شو فيه مباريات؟', 'أبي قهوة', 'الواي فاي', 'الجو حار']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 4️⃣ شكر / وداع
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.thanks)) {
+        return {
+            text: pick(responses.thanks_reply).replace('{name}', name),
+            suggestions: ['فيه شي ثاني؟', 'تمام']
+        };
+    }
+    
+    if (matchIntent(txt, intents.bye)) {
+        return {
+            text: pick(responses.bye_reply),
+            suggestions: []
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 5️⃣ مباراة بدون فريق محدد
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.match_general)) {
+        return {
+            text: `حلو! خل نتفرج كورة سوا 🔥<br>أي فريق تشجّع يا ${name}؟`,
+            suggestions: ['الهلال 🔵', 'النصر 🟡', 'الاتحاد ⚫', 'الأهلي 🟢']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 6️⃣ القهوة
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.coffee)) {
+        return {
+            text: `يا هلا! ☕<br>عندنا قهوة مختصة من أفضل المحامص السعودية:<br>` +
+                  `• <strong>قهوة عربية</strong> - 10 ر.س<br>` +
+                  `• <strong>اسبريسو مختصة</strong> - 15 ر.س<br>` +
+                  `• <strong>كابتشينو فاخر</strong> - 18 ر.س<br><br>` +
+                  `إيش يجلب لك يا ${name}؟`,
+            suggestions: ['قهوة عربية', 'اسبريسو', 'كابتشينو']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 7️⃣ الطعام
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.food)) {
+        // طعام سعودي
+        if (matchIntent(txt, intents.food_saudi)) {
+            return {
+                text: `الطعام السعودي الأصيل! 🍽<br>` +
+                      `• <strong>كبسة دجاج/لحم</strong> - 35 ر.س<br>` +
+                      `• <strong>مندي يمني</strong> - 40 ر.س<br>` +
+                      `• <strong>جريش جنوبي</strong> - 30 ر.س<br><br>` +
+                      `كل أكلاتنا من مطاعم سعودية فاخرة 👌`,
+                suggestions: ['كبسة دجاج', 'مندي', 'جريش']
+            };
+        }
+        // طعام سريع
+        if (matchIntent(txt, intents.food_fast)) {
+            return {
+                text: `طلبات سريعة من أشهر المطاعم 🍔<br>` +
+                      `• <strong>برجر فاخر</strong> - 28 ر.س<br>` +
+                      `• <strong>بيتزا إيطالية</strong> - 45 ر.س<br>` +
+                      `• <strong>شاورما مشكل</strong> - 18 ر.س<br><br>` +
+                      `التوصيل خلال 20 دقيقة 🛵`,
+                suggestions: ['برجر', 'بيتزا', 'شاورما']
+            };
+        }
+        // طعام عام
+        const timeMsg = time === 'morning' ? 'فطور دافي' : time === 'evening' ? 'عشاء فخم' : 'وجبة شهية';
+        return {
+            text: `يا هلا! 🍽 خل أرتب لك <strong>${timeMsg}</strong> يا ${name}.<br>` +
+                  `تبي شي سعودي أصيل ولا حاجة سريعة؟`,
+            suggestions: ['سعودي تقليدي', 'وجبات سريعة', 'صحي', 'حلويات']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 8️⃣ المكيف - حار
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.hot)) {
+        return {
+            text: `أبشّر يا ${name} 🌡️<br>عدّلت المكيف على <strong>18°</strong> ووضع التبريد القوي.<br>` +
+                  `بتحس بالفرق خلال 5 دقايق ❄️`,
+            suggestions: ['تمام', 'أبرد شوي', 'كافي كذا']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 9️⃣ المكيف - برد
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.cold)) {
+        return {
+            text: `عدّلت لك المكيف على <strong>24°</strong> 🌡️<br>` +
+                  `إذا حسّيت بحاجة لتعديل، قول لي.`,
+            suggestions: ['أدفأ شوي', 'كافي', 'أبرد']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 🔟 الإضاءة
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.light)) {
+        if (matchIntent(txt, intents.light_high)) {
+            return {
+                text: `رفعت لك الإضاءة على <strong>100%</strong> ☀️<br>الغرفة الحين منوّرة كاملة`,
+                suggestions: ['شكراً', 'خفض شوي']
+            };
+        }
+        if (matchIntent(txt, intents.light_low)) {
+            return {
+                text: `خفّضت الإضاءة على <strong>30%</strong> 🌙<br>جو هادي ومريح`,
+                suggestions: ['شكراً', 'وضع نوم', 'رومانسي']
+            };
+        }
+        if (matchIntent(txt, intents.light_off)) {
+            return {
+                text: `طفّيت كل الإضاءة ⚫<br>تصبح على خير يا ${name} 🌙`,
+                suggestions: ['شغّلها مرة ثانية']
+            };
+        }
+        return {
+            text: `الإضاءة الحين على <strong>60%</strong> 💡<br>كيف تبيها يا ${name}؟`,
+            suggestions: ['أعلى ☀️', 'أخفض 🌙', 'وضع رومانسي 💜', 'إطفاء ⚫']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 1️⃣1️⃣ الواي فاي
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.wifi)) {
+        return {
+            text: `📶 شبكة الواي فاي للشقة:<br><br>` +
+                  `الاسم: <strong>QLVIN_Raka_5G</strong><br>` +
+                  `كلمة المرور: <strong>12345678</strong><br><br>` +
+                  `السرعة: <strong>500 ميجا</strong> ⚡<br>` +
+                  `الإشارة قوية في كل الغرف 💯`,
+            suggestions: ['شكراً', 'فيه شبكة 2.4؟', 'الإشارة ضعيفة']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 1️⃣2️⃣ التمديد
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.extend)) {
+        return {
+            text: `أكيد يا ${name} ⏳<br>خيارات التمديد:<br><br>` +
+                  `• <strong>ساعة وحدة</strong> - 50 ر.س<br>` +
+                  `• <strong>3 ساعات</strong> - 120 ر.س <small>(وفّر 30 ر.س)</small><br>` +
+                  `• <strong>6 ساعات</strong> - 200 ر.س <small>(وفّر 100 ر.س)</small><br>` +
+                  `• <strong>24 ساعة</strong> - 350 ر.س <small>(الأوفر)</small> 🌟`,
+            suggestions: ['ساعة وحدة', '3 ساعات', '6 ساعات', '24 ساعة']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 1️⃣3️⃣ الترفيه
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.entertainment)) {
+        return {
+            text: `📺 على راحتك! فاتح لك:<br><br>` +
+                  `• <strong>Netflix</strong> - كل الجديد<br>` +
+                  `• <strong>Shahid VIP</strong> - مسلسلات عربية<br>` +
+                  `• <strong>YouTube Premium</strong><br>` +
+                  `• <strong>Apple TV+</strong><br><br>` +
+                  `إيش مزاجك يا ${name}؟`,
+            suggestions: ['فيلم سعودي 🎬', 'أكشن 💥', 'كوميدي 😂', 'وثائقي 🌍']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 1️⃣4️⃣ الجو
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.weather)) {
+        const weatherEmoji = time === 'morning' ? '🌅' : time === 'evening' ? '🌇' : time === 'night' ? '🌃' : '☀️';
+        return {
+            text: `${weatherEmoji} الجو خارج: <strong>38°</strong> (حار شوي)<br>` +
+                  `❄️ غرفتك على: <strong>22°</strong> (مزبوطة)<br><br>` +
+                  `الرطوبة: <strong>45%</strong><br>` +
+                  `السماء: صافية 🌤️`,
+            suggestions: ['عدّل المكيف', 'تمام', 'إيش الجو بكره؟']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 1️⃣5️⃣ تنظيف
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.cleaning)) {
+        return {
+            text: `🧹 أرسلت طلب التنظيف لفريقنا.<br>` +
+                  `بيوصلك خلال <strong>20 دقيقة</strong>.<br><br>` +
+                  `تحب أرتب لك جلسة في الصالة بينما يشتغلون؟`,
+            suggestions: ['تمام', 'لا، أنا برا', 'بدّل وقت لاحقاً']
+        };
+    }
+    
+    if (matchIntent(txt, intents.towels)) {
+        return {
+            text: `🛁 طلب مناشف جديدة - تم!<br>` +
+                  `بيوصلك سيت كامل (حمام + يدين + وجه) خلال 10 دقايق.`,
+            suggestions: ['شكراً', 'مع شامبو لو سمحت']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 1️⃣6️⃣ الراحة - Mode ذكي
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.relax)) {
+        return {
+            text: `أبشر يا ${name} 🌙<br><br>` +
+                  `فعّلت لك <strong>وضع الاسترخاء</strong>:<br>` +
+                  `• الإضاءة → 30% دافئة 💡<br>` +
+                  `• المكيف → 22° هادي ❄️<br>` +
+                  `• الصوت → موسيقى Lo-Fi 🎵<br>` +
+                  `• الإشعارات → صامتة 🔕<br><br>` +
+                  `استمتع براحتك 🌿`,
+            suggestions: ['كمل كذا', 'بدّل الموسيقى', 'أوقف الوضع']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 1️⃣7️⃣ الموسيقى
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.music)) {
+        return {
+            text: `🎵 شغّلت لك الموسيقى<br><br>` +
+                  `اختياراتي:<br>` +
+                  `• <strong>Lo-Fi هادئ</strong> 🎹<br>` +
+                  `• <strong>عربي كلاسيكي</strong> 🎻<br>` +
+                  `• <strong>عود سعودي</strong> 🪕<br>` +
+                  `• <strong>قرآن كريم</strong> 📖`,
+            suggestions: ['Lo-Fi', 'عربي', 'عود', 'قرآن', 'أوقف']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 1️⃣8️⃣ الكود / الباب
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.code)) {
+        return {
+            text: `🔐 رمز دخول شقتك:<br><br>` +
+                  `<strong style="font-size:28px;letter-spacing:6px;color:#FFB340">4 3 2 1</strong><br><br>` +
+                  `صالح طوال فترة إقامتك.<br>` +
+                  `<small>إذا ضاع منك، قول لي وأنا أبدّله فوراً.</small>`,
+            suggestions: ['شكراً', 'بدّل الكود', 'كيف أستخدمه؟']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 1️⃣9️⃣ السعر
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.price)) {
+        return {
+            text: `💰 الأسعار في شقتك:<br><br>` +
+                  `☕ قهوة: 10-18 ر.س<br>` +
+                  `🍿 سناك: 8-15 ر.س<br>` +
+                  `🍽 وجبة: 28-45 ر.س<br>` +
+                  `⏳ تمديد ساعة: 50 ر.س<br><br>` +
+                  `كل الأسعار شاملة الضريبة والتوصيل 👌`,
+            suggestions: ['اطلب قهوة', 'اطلب وجبة', 'مدد إقامتك']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 2️⃣0️⃣ المساعدة / مشكلة
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.support)) {
+        return {
+            text: `أنا هنا يا ${name} 🙏<br>إيش المشكلة بالضبط؟`,
+            suggestions: ['الواي فاي ضعيف', 'المكيف ما يبرد', 'مشكلة بالباب', 'مشكلة ثانية']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 2️⃣1️⃣ معلومات الشقة
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.apartment_info)) {
+        return {
+            text: `📍 معلومات شقتك:<br><br>` +
+                  `الاسم: <strong>شقة الراكة الفاخرة</strong><br>` +
+                  `الموقع: <strong>الراكة، الخبر</strong><br>` +
+                  `الطابق: <strong>الثالث</strong><br>` +
+                  `المساحة: <strong>120 متر</strong><br>` +
+                  `الغرف: 2 غرفة نوم + صالة + مطبخ`,
+            suggestions: ['كم باقي على المغادرة؟', 'مدد إقامتك', 'احجز خدمات']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 2️⃣2️⃣ خروج
+    // ═══════════════════════════════════════
+    if (matchIntent(txt, intents.checkout)) {
+        return {
+            text: `🚪 المغادرة المتوقعة: <strong>2:00 PM اليوم</strong><br>` +
+                  `الوقت المتبقي: <strong>5 ساعات تقريباً</strong><br><br>` +
+                  `تبي تمدد ولا تخرج في الموعد؟`,
+            suggestions: ['مدد إقامتي', 'سأخرج بالموعد', 'بدّل الموعد']
+        };
+    }
+
+    // ═══════════════════════════════════════
+    // 🎯 Fallback ذكي (لو ما فهم)
+    // ═══════════════════════════════════════
+    return {
+        text: pick(responses.not_understood).replace('{name}', name),
+        suggestions: ['⚽ مباريات اليوم', '☕ اطلب قهوة', '🌡️ تحكم بالغرفة', '📶 الواي فاي', '🍽 اطلب طعام', '⏳ تمديد']
+    };
+}
+
+// ========================================
+// 🌐 Real Gemini - Fallback ذكي فقط
+// (يدخل فقط لو Smart Reply رجع fallback)
+// ========================================
+async function getGeminiReply(userText) {
+    // أول شي: جرّب Smart Reply
+    const smartReply = getSmartReply(userText);
+    
+    // 🎯 لو Smart فهم الطلب (مو fallback)، استخدمه مباشرة
+    const isFallback = responses.not_understood.some(t =>
+        smartReply.text.includes(t.replace('{name}', state.guestName).split(' ')[0])
+    );
+    
+    if (!isFallback) {
+        console.log('✅ Smart Reply كفى (لا نحتاج Gemini)');
+        return smartReply;
+    }
+
+    // 🤖 لو Smart ما فهم → جرّب Gemini الحقيقي
+    console.log('🤖 طلب Gemini للنية المعقدة...');
+    
+    try {
+        // TODO: ربط Supabase Edge Function هنا
+        // const { data, error } = await supabase.functions.invoke('fahad-chat', {
+        //     body: {
+        //         message: userText,
+        //         guestName: state.guestName,
+        //         context: {
+        //             time: getTimeContext(),
+        //             temperature: 38,
+        //             ac: 22,
+        //             favoriteTeam: state.favoriteTeam
+        //         }
+        //     }
+        // });
+        // 
+        // if (data && data.reply) {
+        //     return {
+        //         text: data.reply,
+        //         suggestions: data.suggestions || ['شكراً', 'فيه شي ثاني؟']
+        //     };
+        // }
+        
+        // مؤقتاً: نرجع smart fallback
+        return smartReply;
+    } catch (err) {
+        console.error('Gemini error:', err);
+        return smartReply;
+    }
+}
+
+// ========================================
+// 💬 معالجة الرد من فهد
+// ========================================
+async function processFahadReply(userText) {
+    showTyping();
+    await sleep(800 + Math.random() * 600);
+    hideTyping();
+
+    let reply;
+    if (state.geminiEnabled) {
+        reply = await getGeminiReply(userText);
+    } else {
+        reply = getSmartReply(userText);
+    }
+
+    addMessage('fahad', reply.text, reply.suggestions);
+    speak(reply.text);
+
+    if (reply.action === 'showMatch') {
+        await sleep(1800);
+        showMatchScreen();
+    }
+}
+
+// ========================================
+// 🎬 شاشات
+// ========================================
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+
+    // تحديث الخلفية حسب الشاشة
+    const wp = document.getElementById('wallpaper');
+    wp.className = 'wallpaper';
+    if (id === 'screen-action') wp.classList.add('action');
+    if (id === 'screen-ambient') wp.classList.add('night');
+}
+
+function startGreeting() {
+    haptic();
+    showScreen('screen-greeting');
+    updateIsland('🧑‍💼', 'فهد جاهز', 'gold', 3000);
+    setTimeout(() => {
+        speak(`هلا والله بمحمد. نوّرت Qlvin. إيش تحب نسوي اليوم؟`);
+    }, 800);
+}
+
+function startTextMode() {
+    haptic();
+    state.mode = 'text';
+    showScreen('screen-conversation');
+    initConversation();
+    document.getElementById('conv-input-bar').classList.remove('hidden');
+    document.getElementById('voice-overlay').classList.remove('active');
+    document.getElementById('mode-icon').textContent = '💬';
+    document.getElementById('mode-label').textContent = 'نصي';
+}
+
+function startVoiceMode() {
+    haptic();
+    state.mode = 'voice';
+    showScreen('screen-conversation');
+    initConversation();
+    document.getElementById('conv-input-bar').classList.add('hidden');
+    document.getElementById('voice-overlay').classList.remove('active');
+    document.getElementById('mode-icon').textContent = '🎤';
+    document.getElementById('mode-label').textContent = 'صوتي';
+    setTimeout(startListening, 1200);
+}
+
+function toggleVoiceText() {
+    haptic();
+    if (state.mode === 'text') {
+        state.mode = 'voice';
+        document.getElementById('conv-input-bar').classList.add('hidden');
+        document.getElementById('mode-icon').textContent = '🎤';
+        document.getElementById('mode-label').textContent = 'صوتي';
+        showNotif('🎤', 'وضع صوتي مفعّل');
+        setTimeout(startListening, 600);
+    } else {
+        state.mode = 'text';
+        document.getElementById('conv-input-bar').classList.remove('hidden');
+        document.getElementById('voice-overlay').classList.remove('active');
+        stopListening();
+        document.getElementById('mode-icon').textContent = '💬';
+        document.getElementById('mode-label').textContent = 'نصي';
+        showNotif('💬', 'وضع نصي مفعّل');
+    }
+}
+
+let convInitialized = false;
+function initConversation() {
+    if (convInitialized) return;
+    convInitialized = true;
+    
+    // ترحيب ذكي حسب الوقت
+    const time = getTimeContext();
+    let greet;
+    if (time === 'morning') {
+        greet = `صباح الخير يا <strong>${state.guestName}</strong> 🌞`;
+    } else if (time === 'evening') {
+        greet = `مسا الخير يا <strong>${state.guestName}</strong> 🌅`;
+    } else if (time === 'night') {
+        greet = `مسا الخير يا <strong>${state.guestName}</strong> 🌙`;
+    } else {
+        greet = `يا هلا بـ <strong>${state.guestName}</strong> 👋`;
+    }
+    
+    addMessage('fahad',
+        `${greet}<br>` +
+        `أنا <strong>فهد</strong> 🧑‍💼<br>` +
+        `موظف الاستقبال في Qlvin. قول لي إيش تبي وأنا أرتّب لك كل شي.`,
+        ['⚽ مباريات اليوم', '☕ أبي قهوة', '📶 الواي فاي', '🌡️ تحكم بالغرفة']
+    );
+}
+
+function addMessage(sender, text, suggestions) {
+    const messages = document.getElementById('conv-messages');
+    const msg = document.createElement('div');
+    msg.className = 'msg ' + sender;
+    msg.innerHTML = text;
+    messages.appendChild(msg);
+
+    if (suggestions && suggestions.length) {
+        const wrap = document.createElement('div');
+        wrap.className = 'msg-suggestions';
+        suggestions.forEach(s => {
+            const chip = document.createElement('div');
+            chip.className = 'suggestion-chip';
+            chip.textContent = s;
+            chip.onclick = () => {
+                haptic();
+                addMessage('guest', s);
+                processFahadReply(s);
+                wrap.remove();
+            };
+            wrap.appendChild(chip);
+        });
+        messages.appendChild(wrap);
+    }
+
+    messages.parentElement.scrollTop = messages.parentElement.scrollHeight;
+}
+
+function showTyping() {
+    const messages = document.getElementById('conv-messages');
+    const t = document.createElement('div');
+    t.className = 'typing-indicator';
+    t.id = 'typing';
+    t.innerHTML = '<span></span><span></span><span></span>';
+    messages.appendChild(t);
+    messages.parentElement.scrollTop = messages.parentElement.scrollHeight;
+}
+
+function hideTyping() {
+    document.getElementById('typing')?.remove();
+}
+
+function sendUserMessage() {
+    const input = document.getElementById('conv-input');
+    const text = input.value.trim();
+    if (!text) return;
+    haptic();
+    addMessage('guest', text);
+    input.value = '';
+    processFahadReply(text);
+}
+
+// ========================================
+// 🎤 Voice Recognition
+// ========================================
+function startListening() {
+    if (!recognition) {
+        showNotif('⚠️', 'الصوت غير مدعوم - استخدم النصي');
+        return;
+    }
+    try {
+        recognition.start();
+        state.isListening = true;
+        document.getElementById('voice-overlay').classList.add('active');
+        document.getElementById('conv-status').textContent = 'يستمع...';
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function stopListening() {
+    if (recognition && state.isListening) {
+        try { recognition.stop(); } catch(e) {}
+    }
+    state.isListening = false;
+    document.getElementById('voice-overlay').classList.remove('active');
+    document.getElementById('conv-status').textContent = 'متصل';
+}
+
+function toggleListening() {
+    if (state.isListening) {
+        stopListening();
+    } else {
+        startListening();
+    }
+}
+
+// ========================================
+// ⚽ Match Screen
+// ========================================
+function showMatchScreen() {
+    if (!state.favoriteTeam) state.favoriteTeam = 'الهلال';
+    const match = matches[state.favoriteTeam];
+
+    const hero = document.getElementById('match-hero');
+    hero.innerHTML = `
+        <div class="match-status">${match.status === 'LIVE' ? 'مباشر · ' + match.currentMin + "'" : match.time}</div>
+        <div class="match-teams">
+            <div class="team">
+                <div class="team-logo" style="background:${match.homeColor}20;">${match.homeLogo}</div>
+                <div class="team-name">${state.favoriteTeam}</div>
+                <div class="team-score">${match.score.home}</div>
+            </div>
+            <div>
+                <div class="match-vs">VS</div>
+            </div>
+            <div class="team">
+                <div class="team-logo" style="background:${match.awayColor}20;">${match.awayLogo}</div>
+                <div class="team-name">${match.opponent}</div>
+                <div class="team-score">${match.score.away}</div>
+            </div>
+        </div>
+        <div class="match-actions">
+            <div class="match-action" onclick="showNotif('📺', 'جاري التحويل للقناة...')">
+                <div class="ma-icon">📺</div>
+                <div class="ma-label">شاهد على التلفزيون</div>
+            </div>
+            <div class="match-action" onclick="showNotif('🔔', 'فعّلت تنبيهات الأهداف')">
+                <div class="ma-icon">🔔</div>
+                <div class="ma-label">تنبيهات الأهداف</div>
+            </div>
+        </div>
+    `;
+
+    const stats = document.getElementById('match-stats');
+    stats.innerHTML = `
+        <div class="stats-title">📊 إحصائيات حية</div>
+        <div class="stat-row">
+            <div class="stat-val left">${match.stats.possession[0]}%</div>
+            <div class="stat-label">الاستحواذ</div>
+            <div class="stat-val right">${match.stats.possession[1]}%</div>
+        </div>
+        <div class="stat-bar">
+            <div style="width: ${match.stats.possession[0]}%"></div>
+            <div style="width: ${match.stats.possession[1]}%"></div>
+        </div>
+        <div class="stat-row">
+            <div class="stat-val left">${match.stats.shots[0]}</div>
+            <div class="stat-label">التسديدات</div>
+            <div class="stat-val right">${match.stats.shots[1]}</div>
+        </div>
+        <div class="stat-row">
+            <div class="stat-val left">${match.stats.corners[0]}</div>
+            <div class="stat-label">الركنيات</div>
+            <div class="stat-val right">${match.stats.corners[1]}</div>
+        </div>
+    `;
+
+    showScreen('screen-action');
+    updateIsland('⚽', `${state.favoriteTeam} ${match.score.home}-${match.score.away} ${match.opponent}`, 'gold', 5000);
+}
+
+function backToConversation() {
+    haptic();
+    showScreen('screen-conversation');
+}
+
+function orderItem(name, price) {
+    haptic();
+    showNotif('☕', `تم طلب ${name} (${price} ر.س)`);
+    updateIsland('✓', `${name} جاهز خلال 10 دقايق`, 'green', 4000);
+
+    // تنبيه المضيف
+    console.log(`📨 تنبيه المضيف: الضيف ${state.guestName} طلب ${name}`);
+}
+
+// ========================================
+// 🛋️ Ambient Mode
+// ========================================
+function enterAmbient() {
+    showScreen('screen-ambient');
+    updateAmbientTime();
+}
+
+function goBackToConv() {
+    haptic();
+    showScreen('screen-conversation');
+}
+
+function updateAmbientTime() {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes().toString().padStart(2, '0');
+    document.getElementById('ambient-time').textContent = `${h % 12 || 12}:${m}`;
+}
+
+// ========================================
+// ⚙️ Settings
+// ========================================
+function toggleSettings() {
+    haptic();
+    document.getElementById('settings-panel').classList.toggle('open');
+}
+
+function toggleTTS() {
+    haptic();
+    state.ttsEnabled = !state.ttsEnabled;
+    document.getElementById('tts-toggle').classList.toggle('on');
+    showNotif('🎤', state.ttsEnabled ? 'الصوت مفعّل' : 'الصوت موقف');
+}
+
+function toggleGemini() {
+    haptic();
+    state.geminiEnabled = !state.geminiEnabled;
+    document.getElementById('gemini-toggle').classList.toggle('on');
+    showNotif(state.geminiEnabled ? '🤖' : '🧠',
+              state.geminiEnabled ? 'Gemini الحقيقي مفعّل' : 'Smart Mock مفعّل');
+}
+
+// ========================================
+// 🔔 Helpers
+// ========================================
+function updateIsland(emoji, text, color = 'gold', duration = 3000) {
+    const island = document.getElementById('island');
+    const iconWrap = document.getElementById('di-icon-wrap');
+    const textEl = document.getElementById('di-text');
+
+    iconWrap.className = `di-icon-wrap ${color}`;
+    iconWrap.textContent = emoji;
+    textEl.textContent = text;
+    island.classList.add('expanded');
+
+    if (duration > 0) {
+        setTimeout(() => island.classList.remove('expanded'), duration);
+    }
+}
+
+function showNotif(icon, text) {
+    const notif = document.getElementById('notif');
+    document.getElementById('notif-icon').textContent = icon;
+    document.getElementById('notif-text').textContent = text;
+    notif.classList.add('show');
+    setTimeout(() => notif.classList.remove('show'), 2800);
+}
+
+function haptic() {
+    if (navigator.vibrate) navigator.vibrate(15);
+}
+
+function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+}
+
+// ========================================
+// 🕐 Clock
+// ========================================
+function updateClock() {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes().toString().padStart(2, '0');
+    const time = `${h % 12 || 12}:${m}`;
+    document.getElementById('status-time').textContent = time;
+    if (document.getElementById('ambient-time')) {
+        document.getElementById('ambient-time').textContent = time;
+    }
+
+    // تحديث الخلفية حسب الوقت
+    const wp = document.getElementById('wallpaper');
+    const hour = now.getHours();
+    if (!document.querySelector('.screen.active#screen-action')) {
+        wp.className = 'wallpaper';
+        if (hour >= 18 || hour < 5) {
+            wp.classList.add(hour >= 21 || hour < 5 ? 'night' : 'evening');
+        }
+    }
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+// Idle Mode (إذا ما فيه نشاط لمدة طويلة، يدخل Ambient)
+// (معطّل للديمو)
+// let idleTimer;
+// function resetIdle() {
+//     clearTimeout(idleTimer);
+//     idleTimer = setTimeout(enterAmbient, 60000);
+// }
+// document.addEventListener('click', resetIdle);
+// resetIdle();
+</script>
+</body>
+</html>

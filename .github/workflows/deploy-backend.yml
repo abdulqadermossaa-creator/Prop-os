@@ -1,0 +1,16 @@
+name: Deploy Backend to Render
+
+on:
+  push:
+    branches: [claude/smart-apartment-system-11CAW, main]
+    paths:
+      - 'server/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"

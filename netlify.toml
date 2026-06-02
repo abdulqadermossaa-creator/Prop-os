@@ -1,4 +1,11 @@
 [build]
+  publish = "frontend"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "no-cache"
   base = "qlvin-os-ui"
   command = "npm run build"
   publish = "dist"

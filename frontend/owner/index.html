@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>qlevl · لوحة المالك</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Tajawal:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090d;--bg2:#0b0e14;--panel:#0f1218;--border:#1a2030;
+  --accent:#00c8ff;--gold:#f0b429;--green:#00e676;--red:#ff3d57;
+  --orange:#ff7043;--text:#dce6f0;--dim:#4a5a6a;
+  --mono:'IBM Plex Mono',monospace;--sans:'Tajawal',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px}
+.login-card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:32px;width:min(360px,100%);text-align:center}
+.login-logo{font-family:var(--mono);font-size:36px;font-weight:600;color:var(--accent);margin-bottom:4px}
+.login-logo em{color:var(--gold);font-style:normal}
+.login-sub{font-size:12px;color:var(--dim);margin-bottom:24px}
+.field{margin-bottom:12px;text-align:right}
+.field label{font-size:11px;color:var(--dim);display:block;margin-bottom:5px}
+.field input{width:100%;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none}
+.field input:focus{border-color:var(--accent)}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#0090cc);border:none;border-radius:12px;color:#000;font-family:var(--sans);font-size:15px;font-weight:900;cursor:pointer;margin-top:6px}
+
+.hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.logo{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--accent)}
+.logo em{color:var(--gold);font-style:normal}
+.owner-badge{font-size:11px;color:var(--dim);padding:4px 10px;border:1px solid var(--border);border-radius:10px}
+.logout-btn{font-size:11px;color:var(--dim);background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer}
+
+.w{max-width:500px;margin:0 auto;padding:14px;display:flex;flex-direction:column;gap:14px}
+
+/* SUSPENDED BANNER */
+.suspended-banner{
+  background:rgba(255,61,87,.08);border:1px solid var(--red);border-radius:12px;
+  padding:16px 18px;display:none;
+}
+.suspended-banner.show{display:block}
+.sb-title{color:var(--red);font-weight:800;margin-bottom:4px}
+.sb-desc{font-size:12px;color:#c08090}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.stat-label{font-size:10px;color:var(--dim);margin-bottom:6px}
+.stat-val{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--gold)}
+.stat-unit{font-size:9px;color:var(--dim);margin-top:2px}
+
+/* APT CARD */
+.apt-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.apt-card-top{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start}
+.apt-card-name{font-size:15px;font-weight:800;margin-bottom:4px}
+.apt-card-loc{font-size:11px;color:var(--dim)}
+.apt-badge{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid}
+.b-active{color:var(--green);border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.07)}
+.b-occupied{color:var(--accent);border-color:rgba(0,200,255,.3);background:rgba(0,200,255,.07)}
+.b-suspended{color:var(--red);border-color:rgba(255,61,87,.3);background:rgba(255,61,87,.07)}
+
+.apt-card-body{padding:14px 18px}
+.booking-info{background:var(--bg2);border-radius:10px;padding:12px 14px}
+.bi-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px}
+.bi-row:last-child{margin:0}
+.bi-label{color:var(--dim)}
+.bi-val{font-weight:700}
+.no-booking{font-size:12px;color:var(--dim);padding:8px 0}
+.timer{font-family:var(--mono);font-size:24px;color:var(--accent);text-align:center;margin-top:10px}
+.commission-note{
+  margin-top:10px;padding:10px 14px;background:rgba(240,180,41,.05);
+  border:1px solid rgba(240,180,41,.15);border-radius:8px;
+  font-size:11px;color:#a08040;
+}
+.cn-row{display:flex;justify-content:space-between;margin-bottom:4px}
+.cn-row:last-child{margin:0}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200}
+.toast{padding:11px 20px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;animation:ti .3s ease}
+.toast.success{background:#00a854}.toast.error{background:#cc1a2c}.toast.info{background:#005f7a}
+@keyframes ti{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Login -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-logo">qlev<em>l</em></div>
+    <div class="login-sub">لوحة المالك</div>
+    <div class="field">
+      <label>رقم المالك</label>
+      <input id="ownerId" type="number" placeholder="1">
+    </div>
+    <div class="field">
+      <label>PIN</label>
+      <input id="ownerPin" type="password" maxlength="8" placeholder="••••"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-login" onclick="doLogin()">دخول</button>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+<div class="hdr">
+  <div class="logo">qlev<em>l</em></div>
+  <div class="owner-badge" id="ownerBadge">—</div>
+  <button class="logout-btn" onclick="logout()">خروج</button>
+</div>
+
+<div class="w">
+
+  <div class="suspended-banner" id="suspendedBanner">
+    <div class="sb-title">⚠️ حسابك موقوف</div>
+    <div class="sb-desc">تواصل مع إدارة المنصة لتفعيل الخدمة.</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">صافي اليوم</div>
+      <div class="stat-val" id="stToday">—</div>
+      <div class="stat-unit">ريال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">صافي الشهر</div>
+      <div class="stat-val" id="stMonth">—</div>
+      <div class="stat-unit">ريال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">الحجوزات</div>
+      <div class="stat-val" id="stBookings">—</div>
+      <div class="stat-unit">حجز</div>
+    </div>
+  </div>
+
+  <div id="aptsList"></div>
+
+</div>
+</div>
+
+<script>
+const S = localStorage.getItem('QLEVL_API') || window.location.origin;
+let OID = null;
+let OPIN = '';
+let timers = {};
+
+async function doLogin() {
+  OID = parseInt(document.getElementById('ownerId').value);
+  OPIN = document.getElementById('ownerPin').value.trim();
+  const res = await fetch(`${S}/api/owner/login`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({owner_id: OID, pin: OPIN})
+  });
+  const d = await res.json();
+  if (res.ok) {
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('ownerBadge').textContent = d.owner?.name || 'مالك';
+    loadDashboard();
+  } else {
+    toast(d.error || 'خطأ في الدخول', 'error');
+  }
+}
+
+function logout() {
+  OID = null; OPIN = '';
+  document.getElementById('loginWrap').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+async function loadDashboard() {
+  const res = await fetch(`${S}/api/owner/${OID}/dashboard?pin=${OPIN}`);
+  if (!res.ok) { const d = await res.json(); toast(d.error,'error'); return; }
+  const data = await res.json();
+
+  const owner = data.owner;
+  if (!owner.is_active) {
+    document.getElementById('suspendedBanner').classList.add('show');
+  }
+
+  const st = data.stats;
+  document.getElementById('stToday').textContent = st.today_net;
+  document.getElementById('stMonth').textContent = st.month_net;
+  document.getElementById('stBookings').textContent = st.total_bookings;
+
+  renderApts(data.apartments, owner.commission_rate);
+}
+
+function renderApts(apts, commRate) {
+  const el = document.getElementById('aptsList');
+  if (!apts.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--dim);font-size:13px;padding:30px">لا توجد شقق مسجلة</div>';
+    return;
+  }
+  el.innerHTML = apts.map(a => {
+    const b = a.active_booking;
+    const suspended = !a.is_active;
+    const badgeClass = suspended ? 'b-suspended' : b ? 'b-occupied' : 'b-active';
+    const badgeLabel = suspended ? 'موقوفة' : b ? 'مشغولة' : 'فارغة';
+
+    let bodyHtml = '';
+    if (suspended) {
+      bodyHtml = `<div style="color:var(--red);font-size:12px;padding:8px 0">⛔ هذه الشقة موقوفة من قِبل الإدارة</div>`;
+    } else if (b) {
+      const total = b.total_amount || 0;
+      const comm = b.commission_amt || 0;
+      const net = b.owner_net || 0;
+      bodyHtml = `
+        <div class="booking-info">
+          <div class="bi-row"><span class="bi-label">الضيف</span><span class="bi-val">${b.guest_name}</span></div>
+          <div class="bi-row"><span class="bi-label">دخل</span><span class="bi-val">${fmtT(b.start_time)}</span></div>
+          <div class="bi-row"><span class="bi-label">خروج</span><span class="bi-val">${fmtT(b.end_time)}</span></div>
+        </div>
+        <div class="timer" id="timer-${a.id}">${fmtSec(b.remaining_seconds)}</div>
+        <div class="commission-note">
+          <div class="cn-row"><span>إجمالي الحجز</span><span>${total} ر.س</span></div>
+          <div class="cn-row"><span>عمولة المنصة (${commRate}%)</span><span style="color:var(--red)">- ${comm} ر.س</span></div>
+          <div class="cn-row" style="font-weight:800;color:var(--gold)"><span>صافي ربحك</span><span>${net} ر.س</span></div>
+        </div>
+      `;
+      // start ticker
+      startTimer(a.id, b.remaining_seconds);
+    } else {
+      bodyHtml = `<div class="no-booking">لا يوجد حجز نشط حالياً</div>`;
+    }
+
+    return `
+      <div class="apt-card" style="margin-bottom:12px">
+        <div class="apt-card-top">
+          <div>
+            <div class="apt-card-name">${a.name}</div>
+            <div class="apt-card-loc">${a.location || '—'} · ${a.hourly_rate} ر.س/ساعة</div>
+          </div>
+          <span class="apt-badge ${badgeClass}">${badgeLabel}</span>
+        </div>
+        <div class="apt-card-body">${bodyHtml}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function startTimer(id, rem) {
+  if (timers[id]) clearInterval(timers[id]);
+  let r = rem;
+  timers[id] = setInterval(() => {
+    if (r > 0) r--;
+    const el = document.getElementById(`timer-${id}`);
+    if (el) el.textContent = fmtSec(r);
+  }, 1000);
+}
+
+function fmtSec(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+    : `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function fmtT(dt) {
+  if (!dt) return '—';
+  const d = new Date(dt + 'Z');
+  return d.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
+}
+
+function toast(msg, type='info', ms=3000) {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  const w = document.getElementById('toastWrap');
+  w.appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+
+setInterval(() => { if (OID) loadDashboard(); }, 30000);
+</script>
+</body>
+</html>
