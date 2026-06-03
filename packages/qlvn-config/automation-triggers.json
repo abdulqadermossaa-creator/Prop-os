@@ -1,39 +1,43 @@
 {
   "triggers": [
     {
-      "key": "time_of_day",
+      "key": "door_open",
+      "label_ar": "فتح الباب",
+      "icon": "🚪",
+      "config_schema": { "door_device_id": "uuid" }
+    },
+    {
+      "key": "presence",
+      "label_ar": "اكتشاف وجود",
+      "icon": "🚶",
+      "config_schema": { "presence_device_id": "uuid", "delay_seconds": 0 }
+    },
+    {
+      "key": "time",
       "label_ar": "وقت محدد",
       "icon": "⏰",
       "config_schema": {
         "time": "HH:MM",
-        "days": ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
+        "days": ["sun","mon","tue","wed","thu","fri","sat"]
       }
     },
     {
-      "key": "door_open",
-      "label_ar": "فتح الباب",
-      "icon": "🚪",
-      "config_schema": {
-        "door_device_id": "uuid"
-      }
+      "key": "checkout",
+      "label_ar": "وقت المغادرة",
+      "icon": "🏁",
+      "config_schema": { "minutes_before": 0 }
     },
     {
-      "key": "presence_detected",
-      "label_ar": "اكتشاف وجود",
-      "icon": "🚶",
-      "config_schema": {
-        "presence_device_id": "uuid",
-        "delay_seconds": 0
-      }
+      "key": "guest_message",
+      "label_ar": "رسالة من الضيف",
+      "icon": "💬",
+      "config_schema": { "keywords": [] }
     },
     {
-      "key": "presence_lost",
-      "label_ar": "انتهاء الوجود",
-      "icon": "👻",
-      "config_schema": {
-        "presence_device_id": "uuid",
-        "timeout_minutes": 5
-      }
+      "key": "match_detected",
+      "label_ar": "مباراة قريبة",
+      "icon": "⚽",
+      "config_schema": { "team": "string", "minutes_before": 30 }
     },
     {
       "key": "guest_checked_in",
@@ -42,45 +46,10 @@
       "config_schema": {}
     },
     {
-      "key": "checkout_time_reached",
-      "label_ar": "وقت المغادرة",
-      "icon": "🏁",
-      "config_schema": {
-        "minutes_before": 0
-      }
-    },
-    {
-      "key": "guest_message",
-      "label_ar": "رسالة من الضيف",
-      "icon": "💬",
-      "config_schema": {
-        "keywords": []
-      }
-    },
-    {
-      "key": "match_detected",
-      "label_ar": "مباراة قريبة",
-      "icon": "⚽",
-      "config_schema": {
-        "team": "string",
-        "minutes_before": 30
-      }
-    },
-    {
-      "key": "temperature_threshold",
-      "label_ar": "حد الحرارة",
-      "icon": "🌡️",
-      "config_schema": {
-        "temp_device_id": "uuid",
-        "operator": "above|below",
-        "value": 30
-      }
-    },
-    {
-      "key": "manual",
-      "label_ar": "تشغيل يدوي",
-      "icon": "🎮",
-      "config_schema": {}
+      "key": "presence_lost",
+      "label_ar": "انتهاء الوجود",
+      "icon": "👻",
+      "config_schema": { "timeout_minutes": 180 }
     }
   ]
 }

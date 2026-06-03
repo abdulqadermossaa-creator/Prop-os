@@ -7,9 +7,8 @@
       "params_schema": {
         "device_id": "uuid",
         "power": "on|off",
-        "temperature": 16,
-        "mode": "cool|heat|fan|auto",
-        "fan_speed": "low|medium|high|auto"
+        "temperature": 22,
+        "mode": "cool|heat|fan|auto"
       }
     },
     {
@@ -23,15 +22,18 @@
       }
     },
     {
-      "key": "set_led_rgb",
-      "label_ar": "تغيير لون RGB",
-      "icon": "🌈",
+      "key": "notify_host",
+      "label_ar": "تنبيه المضيف",
+      "icon": "👨‍💼",
+      "params_schema": { "title": "string", "body": "string" }
+    },
+    {
+      "key": "send_whatsapp",
+      "label_ar": "إرسال واتساب",
+      "icon": "📲",
       "params_schema": {
-        "device_id": "uuid",
-        "power": "on|off",
-        "color": "#RRGGBB",
-        "brightness": 100,
-        "effect": "static|pulse|rainbow|strobe"
+        "recipient": "guest|host|founder",
+        "message_template": "string"
       }
     },
     {
@@ -39,18 +41,16 @@
       "label_ar": "تفعيل وضع",
       "icon": "🎭",
       "params_schema": {
-        "mode": "normal|cinema|sleep|match|relax|business"
+        "mode": "normal|cinema|sleep|match|relax"
       }
     },
     {
-      "key": "show_notification",
-      "label_ar": "إظهار إشعار",
-      "icon": "🔔",
+      "key": "log_event",
+      "label_ar": "تسجيل حدث",
+      "icon": "📝",
       "params_schema": {
-        "title": "string",
-        "body": "string",
-        "duration_seconds": 5,
-        "target": "tablet|mobile_card|both"
+        "event_type": "string",
+        "payload": {}
       }
     },
     {
@@ -64,47 +64,11 @@
       }
     },
     {
-      "key": "send_whatsapp",
-      "label_ar": "إرسال واتساب",
-      "icon": "📲",
-      "params_schema": {
-        "recipient": "guest|host|founder",
-        "message_template": "string"
-      }
-    },
-    {
-      "key": "notify_host",
-      "label_ar": "تنبيه المضيف",
-      "icon": "👨‍💼",
-      "params_schema": {
-        "title": "string",
-        "body": "string"
-      }
-    },
-    {
-      "key": "log_event",
-      "label_ar": "تسجيل حدث",
-      "icon": "📝",
-      "params_schema": {
-        "event_type": "string",
-        "payload": {}
-      }
-    },
-    {
       "key": "change_unit_status",
       "label_ar": "تغيير حالة الشقة",
       "icon": "🔄",
       "params_schema": {
-        "status": "approved|suspended|inactive"
-      }
-    },
-    {
-      "key": "lock_door",
-      "label_ar": "قفل الباب",
-      "icon": "🔐",
-      "params_schema": {
-        "device_id": "uuid",
-        "action": "lock|unlock"
+        "operational_status": "available|occupied|cleaning|maintenance"
       }
     }
   ]
