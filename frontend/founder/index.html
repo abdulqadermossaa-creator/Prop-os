@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QLVIN OS · Founder Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030305;
+            --bg2: #07070d;
+            --bg3: #0a0a14;
+            --glass: rgba(255,255,255,0.04);
+            --glass2: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.08);
+            --sky: #64d2ff;
+            --gold: #c5a059;
+            --gold-soft: #d4a853;
+            --accent: #10b981;
+            --danger: #ff3b30;
+            --warn: #ff9f0a;
+            --text: #ffffff;
+            --text2: rgba(255,255,255,0.5);
+            --text3: rgba(255,255,255,0.35);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow-x: hidden; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        body::before { content: ''; position: fixed; top: -20%; right: -10%; width: 550px; height: 550px; background: radial-gradient(circle, rgba(197,160,89,0.045) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+        body::after { content: ''; position: fixed; bottom: -25%; left: -15%; width: 450px; height: 450px; background: radial-gradient(circle, rgba(100,210,255,0.03) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+
+        @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+        @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.6)} 50%{box-shadow:0 0 0 6px rgba(16,185,129,0)} }
+        @keyframes pulseRed { 0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.6)} 50%{box-shadow:0 0 0 6px rgba(255,59,48,0)} }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+        @keyframes sIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideDown { from{max-height:0;opacity:0} to{max-height:1500px;opacity:1} }
+        @keyframes countUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ===== Lock Screen ===== */
+        #lock-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; padding: 24px; transition: opacity .6s; }
+        .lk-logo { font-size: 36px; font-weight: 900; letter-spacing: 4px; animation: sIn .8s ease; }
+        .lk-logo span { color: var(--gold); font-size: 13px; margin-right: 6px; font-weight: 400; letter-spacing: 3px; }
+        .lk-tag { font-size: 10px; color: var(--text2); letter-spacing: 4px; margin-top: 6px; margin-bottom: 44px; animation: sIn .8s .2s both; }
+
+        .lock-box { width: 100%; max-width: 320px; background: var(--glass); border: 1px solid var(--border); border-radius: 28px; padding: 28px; animation: sIn .8s .35s both; position: relative; overflow: hidden; }
+        .lock-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,transparent,var(--gold),transparent); }
+        .lk-title { font-size: 15px; font-weight: 900; text-align: center; margin-bottom: 6px; }
+        .lk-hint { font-size: 10px; color: var(--text2); text-align: center; margin-bottom: 24px; }
+
+        .pin-row { display: flex; justify-content: center; gap: 14px; margin-bottom: 28px; }
+        .pin-dot { width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(197,160,89,0.35); transition: all .3s; }
+        .pin-dot.filled { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 10px rgba(197,160,89,0.45); }
+
+        .keypad { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; }
+        .key { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 17px; font-size: 21px; font-weight: 700; cursor: pointer; transition: all .2s; text-align: center; color: var(--text); font-family: 'Tajawal'; user-select: none; }
+        .key:hover { background: var(--glass2); border-color: rgba(197,160,89,0.28); }
+        .key:active { transform: scale(.88); background: rgba(197,160,89,0.12); }
+        .key.zero { grid-column: 2; }
+        .key.del { font-size: 15px; color: var(--text2); }
+        .lk-err { color: var(--danger); font-size: 11px; text-align: center; margin-top: 13px; min-height: 18px; transition: all .3s; }
+        .shake { animation: shake .45s ease; }
+
+        /* ===== Dashboard ===== */
+        #dashboard { display: none; padding: 18px; padding-bottom: 30px; animation: fadeUp .5s ease; position: relative; z-index: 1; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+        .logo { font-weight: 900; font-size: 18px; letter-spacing: 2px; display: flex; align-items: baseline; gap: 6px; }
+        .logo span { color: var(--gold); font-size: 11px; font-weight: 400; letter-spacing: 2px; }
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+        .badge-founder { background: rgba(197,160,89,0.1); color: var(--gold); padding: 6px 12px; border-radius: 18px; font-size: 10px; font-weight: 900; border: 1px solid rgba(197,160,89,0.22); }
+        .add-client-btn { background: var(--sky); color: #000; border: none; padding: 8px 13px; border-radius: 11px; font-family: 'Tajawal'; font-size: 11px; font-weight: 900; cursor: pointer; transition: all .3s; }
+        .add-client-btn:hover { background: #4ac3ff; transform: translateY(-1px); }
+
+        /* ===== HQ Wallet (أرباح المؤسسين) ===== */
+        .hq-wallet {
+            background: linear-gradient(135deg, rgba(197,160,89,0.08), rgba(16,185,129,0.03));
+            border: 1px solid rgba(197,160,89,0.22); border-radius: 24px;
+            padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden;
+        }
+        .hq-wallet::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,transparent,var(--gold),transparent); }
+        .hq-title { font-size: 10px; color: var(--gold); font-weight: 900; letter-spacing: 1.5px; margin-bottom: 8px; }
+        .hq-amount { font-size: 32px; font-weight: 900; color: var(--accent); animation: countUp .6s ease; }
+        .hq-amount small { font-size: 13px; opacity: .7; }
+        .hq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 14px; }
+        .hq-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 11px 12px; border-radius: 12px; }
+        .hq-box .lbl { font-size: 9px; color: var(--text2); margin-bottom: 4px; }
+        .hq-box .val { font-size: 15px; font-weight: 900; color: var(--sky); }
+
+        /* ===== Platform Stats ===== */
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+        .sg-card { background: var(--glass); border: 1px solid var(--border); border-radius: 16px; padding: 13px; text-align: center; }
+        .sg-lbl { font-size: 8px; color: var(--text2); letter-spacing: 1px; margin-bottom: 6px; }
+        .sg-val { font-size: 19px; font-weight: 900; }
+        .sg-sub { font-size: 7px; color: var(--text2); margin-top: 2px; }
+
+        /* ===== Section Label ===== */
+        .sec-lbl { font-size: 10px; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; margin: 18px 0 11px; display: flex; justify-content: space-between; align-items: center; }
+        .sec-lbl .count { color: var(--sky); background: rgba(100,210,255,0.08); padding: 2px 8px; border-radius: 7px; font-size: 9px; }
+        .sec-lbl .btn-add { background: var(--gold); color: #000; border: none; padding: 5px 11px; border-radius: 9px; font-size: 10px; font-weight: 900; cursor: pointer; font-family: 'Tajawal'; transition: all .3s; }
+        .sec-lbl .btn-add:hover { background: var(--gold-soft); }
+
+        /* ===== Owners Tree (شجرة الملاك) ===== */
+        .owner-card { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; margin-bottom: 11px; overflow: hidden; transition: all .3s; }
+        .owner-card:hover { border-color: rgba(197,160,89,0.2); }
+        .owner-card.open { border-color: rgba(197,160,89,0.3); }
+        
+        .owner-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background .3s; }
+        .owner-header:hover { background: var(--glass2); }
+        .owner-info { display: flex; align-items: center; gap: 12px; }
+        .owner-avatar { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: #000; flex-shrink: 0; }
+        .owner-info h3 { font-size: 14px; font-weight: 800; }
+        .owner-info p { font-size: 9px; color: var(--text2); margin-top: 2px; }
+        .owner-actions { display: flex; gap: 7px; align-items: center; }
+        .chevron { color: var(--text2); transition: transform .3s; font-size: 14px; }
+        .owner-card.open .chevron { transform: rotate(180deg); }
+
+        .btn-status { padding: 5px 10px; border-radius: 9px; font-size: 9px; font-weight: 700; border: none; cursor: pointer; font-family: 'Tajawal'; transition: all .3s; }
+        .btn-active { background: rgba(16,185,129,0.13); color: var(--accent); }
+        .btn-active:hover { background: rgba(16,185,129,0.22); }
+        .btn-suspended { background: rgba(255,59,48,0.13); color: var(--danger); border: 1px solid rgba(255,59,48,0.3); }
+
+        /* قائمة الشقق المنزلقة */
+        .apartments-container { max-height: 0; overflow: hidden; transition: max-height .4s ease; background: rgba(0,0,0,0.25); }
+        .owner-card.open .apartments-container { max-height: 1500px; animation: slideDown .5s ease; }
+        .apartments-inner { padding: 12px; border-top: 1px solid var(--border); }
+
+        .apt-row { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 13px; margin-bottom: 8px; transition: all .3s; }
+        .apt-row.killed { opacity: 0.4; position: relative; }
+        .apt-row.killed::after { content: '🔴 الشقة معطلة برمجياً'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--danger); font-size: 12px; background: rgba(0,0,0,0.5); border-radius: 14px; }
+
+        .apt-header-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .apt-name { font-size: 13px; font-weight: 800; }
+        .iot-status { display: flex; align-items: center; gap: 5px; font-size: 9px; font-weight: 700; }
+        .pulse-lamp { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .lamp-online { background: var(--accent); animation: pulse 2s infinite; }
+        .lamp-offline { background: var(--danger); animation: pulseRed 2s infinite; }
+        .txt-lamp { color: var(--accent); }
+        .txt-lamp.off { color: var(--danger); }
+
+        .apt-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin: 10px 0; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 10px; }
+        .apt-stat-item { text-align: center; }
+        .apt-stat-item .stat-lbl { font-size: 7px; color: var(--text2); display: block; margin-bottom: 2px; line-height: 1.2; }
+        .apt-stat-item .stat-val { font-size: 11px; font-weight: 700; }
+
+        .apt-controls { display: flex; gap: 7px; }
+        .btn-control { flex: 1; padding: 9px 7px; border-radius: 10px; border: 1px solid var(--border); font-size: 10px; font-weight: 700; cursor: pointer; color: var(--text); background: rgba(255,255,255,0.02); font-family: 'Tajawal'; transition: all .3s; }
+        .btn-control:hover { background: rgba(255,255,255,0.05); }
+        .btn-ota { border-color: rgba(100,210,255,0.3); color: var(--sky); }
+        .btn-ota:hover { background: rgba(100,210,255,0.08); }
+        .btn-ota:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-kill { border-color: rgba(255,59,48,0.3); color: var(--danger); }
+        .btn-kill:hover { background: rgba(255,59,48,0.08); }
+
+        .add-apt-btn { width: 100%; padding: 10px; background: transparent; border: 1px dashed var(--border); color: var(--text2); border-radius: 12px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Tajawal'; transition: all .3s; margin-top: 4px; }
+        .add-apt-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+        .suspended-mask { position: relative; }
+        .suspended-mask > * { opacity: 0.25; pointer-events: none; }
+        .suspended-mask::after { content: '🔴 الحساب موقوف بالكامل'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--danger); font-size: 14px; z-index: 5; background: rgba(0,0,0,0.5); border-radius: 12px; pointer-events: none; }
+
+        /* ===== Ad Engine ===== */
+        .ad-engine { background: linear-gradient(135deg, #0d0d18, #131320); border: 1px dashed rgba(197,160,89,0.32); border-radius: 22px; padding: 18px; margin-bottom: 14px; }
+        .ae-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+        .ae-title { font-size: 13px; font-weight: 800; color: var(--gold); }
+        .ae-live { font-size: 8px; color: var(--text2); display: flex; align-items: center; gap: 5px; }
+        .ae-live::before { content: ''; width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: blink 2s infinite; }
+        .ae-sub { font-size: 10px; color: var(--text2); margin-bottom: 14px; }
+
+        .ad-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 12px; }
+        .ad-slot { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 11px; }
+        .slot-lbl { font-size: 8px; color: var(--text2); letter-spacing: 1px; margin-bottom: 5px; }
+        .slot-unit { font-size: 10px; font-weight: 700; color: var(--sky); margin-bottom: 4px; }
+        .slot-status { font-size: 7px; padding: 2px 7px; border-radius: 6px; display: inline-block; }
+        .slot-on { background: rgba(16,185,129,0.14); color: var(--accent); }
+        .slot-empty { background: var(--glass); color: var(--text2); }
+
+        /* ===== Updates Center (OTA) ===== */
+        .updates-center { background: var(--glass); border: 1px solid var(--border); border-radius: 22px; padding: 18px; margin-bottom: 14px; }
+        .uc-title { font-size: 13px; font-weight: 900; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .uc-sub { font-size: 10px; color: var(--text2); margin-bottom: 14px; }
+        .select-target, .text-area-update, .ae-input {
+            width: 100%; padding: 11px 13px; background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border); border-radius: 11px; color: var(--text);
+            font-family: 'Tajawal'; font-size: 12px; margin-bottom: 9px; transition: border-color .3s;
+        }
+        .select-target:focus, .text-area-update:focus, .ae-input:focus { outline: none; border-color: rgba(197,160,89,0.45); }
+        .text-area-update { height: 80px; resize: none; }
+        .select-target option { background: #0a0a12; }
+        .deploy-btn { width: 100%; background: var(--gold); color: #000; border: none; padding: 13px; border-radius: 12px; font-family: 'Tajawal'; font-size: 12px; font-weight: 900; cursor: pointer; transition: all .3s; }
+        .deploy-btn:hover { background: var(--gold-soft); transform: translateY(-1px); }
+        .save-btn { background: rgba(16,185,129,0.13); border: 1px solid rgba(16,185,129,0.28); color: var(--accent); padding: 11px 22px; border-radius: 11px; font-family: 'Tajawal'; font-size: 11px; font-weight: 700; cursor: pointer; transition: all .3s; }
+        .save-btn:hover { background: rgba(16,185,129,0.24); }
+
+        /* ===== Platform Logs ===== */
+        .log-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: fadeUp .3s ease; }
+        .log-item:last-child { border-bottom: none; }
+        .log-icon { font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+        .log-body { flex: 1; }
+        .log-event { font-size: 11px; font-weight: 700; }
+        .log-host { font-size: 8px; color: var(--text2); margin-top: 2px; }
+        .log-type { font-size: 7px; padding: 2px 6px; border-radius: 5px; margin-top: 4px; display: inline-block; }
+        .lt-new { background: rgba(16,185,129,0.12); color: var(--accent); }
+        .lt-stop { background: rgba(255,59,48,0.12); color: var(--danger); }
+        .lt-ad { background: rgba(197,160,89,0.12); color: var(--gold); }
+        .lt-sys { background: rgba(100,210,255,0.1); color: var(--sky); }
+        .lt-ota { background: rgba(100,210,255,0.15); color: var(--sky); }
+        .log-time { font-size: 8px; color: var(--text2); white-space: nowrap; }
+
+        .logout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255,59,48,0.06); border: 1px solid rgba(255,59,48,0.18); color: var(--danger); padding: 13px; border-radius: 14px; width: 100%; cursor: pointer; font-family: 'Tajawal'; font-size: 12px; font-weight: 700; transition: all .3s; margin-top: 18px; }
+        .logout-btn:hover { background: rgba(255,59,48,0.14); }
+
+        /* ===== Modal إضافة عميل ===== */
+        .modal-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .3s; backdrop-filter: blur(8px); }
+        .modal-ov.open { opacity: 1; pointer-events: all; }
+        .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 26px 26px 0 0; padding: 22px 16px 28px; width: 100%; max-height: 92vh; overflow-y: auto; transform: translateY(100%); transition: transform .4s cubic-bezier(.32,.72,0,1); }
+        .modal-ov.open .modal { transform: translateY(0); }
+        .modal-handle { width: 38px; height: 3px; background: var(--border); border-radius: 3px; margin: 0 auto 18px; }
+        .modal-title { font-size: 17px; font-weight: 900; text-align: center; margin-bottom: 3px; }
+        .modal-sub { font-size: 10px; color: var(--text2); text-align: center; margin-bottom: 20px; }
+
+        .form-section { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 11px; }
+        .fs-title { font-size: 11px; color: var(--sky); font-weight: 800; margin-bottom: 11px; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+        .fs-title .num { background: rgba(100,210,255,0.15); color: var(--sky); width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; }
+
+        .form-group { margin-bottom: 10px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-label { font-size: 10px; color: var(--text2); margin-bottom: 5px; display: block; }
+        .form-label .req { color: var(--danger); }
+        .form-input { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Tajawal'; font-size: 12px; transition: all .3s; }
+        .form-input:focus { outline: none; border-color: rgba(100,210,255,0.45); background: rgba(255,255,255,0.06); }
+        .form-input::placeholder { color: rgba(255,255,255,0.22); }
+        .form-hint { font-size: 9px; color: var(--text2); margin-top: 4px; font-style: italic; }
+
+        .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+        .plan-opt { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; transition: all .3s; text-align: center; }
+        .plan-opt:hover, .plan-opt.sel { background: rgba(197,160,89,0.1); border-color: rgba(197,160,89,0.45); }
+        .plan-opt .pn { font-size: 11px; font-weight: 700; color: var(--gold); }
+        .plan-opt .pp { font-size: 9px; color: var(--text2); margin-top: 2px; }
+
+        .submit-row { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-top: 8px; }
+        .cancel-btn { background: var(--glass); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 11px; font-family: 'Tajawal'; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .submit-btn { background: var(--sky); color: #000; border: none; padding: 12px; border-radius: 11px; font-family: 'Tajawal'; font-size: 12px; font-weight: 900; cursor: pointer; transition: all .3s; }
+        .submit-btn:hover { background: #4ac3ff; }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--sky); color: #000; padding: 11px 22px; border-radius: 30px; font-size: 12px; font-weight: 700; opacity: 0; transition: all .3s; pointer-events: none; z-index: 500; max-width: 92%; text-align: center; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.success { background: var(--accent); color: #fff; }
+        .toast.danger { background: var(--danger); color: #fff; }
+    </style>
+</head>
+<body>
+
+<!-- ===== Lock Screen ===== -->
+<div id="lock-screen">
+    <div class="lk-logo">QLVIN<span>FOUNDER OS</span></div>
+    <div class="lk-tag">OWNER ACCESS ONLY · COMMAND CENTER</div>
+
+    <div class="lock-box" id="lock-box">
+        <div class="lk-title">🔐 لوحة المؤسسين</div>
+        <div class="lk-hint">أدخل رمز الوصول المشفّر</div>
+
+        <div class="pin-row">
+            <div class="pin-dot" id="d0"></div>
+            <div class="pin-dot" id="d1"></div>
+            <div class="pin-dot" id="d2"></div>
+            <div class="pin-dot" id="d3"></div>
+        </div>
+
+        <div class="keypad">
+            <button class="key" onclick="pressKey('1')">1</button>
+            <button class="key" onclick="pressKey('2')">2</button>
+            <button class="key" onclick="pressKey('3')">3</button>
+            <button class="key" onclick="pressKey('4')">4</button>
+            <button class="key" onclick="pressKey('5')">5</button>
+            <button class="key" onclick="pressKey('6')">6</button>
+            <button class="key" onclick="pressKey('7')">7</button>
+            <button class="key" onclick="pressKey('8')">8</button>
+            <button class="key" onclick="pressKey('9')">9</button>
+            <button class="key zero" onclick="pressKey('0')">0</button>
+            <button class="key del" onclick="deleteKey()">⌫</button>
+        </div>
+        <div class="lk-err" id="lk-err"></div>
+    </div>
+</div>
+
+<!-- ===== Dashboard ===== -->
+<div id="dashboard">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">QLVIN<span>FOUNDER</span></div>
+        <div class="header-actions">
+            <button class="add-client-btn" onclick="openAddClient()">➕ مالك جديد</button>
+            <div class="badge-founder">👑 سليمان + عبدالقادر</div>
+        </div>
+    </div>
+
+    <!-- محفظة أرباح المؤسسين -->
+    <div class="hq-wallet">
+        <div class="hq-title">💰 محفظة الأرباح الصافية للمؤسسين · 100%</div>
+        <div class="hq-amount">٥,٤٢٠ <small>ر.س</small></div>
+        <div class="hq-grid">
+            <div class="hq-box">
+                <div class="lbl">القهوة والفشار</div>
+                <div class="val">٣,٨٠٠ ر.س</div>
+            </div>
+            <div class="hq-box">
+                <div class="lbl">حصتنا من التمديد</div>
+                <div class="val">١,٦٢٠ ر.س</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Stats -->
+    <div class="stats-row">
+        <div class="sg-card">
+            <div class="sg-lbl">ملاك نشطين</div>
+            <div class="sg-val" style="color:var(--accent);">٢</div>
+            <div class="sg-sub">من ٣ مسجلين</div>
+        </div>
+        <div class="sg-card">
+            <div class="sg-lbl">إجمالي الوحدات</div>
+            <div class="sg-val" style="color:var(--gold);">٤</div>
+            <div class="sg-sub">٣ متصلة · ١ مفصولة</div>
+        </div>
+        <div class="sg-card">
+            <div class="sg-lbl">دخل المنصة</div>
+            <div class="sg-val" style="color:var(--sky);">٤٦٫٨ك</div>
+            <div class="sg-sub">ر.س / شهر</div>
+        </div>
+    </div>
+
+    <!-- شجرة الملاك -->
+    <div class="sec-lbl">
+        <span>👥 شجرة الملاك المتصلين</span>
+        <span class="count" id="owners-count">٢ ملاك</span>
+    </div>
+
+    <div id="owners-tree">
+
+        <!-- المالك 1: خالد السديري -->
+        <div class="owner-card" id="owner-card-1">
+            <div class="owner-header" onclick="toggleOwner(1)">
+                <div class="owner-info">
+                    <div class="owner-avatar" style="background:linear-gradient(135deg,var(--sky),var(--accent));">خا</div>
+                    <div>
+                        <h3>خالد السديري</h3>
+                        <p>٢ شقق · شرق الدمام · QLVN-1001</p>
+                    </div>
+                </div>
+                <div class="owner-actions" onclick="event.stopPropagation()">
+                    <button class="btn-status btn-active" id="status-1" onclick="toggleOwnerStatus(1)">🟢 نشط</button>
+                    <span class="chevron">▼</span>
+                </div>
+            </div>
+
+            <div class="apartments-container">
+                <div class="apartments-inner" id="content-1">
+
+                    <!-- شقة الراكة -->
+                    <div class="apt-row" id="apt-1-1">
+                        <div class="apt-header-meta">
+                            <div class="apt-name">🏠 شقة الراكة (الفاخرة)</div>
+                            <div class="iot-status">
+                                <span class="pulse-lamp lamp-online"></span>
+                                <span class="txt-lamp">Pi متصل</span>
+                            </div>
+                        </div>
+                        <div class="apt-stats">
+                            <div class="apt-stat-item"><span class="stat-lbl">حجوزات الشهر</span><div class="stat-val">١٢</div></div>
+                            <div class="apt-stat-item"><span class="stat-lbl">دخل المالك</span><div class="stat-val" style="color:var(--accent);">٩٫٤ك</div></div>
+                            <div class="apt-stat-item"><span class="stat-lbl">حصتنا</span><div class="stat-val" style="color:var(--sky);">١٫٢ك</div></div>
+                        </div>
+                        <div class="apt-controls">
+                            <button class="btn-control btn-ota" onclick="pushOTA('شقة الراكة')">🔄 OTA Update</button>
+                            <button class="btn-control btn-kill" onclick="toggleAptKill(1,1)">⛔ إطفاء</button>
+                        </div>
+                    </div>
+
+                    <!-- شقة بن خلدون -->
+                    <div class="apt-row" id="apt-1-2">
+                        <div class="apt-header-meta">
+                            <div class="apt-name">🏠 شقة بن خلدون</div>
+                            <div class="iot-status">
+                                <span class="pulse-lamp lamp-online"></span>
+                                <span class="txt-lamp">Pi متصل</span>
+                            </div>
+                        </div>
+                        <div class="apt-stats">
+                            <div class="apt-stat-item"><span class="stat-lbl">حجوزات الشهر</span><div class="stat-val">٨</div></div>
+                            <div class="apt-stat-item"><span class="stat-lbl">دخل المالك</span><div class="stat-val" style="color:var(--accent);">١٢٫٥ك</div></div>
+                            <div class="apt-stat-item"><span class="stat-lbl">حصتنا</span><div class="stat-val" style="color:var(--sky);">١٫٨ك</div></div>
+                        </div>
+                        <div class="apt-controls">
+                            <button class="btn-control btn-ota" onclick="pushOTA('شقة بن خلدون')">🔄 OTA Update</button>
+                            <button class="btn-control btn-kill" onclick="toggleAptKill(1,2)">⛔ إطفاء</button>
+                        </div>
+                    </div>
+
+                    <button class="add-apt-btn" onclick="toast('فتح إضافة شقة لـ خالد السديري')">+ إضافة شقة جديدة لنفس المالك</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- المالك 2: عبدالعزيز الفهد -->
+        <div class="owner-card" id="owner-card-2">
+            <div class="owner-header" onclick="toggleOwner(2)">
+                <div class="owner-info">
+                    <div class="owner-avatar" style="background:linear-gradient(135deg,var(--gold),var(--danger));">عب</div>
+                    <div>
+                        <h3>عبدالعزيز الفهد</h3>
+                        <p>١ شقة · حي المنار · QLVN-1002</p>
+                    </div>
+                </div>
+                <div class="owner-actions" onclick="event.stopPropagation()">
+                    <button class="btn-status btn-active" id="status-2" onclick="toggleOwnerStatus(2)">🟢 نشط</button>
+                    <span class="chevron">▼</span>
+                </div>
+            </div>
+
+            <div class="apartments-container">
+                <div class="apartments-inner" id="content-2">
+
+                    <div class="apt-row" id="apt-2-1">
+                        <div class="apt-header-meta">
+                            <div class="apt-name">🏠 شقة المنار</div>
+                            <div class="iot-status">
+                                <span class="pulse-lamp lamp-offline"></span>
+                                <span class="txt-lamp off">Pi مفصول</span>
+                            </div>
+                        </div>
+                        <div class="apt-stats">
+                            <div class="apt-stat-item"><span class="stat-lbl">حجوزات الشهر</span><div class="stat-val">٥</div></div>
+                            <div class="apt-stat-item"><span class="stat-lbl">دخل المالك</span><div class="stat-val" style="color:var(--accent);">٧٫٠ك</div></div>
+                            <div class="apt-stat-item"><span class="stat-lbl">حصتنا</span><div class="stat-val" style="color:var(--sky);">٧٧٠</div></div>
+                        </div>
+                        <div class="apt-controls">
+                            <button class="btn-control btn-ota" disabled onclick="toast('⚠️ تعذّر: Pi مفصول، تحقق من اتصال الإنترنت', 'danger')">🔄 OTA Update</button>
+                            <button class="btn-control btn-kill" onclick="toggleAptKill(2,1)">⛔ إطفاء</button>
+                        </div>
+                    </div>
+
+                    <button class="add-apt-btn" onclick="toast('فتح إضافة شقة لـ عبدالعزيز الفهد')">+ إضافة شقة جديدة لنفس المالك</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Ad Engine -->
+    <div class="sec-lbl">📢 محرك الإعلانات · B2B</div>
+    <div class="ad-engine">
+        <div class="ae-header">
+            <div class="ae-title">Ad Engine</div>
+            <div class="ae-live">مباشر</div>
+        </div>
+        <div class="ae-sub">إعلانات موجّهة للضيوف حسب موقع العقار</div>
+
+        <div class="ad-slots">
+            <div class="ad-slot">
+                <div class="slot-lbl">الراكة · SLOT 1</div>
+                <div class="slot-unit">البيك · ١٥٪</div>
+                <span class="slot-status slot-on">● نشط</span>
+            </div>
+            <div class="ad-slot">
+                <div class="slot-lbl">المنار · SLOT 1</div>
+                <div class="slot-unit">— فارغ</div>
+                <span class="slot-status slot-empty">متاح</span>
+            </div>
+        </div>
+
+        <select class="select-target">
+            <option>اختر الوحدة المستهدفة</option>
+            <option>شقة الراكة</option>
+            <option>شقة بن خلدون</option>
+            <option>شقة المنار</option>
+            <option>جميع الوحدات</option>
+        </select>
+        <input type="text" class="ae-input" placeholder="اسم العرض · مثال: خصم ٢٠٪">
+        <input type="text" class="ae-input" placeholder="رابط صورة الإعلان">
+        <button class="save-btn" onclick="publishAd()">نشر الإعلان ←</button>
+    </div>
+
+    <!-- مركز تحديثات OTA -->
+    <div class="sec-lbl">🚀 مركز التحديثات السحابي</div>
+    <div class="updates-center">
+        <div class="uc-title">📡 دفع تحديث OTA عالمي</div>
+        <div class="uc-sub">بث برمجي مشفر لكل الواجهات والأجهزة</div>
+
+        <select class="select-target" id="update-target">
+            <option value="owner">→ واجهة الملاك (لوحة المضيف)</option>
+            <option value="staff">→ تطبيق الكادر التشغيلي (نظافة + صيانة)</option>
+            <option value="unit">→ داشبورد شاشة الشقة (تابلت الضيف)</option>
+            <option value="raspberry">→ كل أجهزة Raspberry Pi (Firmware)</option>
+        </select>
+        <textarea class="text-area-update" id="update-notes" placeholder="مذكرات التحديث · مثلاً: إصلاح خطأ في العد التنازلي + إضافة صوت ترحيب"></textarea>
+        <button class="deploy-btn" onclick="deployGlobalUpdate()">⚡ بث التحديث الآن</button>
+    </div>
+
+    <!-- سجل المنصة -->
+    <div class="sec-lbl">📋 سجل المنصة · مباشر</div>
+    <div id="platform-logs">
+        <div class="log-item">
+            <div class="log-icon">🆕</div>
+            <div class="log-body">
+                <div class="log-event">مالك جديد: محمد الغامدي</div>
+                <div class="log-host">QLVN-1044 · ٣ وحدات · بريدة</div>
+                <span class="log-type lt-new">NEW OWNER</span>
+            </div>
+            <div class="log-time">منذ ٢٠ د</div>
+        </div>
+        <div class="log-item">
+            <div class="log-icon">📢</div>
+            <div class="log-body">
+                <div class="log-event">نشر إعلان: البيك · الراكة</div>
+                <div class="log-host">١٥٪ خصم · صالح اليوم</div>
+                <span class="log-type lt-ad">AD ENGINE</span>
+            </div>
+            <div class="log-time">منذ ١ س</div>
+        </div>
+        <div class="log-item">
+            <div class="log-icon">📡</div>
+            <div class="log-body">
+                <div class="log-event">دفع OTA: تحديث v2.3</div>
+                <div class="log-host">جميع الـ Raspberry Pi · ٣ أجهزة</div>
+                <span class="log-type lt-ota">OTA UPDATE</span>
+            </div>
+            <div class="log-time">منذ ٣ س</div>
+        </div>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">🔓 تسجيل الخروج</button>
+</div>
+
+<!-- ===== Modal إضافة مالك ===== -->
+<div class="modal-ov" id="addModal" onclick="closeAddClient(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">➕ إضافة مالك جديد</div>
+        <div class="modal-sub">العقد المشفّر · حفظ مباشر في السيرفر</div>
+
+        <form id="addClientForm" onsubmit="submitNewClient(event)">
+
+            <!-- معلومات المالك -->
+            <div class="form-section">
+                <div class="fs-title"><span class="num">1</span> معلومات المالك</div>
+
+                <div class="form-group">
+                    <label class="form-label">اسم المالك <span class="req">*</span></label>
+                    <input type="text" class="form-input" id="host_name" required placeholder="مثال: خالد السديري">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">رقم الجوال (واتساب) <span class="req">*</span></label>
+                    <input type="tel" class="form-input" id="host_phone" required placeholder="+966501234567">
+                    <div class="form-hint">يستلم رابط الدخول عبر واتساب</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني</label>
+                    <input type="email" class="form-input" id="host_email" placeholder="example@mail.com">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">المنطقة</label>
+                    <input type="text" class="form-input" id="host_area" placeholder="الرياض، شرق الدمام...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">باقة الاشتراك <span class="req">*</span></label>
+                    <div class="plan-grid">
+                        <div class="plan-opt sel" data-plan="basic" data-fee="100" onclick="selectPlan(this)">
+                            <div class="pn">Basic</div>
+                            <div class="pp">١٠٠ ر.س/شهر</div>
+                        </div>
+                        <div class="plan-opt" data-plan="premium" data-fee="200" onclick="selectPlan(this)">
+                            <div class="pn">Premium</div>
+                            <div class="pp">٢٠٠ ر.س/شهر</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- الوحدة الأولى -->
+            <div class="form-section">
+                <div class="fs-title"><span class="num">2</span> الوحدة الأولى</div>
+
+                <div class="form-group">
+                    <label class="form-label">اسم الوحدة <span class="req">*</span></label>
+                    <input type="text" class="form-input" id="unit_name" required placeholder="مثال: شقة الملقا">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">رابط صورة الوحدة</label>
+                    <input type="url" class="form-input" id="unit_image" placeholder="https://...">
+                </div>
+            </div>
+
+            <!-- ربط iCal -->
+            <div class="form-section">
+                <div class="fs-title"><span class="num">3</span> ربط المنصات (iCal)</div>
+
+                <div class="form-group">
+                    <label class="form-label">رابط Airbnb iCal</label>
+                    <input type="url" class="form-input" id="airbnb_ical" placeholder="https://airbnb.com/calendar/ical/...">
+                    <div class="form-hint">من Airbnb Host → Calendar → Export</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">رابط Gathern iCal</label>
+                    <input type="url" class="form-input" id="gathern_ical" placeholder="https://gathern.sa/...">
+                    <div class="form-hint">من Gathern → التقويم → مزامنة</div>
+                </div>
+            </div>
+
+            <div class="submit-row">
+                <button type="button" class="cancel-btn" onclick="closeAddClient()">إلغاء</button>
+                <button type="submit" class="submit-btn" id="submitBtn">✓ إضافة وإرسال الترحيب</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    // ===== PIN Lock =====
+    const CORRECT_PIN = '1234';
+    let pin = '';
+
+    function pressKey(n) {
+        if (pin.length >= 4) return;
+        pin += n;
+        for (let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled', i < pin.length);
+        document.getElementById('lk-err').textContent = '';
+        if (pin.length === 4) setTimeout(checkPin, 200);
+    }
+
+    function deleteKey() {
+        if (!pin.length) return;
+        pin = pin.slice(0,-1);
+        for (let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled', i < pin.length);
+    }
+
+    function checkPin() {
+        if (pin === CORRECT_PIN) {
+            const ls = document.getElementById('lock-screen');
+            ls.style.opacity = '0';
+            setTimeout(() => { ls.style.display='none'; document.getElementById('dashboard').style.display='block'; }, 550);
+        } else {
+            document.getElementById('lk-err').textContent = '❌ رمز غير صحيح';
+            const lb = document.getElementById('lock-box');
+            lb.classList.add('shake');
+            setTimeout(() => lb.classList.remove('shake'), 450);
+            pin = '';
+            for (let i=0;i<4;i++) document.getElementById('d'+i).classList.remove('filled');
+        }
+    }
+
+    function logout() {
+        pin = '';
+        for (let i=0;i<4;i++) document.getElementById('d'+i).classList.remove('filled');
+        document.getElementById('lk-err').textContent = '';
+        document.getElementById('dashboard').style.display = 'none';
+        const ls = document.getElementById('lock-screen');
+        ls.style.display = 'flex'; ls.style.opacity = '1';
+    }
+
+    // ===== Owners Tree =====
+    function toggleOwner(id) {
+        const card = document.getElementById('owner-card-' + id);
+        card.classList.toggle('open');
+    }
+
+    function toggleOwnerStatus(ownerId) {
+        const btn = document.getElementById('status-' + ownerId);
+        const content = document.getElementById('content-' + ownerId);
+        const ownerName = document.querySelector(`#owner-card-${ownerId} .owner-info h3`).textContent;
+
+        if (btn.classList.contains('btn-active')) {
+            if (confirm(`⚠️ تنبيه أمن:\n\nتأكيد إيقاف المالك "${ownerName}"؟\n\nسيتم قفل جميع شققه وإيقاف كل الخدمات فوراً.`)) {
+                btn.classList.remove('btn-active');
+                btn.classList.add('btn-suspended');
+                btn.textContent = '🔴 موقوف';
+                content.classList.add('suspended-mask');
+                
+                addLog({
+                    icon: '⏸',
+                    event: `إيقاف مالك: ${ownerName}`,
+                    host: `QLVN-${1000 + ownerId} · انتهاء العقد`,
+                    type: 'stop',
+                    typeLabel: 'OWNER SUSPENDED'
+                });
+                toast(`⏸ تم إيقاف ${ownerName} وقفل شققه`, 'danger');
+            }
+        } else {
+            btn.classList.remove('btn-suspended');
+            btn.classList.add('btn-active');
+            btn.textContent = '🟢 نشط';
+            content.classList.remove('suspended-mask');
+            
+            addLog({
+                icon: '✓',
+                event: `تفعيل مالك: ${ownerName}`,
+                host: `QLVN-${1000 + ownerId} · تجديد العقد`,
+                type: 'new',
+                typeLabel: 'REACTIVATED'
+            });
+            toast(`✓ تم تفعيل ${ownerName} وإعادة الخدمة`, 'success');
+        }
+    }
+
+    function toggleAptKill(ownerId, aptId) {
+        const apt = document.getElementById(`apt-${ownerId}-${aptId}`);
+        const aptName = apt.querySelector('.apt-name').textContent;
+
+        if (!apt.classList.contains('killed')) {
+            if (confirm(`⚠️ تعطيل ${aptName}؟\n\nسيتم قفل الباب وإيقاف جميع الخدمات داخل الشقة.`)) {
+                apt.classList.add('killed');
+                addLog({
+                    icon: '⛔',
+                    event: `إطفاء شقة: ${aptName}`,
+                    host: 'القفل + كل الخدمات معطّلة',
+                    type: 'stop',
+                    typeLabel: 'APT KILLED'
+                });
+                toast(`⛔ تم تعطيل ${aptName} برمجياً`, 'danger');
+            }
+        } else {
+            apt.classList.remove('killed');
+            toast(`✓ تم إعادة تشغيل ${aptName}`, 'success');
+        }
+    }
+
+    function pushOTA(aptName) {
+        toast(`📡 جاري دفع OTA لـ ${aptName}...`);
+        setTimeout(() => {
+            toast(`✓ تم تحديث Raspberry Pi لـ ${aptName} بنجاح`, 'success');
+            addLog({
+                icon: '📡',
+                event: `OTA Update: ${aptName}`,
+                host: 'Raspberry Pi محدّث بنجاح',
+                type: 'ota',
+                typeLabel: 'OTA UPDATE'
+            });
+        }, 1500);
+    }
+
+    // ===== Modal إضافة مالك =====
+    function openAddClient() {
+        document.getElementById('addModal').classList.add('open');
+    }
+
+    function closeAddClient(e) {
+        if (!e || e.target === document.getElementById('addModal') || e.type === 'click') {
+            document.getElementById('addModal').classList.remove('open');
+        }
+    }
+
+    function selectPlan(el) {
+        document.querySelectorAll('.plan-opt').forEach(o => o.classList.remove('sel'));
+        el.classList.add('sel');
+    }
+
+    async function submitNewClient(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = 'جاري الحفظ...';
+
+        const selectedPlan = document.querySelector('.plan-opt.sel');
+        const clientData = {
+            host_name: document.getElementById('host_name').value,
+            host_phone: document.getElementById('host_phone').value,
+            host_email: document.getElementById('host_email').value,
+            host_area: document.getElementById('host_area').value,
+            plan: selectedPlan.dataset.plan,
+            monthly_fee: parseInt(selectedPlan.dataset.fee),
+            unit_name: document.getElementById('unit_name').value,
+            unit_image: document.getElementById('unit_image').value,
+            airbnb_ical: document.getElementById('airbnb_ical').value,
+            gathern_ical: document.getElementById('gathern_ical').value,
+            created_at: new Date().toISOString()
+        };
+
+        try {
+            /* ============================================
+            في الإنتاج: ربط مع Supabase
+            ============================================
+            const { data: host } = await supabase.from('hosts').insert({...}).select().single();
+            const { data: unit } = await supabase.from('units').insert({...}).select().single();
+            if (clientData.airbnb_ical || clientData.gathern_ical) {
+                await supabase.from('ical_sources').insert({...});
+            }
+            await fetch('/api/send-welcome-whatsapp', {...});
+            */
+
+            await new Promise(r => setTimeout(r, 1200));
+            console.log('[QLVIN] مالك جديد محفوظ:', clientData);
+
+            addNewOwnerCard(clientData);
+            addLog({
+                icon: '🆕',
+                event: `مالك جديد: ${clientData.host_name}`,
+                host: `${clientData.unit_name} · ${clientData.monthly_fee} ر.س/شهر`,
+                type: 'new',
+                typeLabel: 'NEW OWNER'
+            });
+
+            closeAddClient();
+            toast(`✅ تم إضافة ${clientData.host_name} + إرسال واتساب`, 'success');
+            
+            document.getElementById('addClientForm').reset();
+            document.querySelectorAll('.plan-opt').forEach((o,i) => o.classList.toggle('sel', i === 0));
+
+            // تحديث العداد
+            const count = document.querySelectorAll('.owner-card').length;
+            document.getElementById('owners-count').textContent = `${count} ملاك`;
+
+        } catch (err) {
+            toast('❌ خطأ: ' + err.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '✓ إضافة وإرسال الترحيب';
+        }
+    }
+
+    function addNewOwnerCard(client) {
+        const ownersCount = document.querySelectorAll('.owner-card').length;
+        const newId = ownersCount + 1;
+        const initials = client.host_name.substring(0, 2);
+        const colors = [
+            ['var(--sky)', 'var(--accent)'],
+            ['var(--gold)', 'var(--danger)'],
+            ['var(--accent)', 'var(--sky)'],
+            ['#8B5CF6', 'var(--gold)']
+        ];
+        const [c1, c2] = colors[ownersCount % colors.length];
+        const code = `QLVN-${1000 + newId}`;
+
+        const html = `
+            <div class="owner-card" id="owner-card-${newId}">
+                <div class="owner-header" onclick="toggleOwner(${newId})">
+                    <div class="owner-info">
+                        <div class="owner-avatar" style="background:linear-gradient(135deg,${c1},${c2});">${initials}</div>
+                        <div>
+                            <h3>${client.host_name}</h3>
+                            <p>١ شقة · ${client.host_area || 'غير محدد'} · ${code}</p>
+                        </div>
+                    </div>
+                    <div class="owner-actions" onclick="event.stopPropagation()">
+                        <button class="btn-status btn-active" id="status-${newId}" onclick="toggleOwnerStatus(${newId})">🟢 نشط</button>
+                        <span class="chevron">▼</span>
+                    </div>
+                </div>
+                <div class="apartments-container">
+                    <div class="apartments-inner" id="content-${newId}">
+                        <div class="apt-row" id="apt-${newId}-1">
+                            <div class="apt-header-meta">
+                                <div class="apt-name">🏠 ${client.unit_name}</div>
+                                <div class="iot-status">
+                                    <span class="pulse-lamp lamp-offline"></span>
+                                    <span class="txt-lamp off">Pi قيد الإعداد</span>
+                                </div>
+                            </div>
+                            <div class="apt-stats">
+                                <div class="apt-stat-item"><span class="stat-lbl">حجوزات الشهر</span><div class="stat-val">٠</div></div>
+                                <div class="apt-stat-item"><span class="stat-lbl">دخل المالك</span><div class="stat-val" style="color:var(--accent);">٠</div></div>
+                                <div class="apt-stat-item"><span class="stat-lbl">حصتنا</span><div class="stat-val" style="color:var(--sky);">٠</div></div>
+                            </div>
+                            <div class="apt-controls">
+                                <button class="btn-control btn-ota" disabled>🔄 OTA Update</button>
+                                <button class="btn-control btn-kill" onclick="toggleAptKill(${newId},1)">⛔ إطفاء</button>
+                            </div>
+                        </div>
+                        <button class="add-apt-btn" onclick="toast('فتح إضافة شقة لـ ${client.host_name}')">+ إضافة شقة جديدة لنفس المالك</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('owners-tree').insertAdjacentHTML('afterbegin', html);
+    }
+
+    // ===== Ad Engine & OTA =====
+    function publishAd() {
+        toast('✓ تم نشر الإعلان', 'success');
+        addLog({
+            icon: '📢',
+            event: 'نشر إعلان جديد',
+            host: 'Ad Engine · للضيوف المستهدفين',
+            type: 'ad',
+            typeLabel: 'AD ENGINE'
+        });
+    }
+
+    function deployGlobalUpdate() {
+        const target = document.getElementById('update-target');
+        const notes = document.getElementById('update-notes').value;
+
+        if (!notes.trim()) {
+            toast('⚠️ الرجاء كتابة مذكرات التحديث', 'danger');
+            return;
+        }
+
+        const targetText = target.options[target.selectedIndex].text;
+        toast(`🚀 جاري بث التحديث إلى ${targetText}...`);
+
+        setTimeout(() => {
+            toast('✅ تم البث بنجاح', 'success');
+            addLog({
+                icon: '📡',
+                event: `OTA Global Push`,
+                host: `${targetText} · ${notes.substring(0, 40)}...`,
+                type: 'ota',
+                typeLabel: 'GLOBAL UPDATE'
+            });
+            document.getElementById('update-notes').value = '';
+        }, 1500);
+    }
+
+    function addLog(log) {
+        const logs = document.getElementById('platform-logs');
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerHTML = `
+            <div class="log-icon">${log.icon}</div>
+            <div class="log-body">
+                <div class="log-event">${log.event}</div>
+                <div class="log-host">${log.host}</div>
+                <span class="log-type lt-${log.type}">${log.typeLabel}</span>
+            </div>
+            <div class="log-time">الآن</div>
+        `;
+        logs.insertBefore(item, logs.firstChild);
+    }
+
+    function toast(msg, type = '') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show ' + type;
+        setTimeout(() => t.classList.remove('show'), 2800);
+    }
+</script>
+</body>
+</html>
