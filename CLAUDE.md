@@ -35,10 +35,23 @@
 - `supabase/migrations/004_seed.sql` — seed data
 - `packages/qlvn-config/` — triggers + actions registries
 - `.env.example`
+- `supabase/functions/guest-token-validate/` — token validation + auto checkin
+- `supabase/functions/generate-code/` — 6-digit code → DB + WhatsApp
+- `supabase/functions/onboard-host/` — auth + user + host + settings + units
+- `supabase/functions/heartbeat/` — last_seen update + expiry check
+- `supabase/functions/send-whatsapp/` — WhatsApp Cloud API wrapper
+- `supabase/functions/_shared/cors.ts` — shared CORS headers
+- `index.ts` (root) — MCP Server (13 tools)
 
 ### 🔲 التالي — Phase 1
-- [ ] Edge Function: `guest-token-validate`
-- [ ] Edge Function: `generate-code`
-- [ ] Edge Function: `onboard-host`
-- [ ] Edge Function: `heartbeat`
 - [ ] ربط `host_v6.html` بـ Supabase
+
+### 🔲 Phase 2
+- [ ] Supabase Realtime في الواجهات الخمس
+- [ ] ربط `founder_v4_final.html` — إضافة مضيف
+- [ ] iCal sync (Airbnb/Gathern)
+
+### 🔲 Phase 3+
+- [ ] Pi Local Agent (Python)
+- [ ] WhatsApp Gemini/Nawaf
+- [ ] Automation Studio
