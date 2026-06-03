@@ -16,22 +16,18 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  try {
-    // فقط service_role أو المضيف المصرّح له يصل لهذه الوظيفة
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return Response.json(
-        { error: 'unauthorized' },
-        { status: 401, headers: corsHeaders },
-      );
-    }
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    return Response.json({ error: 'unauthorized' }, { status: 401, headers: corsHeaders });
+  }
 
+  try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const { unit_id, guest_session_id, send_whatsapp = true, code_type = 'door' } = await req.json();
+    const { unit_id, guest_session_id, send_whatsapp = true } = await req.json();
 
     if (!unit_id || !guest_session_id) {
       return Response.json(
@@ -46,42 +42,28 @@ Deno.serve(async (req) => {
       .select('id, guest_name, guest_phone, unit_id, token_expires_at, status')
       .eq('id', guest_session_id)
       .eq('unit_id', unit_id)
-      .eq('status', 'active')
+      .in('status', ['pending', 'active'])
       .single();
 
     if (sessionError || !session) {
-      return Response.json(
-        { error: 'session_not_found_or_inactive' },
-        { status: 404, headers: corsHeaders },
-      );
+      return Response.json({ error: 'session_not_found' }, { status: 404, headers: corsHeaders });
     }
 
     // توليد كود فريد
     let code = generateNumericCode(6);
-    let attempts = 0;
-
-    // تأكد أن الكود غير مستخدم حالياً
-    while (attempts < 5) {
-      const { data: existing } = await supabase
+    for (let i = 0; i < 5; i++) {
+      const { data: exists } = await supabase
         .from('access_codes')
         .select('id')
         .eq('unit_id', unit_id)
         .eq('code', code)
-        .eq('is_active', true)
+        .gte('valid_until', new Date().toISOString())
         .maybeSingle();
-
-      if (!existing) break;
+      if (!exists) break;
       code = generateNumericCode(6);
-      attempts++;
     }
 
-    // إلغاء الكودات السابقة لهذه الجلسة
-    await supabase
-      .from('access_codes')
-      .update({ is_active: false })
-      .eq('unit_id', unit_id)
-      .eq('guest_session_id', guest_session_id)
-      .eq('is_active', true);
+    const now = new Date().toISOString();
 
     // حفظ الكود الجديد
     const { data: newCode, error: insertError } = await supabase
@@ -90,9 +72,9 @@ Deno.serve(async (req) => {
         unit_id,
         guest_session_id,
         code,
-        code_type,
-        is_active: true,
-        expires_at: session.token_expires_at,
+        valid_from: now,
+        valid_until: session.token_expires_at,
+        delivered_via: send_whatsapp ? ['whatsapp'] : [],
       })
       .select()
       .single();
@@ -104,37 +86,36 @@ Deno.serve(async (req) => {
       );
     }
 
+    // تحديث access_code في guest_sessions
+    await supabase
+      .from('guest_sessions')
+      .update({ access_code: code, status: 'active' })
+      .eq('id', guest_session_id);
+
     // تسجيل الحدث
     await supabase.from('activity_logs').insert({
       unit_id,
       guest_session_id,
       event_type: 'code_generated',
       source: 'edge_function',
-      payload: { code_id: newCode.id, code_type },
+      payload: { code_id: newCode.id },
     });
 
     let whatsappSent = false;
 
-    // إرسال عبر WhatsApp إذا طُلب
     if (send_whatsapp && session.guest_phone) {
       const { error: waError } = await supabase.functions.invoke('send-whatsapp', {
         body: {
           phone: session.guest_phone,
           message:
-            `🔐 كود دخول شقتك:\n` +
-            `*${code}*\n\n` +
+            `🔐 كود دخول شقتك:\n*${code}*\n\n` +
             `صالح حتى: ${new Date(session.token_expires_at).toLocaleString('ar-SA')}\n\n` +
             `_QLVIN OS — خدمتك أولويتنا_`,
           unit_id,
           guest_session_id,
         },
       });
-
       whatsappSent = !waError;
-
-      if (waError) {
-        console.error('WhatsApp send failed:', waError);
-      }
     }
 
     return Response.json(
@@ -142,15 +123,12 @@ Deno.serve(async (req) => {
         success: true,
         code,
         code_id: newCode.id,
-        expires_at: session.token_expires_at,
+        valid_until: session.token_expires_at,
         whatsapp_sent: whatsappSent,
       },
       { headers: corsHeaders },
     );
-  } catch (err) {
-    return Response.json(
-      { error: 'server_error' },
-      { status: 500, headers: corsHeaders },
-    );
+  } catch (_err) {
+    return Response.json({ error: 'server_error' }, { status: 500, headers: corsHeaders });
   }
 });

@@ -29,8 +29,8 @@
 ## حالة المشروع
 
 ### ✅ مكتمل
-- `supabase/migrations/001_schema.sql` — 15 جدول
-- `supabase/migrations/002_rls.sql` — RLS + helpers
+- `supabase/migrations/001_schema.sql` — 15 جدول (مطابق CLAUDE_FINAL.md §6+7+8)
+- `supabase/migrations/002_rls.sql` — RLS + SECURITY DEFINER helpers
 - `supabase/migrations/003_realtime.sql` — 6 جداول Realtime
 - `supabase/migrations/004_seed.sql` — seed data
 - `packages/qlvn-config/` — triggers + actions registries
@@ -42,13 +42,21 @@
 - `supabase/functions/send-whatsapp/` — WhatsApp Cloud API wrapper
 - `supabase/functions/_shared/cors.ts` — shared CORS headers
 - `index.ts` (root) — MCP Server (13 tools)
+- `apps/host/index.html` — host_v6.html + Supabase integration
+- `apps/host/src/supabase-client.js` — host dashboard: auth OTP + units + logs + realtime
+- `apps/guest-card/index.html` — guest_smart_card_v3.html + token handler
+- `apps/guest-card/src/token-handler.js` — token validate + heartbeat + DOM binding
+- `SETUP.md` — تعليمات التطبيق خطوة بخطوة
 
-### 🔲 التالي — Phase 1
-- [ ] ربط `host_v6.html` بـ Supabase
+### 🔲 Phase 1 — المتبقي
+- [ ] تشغيل migrations في Supabase Dashboard
+- [ ] إنشاء المؤسس الأول في Auth
+- [ ] نشر Edge Functions (`supabase functions deploy`)
 
 ### 🔲 Phase 2
-- [ ] Supabase Realtime في الواجهات الخمس
-- [ ] ربط `founder_v4_final.html` — إضافة مضيف
+- [ ] `apps/tablet/` — guest_tablet_v1.html + Supabase
+- [ ] `apps/guest-card-luxury/` — guest-card-luxury.html + token handler
+- [ ] `apps/founder/` — founder_v4_final.html + Supabase
 - [ ] iCal sync (Airbnb/Gathern)
 
 ### 🔲 Phase 3+

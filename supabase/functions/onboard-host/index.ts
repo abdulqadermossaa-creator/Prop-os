@@ -106,17 +106,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 4. إنشاء host_settings (Plug & Play defaults)
+    // 4. إنشاء host_settings (Plug & Play defaults — §6)
     await supabase.from('host_settings').insert({
       host_id: host.id,
-      features: {
-        nawaf_ai: true,
-        match_mode: true,
-        ad_engine: true,
-        automation_studio: true,
-        ical_sync: true,
-        welcome_scene: true,
-      },
+      card_style: 'cinema',
+      tablet_layout: 'classic',
+      show_sports_widget: true,
+      show_local_ads: true,
+      show_extras_menu: true,
+      ad_engine_enabled: true,
+      nawaf_enabled: true,
+      netflix_confusion_detection: true,
+      extend_button: true,
+      exit_button: true,
+      whatsapp_notifications: true,
+      ical_sync_enabled: true,
     });
 
     // 5. إنشاء الوحدات
