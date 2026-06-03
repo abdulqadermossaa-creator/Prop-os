@@ -1,41 +1,44 @@
 # QLVN OS — Master Build Specification (Final)
 
-> **المرجع:** CLAUDE_FINAL.md (رُفع من المؤسس)
-> **القاعدة الذهبية:** هذا الملف = مصدر الحقيقة الوحيد.
+> **المرجع الأساسي:** `CLAUDE_FINAL.md` في هذا الـ repository.
+> **القاعدة الذهبية:** CLAUDE_FINAL.md = مصدر الحقيقة الوحيد.
+
+---
 
 ## قواعد Claude Code
 
 1. اسأل قبل ما تغيّر معمارية
-2. عدّل ملف واحد في كل خطوة
-3. **لا تعدّل الـ HTML المعتمدة** — مرجع بصري فقط
-4. الـ Plug-and-Play → كل ميزة toggle في `host_settings`
-5. التعليقات بالعربي، الكود بالإنجليزي
-6. No Magic Numbers — كل قيمة في `config.ts` أو `.env`
-7. NEVER expose API keys في client code
-8. ALWAYS log كل action في `activity_logs`
+2. **لا تعدّل الـ HTML المعتمدة** — مرجع بصري فقط
+3. الـ Plug-and-Play → كل ميزة toggle في `host_settings`
+4. التعليقات بالعربي، الكود بالإنجليزي
+5. NEVER expose API keys في client code
+6. ALWAYS log كل action في `activity_logs`
 
-## الواجهات المعتمدة (لا تعدّل)
+---
 
-- `guest_smart_card_v3.html`
-- `guest-card-luxury.html`
-- `guest_tablet_v1.html`
-- `host_v6.html`
-- `founder_v4_final.html`
+## الواجهات المعتمدة (لا تعدّل HTML)
+
+- `guest_smart_card_v3.html` — بوابة الضيف
+- `guest-card-luxury.html` — QDR Luxury
+- `guest_tablet_v1.html` — تابلت الشقة
+- `host_v6.html` — داشبورد المضيف
+- `founder_v4_final.html` — داشبورد المؤسس
+
+---
 
 ## حالة المشروع
 
 ### ✅ مكتمل
 - `supabase/migrations/001_schema.sql` — 15 جدول
-- `supabase/migrations/002_rls.sql` — RLS + policies
+- `supabase/migrations/002_rls.sql` — RLS + helpers
 - `supabase/migrations/003_realtime.sql` — 6 جداول Realtime
-- `supabase/migrations/004_seed.sql` — Demo data + platform automations
-- `packages/qlvn-config/automation-triggers.json`
-- `packages/qlvn-config/automation-actions.json`
+- `supabase/migrations/004_seed.sql` — seed data
+- `packages/qlvn-config/` — triggers + actions registries
 - `.env.example`
 
-### 🔲 التالي — Phase 1 (من CLAUDE_FINAL.md §13)
+### 🔲 التالي — Phase 1
 - [ ] Edge Function: `guest-token-validate`
 - [ ] Edge Function: `generate-code`
 - [ ] Edge Function: `onboard-host`
-- [ ] ربط `host_v6.html` بـ Supabase (supabase-client.js)
 - [ ] Edge Function: `heartbeat`
+- [ ] ربط `host_v6.html` بـ Supabase

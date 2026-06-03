@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QDR OS · التابلت V2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030305;
+            --bg2: #07070d;
+            --glass: rgba(255,255,255,0.04);
+            --glass2: rgba(255,255,255,0.08);
+            --border: rgba(255,255,255,0.08);
+            --sky: #64d2ff;
+            --gold: #d4a853;
+            --accent: #10b981;
+            --danger: #ff3b30;
+            --warn: #ff9f0a;
+            --text: #ffffff;
+            --text2: rgba(255,255,255,0.45);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html,body { height:100%; overflow-x:hidden; }
+        body { font-family:'Tajawal',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+        body::before { content:''; position:fixed; top:-20%; right:-10%; width:480px; height:480px; background:radial-gradient(circle, rgba(100,210,255,0.045) 0%, transparent 70%); pointer-events:none; }
+
+        @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+        @keyframes sIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes ld { to{width:100%} }
+        @keyframes hb-ring { 0%{transform:scale(.5);opacity:1} 100%{transform:scale(1.9);opacity:0} }
+
+        /* Splash */
+        #splash { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999; transition:opacity .7s; }
+        .spl-logo { font-size:40px; font-weight:900; letter-spacing:4px; animation:sIn .8s ease; }
+        .spl-logo span { color:var(--sky); }
+        .spl-tag { font-size:10px; color:var(--text2); letter-spacing:4px; margin-top:6px; animation:sIn .8s .2s both; }
+        .spl-bar { width:110px; height:1px; background:var(--border); margin-top:38px; overflow:hidden; }
+        .spl-bar::after { content:''; display:block; height:100%; background:var(--sky); width:0; animation:ld 1.5s .4s forwards; }
+
+        /* Main */
+        #main { padding:18px; padding-bottom:30px; opacity:0; animation:fadeUp .6s 2s forwards; }
+
+        /* Header */
+        .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:26px; }
+        .greeting h1 { font-size:26px; font-weight:900; line-height:1.2; }
+        .greeting h1 span { color:var(--sky); }
+        .greeting p { font-size:10px; color:var(--text2); margin-top:4px; }
+        .weather-box { background:var(--glass); border:1px solid var(--border); border-radius:16px; padding:12px 16px; text-align:left; }
+        .w-temp { font-size:26px; font-weight:900; }
+        .w-lbl { font-size:9px; color:var(--sky); letter-spacing:1px; margin-top:2px; }
+
+        /* Sec Label */
+        .sec-lbl { font-size:9px; color:var(--text2); letter-spacing:2px; text-transform:uppercase; margin:18px 0 11px; }
+
+        /* Mini Code */
+        .mini-code {
+            background:var(--glass); border:1px solid rgba(100,210,255,0.18);
+            border-radius:20px; padding:16px 18px;
+            display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:16px;
+        }
+        .mc-lbl { font-size:9px; color:var(--text2); margin-bottom:5px; }
+        .mc-num { font-size:28px; font-weight:900; letter-spacing:8px; color:var(--gold); }
+        .mc-exp { font-size:8px; color:var(--accent); margin-top:3px; }
+        .mc-btn { background:rgba(100,210,255,0.1); border:1px solid rgba(100,210,255,0.25); color:var(--sky); padding:8px 14px; border-radius:10px; font-family:'Tajawal'; font-size:11px; font-weight:700; cursor:pointer; transition:all .3s; }
+        .mc-btn:hover { background:rgba(100,210,255,0.2); }
+        .mc-btn:active { transform:scale(.95); }
+
+        /* Time Strip */
+        .time-strip {
+            background:var(--glass); border:1px solid var(--border);
+            border-radius:18px; padding:14px 18px;
+            display:flex; align-items:center; gap:14px; margin-bottom:18px;
+        }
+        .ts-left .lb { font-size:9px; color:var(--text2); letter-spacing:1px; margin-bottom:4px; }
+        .ts-left .vl { font-size:20px; font-weight:900; color:var(--gold); }
+        .ts-prog { flex:1; }
+        .ts-track { height:3px; background:var(--border); border-radius:3px; overflow:hidden; }
+        .ts-fill { height:100%; width:65%; background:linear-gradient(90deg,var(--accent),var(--sky)); border-radius:3px; }
+        .ts-labels { display:flex; justify-content:space-between; font-size:8px; color:var(--text2); margin-top:5px; }
+        .ts-btn { background:var(--sky); color:#000; border:none; padding:10px 16px; border-radius:12px; font-family:'Tajawal'; font-size:11px; font-weight:900; cursor:pointer; transition:all .3s; white-space:nowrap; }
+        .ts-btn:hover { background:#4ac3ff; }
+        .ts-btn:active { transform:scale(.95); }
+
+        /* Control Grid */
+        .ctrl-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:14px; }
+        .ctrl-tile {
+            background:var(--glass); border:1px solid var(--border);
+            border-radius:20px; padding:20px 10px; text-align:center;
+            cursor:pointer; transition:all .3s; position:relative; overflow:hidden;
+        }
+        .ctrl-tile::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 50% 0%,rgba(100,210,255,0.1) 0%,transparent 70%); opacity:0; transition:opacity .3s; }
+        .ctrl-tile:hover { border-color:rgba(100,210,255,0.28); }
+        .ctrl-tile:hover::before { opacity:1; }
+        .ctrl-tile:active { transform:scale(.94); }
+        .ctrl-tile.on { border-color:rgba(16,185,129,0.35); background:rgba(16,185,129,0.05); }
+        .ct-icon { font-size:26px; margin-bottom:9px; }
+        .ct-lbl { font-size:11px; font-weight:700; }
+        .ct-val { font-size:9px; color:var(--text2); margin-top:3px; }
+        .ct-status { font-size:8px; margin-top:7px; padding:2px 8px; border-radius:7px; display:inline-block; }
+        .cs-on { background:rgba(16,185,129,0.18); color:var(--accent); }
+        .cs-off { background:var(--glass); color:var(--text2); }
+
+        /* Requests */
+        .req-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:14px; }
+        .req-btn {
+            background:var(--glass); border:1px solid var(--border);
+            border-radius:18px; padding:16px; cursor:pointer; transition:all .3s;
+            display:flex; align-items:center; gap:11px;
+            color:var(--text); font-family:'Tajawal';
+        }
+        .req-btn:hover { background:var(--glass2); border-color:rgba(100,210,255,0.25); }
+        .req-btn:active { transform:scale(.97); }
+        .rb-icon { font-size:22px; }
+        .rb-t { font-size:12px; font-weight:700; }
+        .rb-s { font-size:9px; color:var(--text2); margin-top:2px; }
+
+        /* Extend Card */
+        .extend-card {
+            background:linear-gradient(135deg, rgba(100,210,255,0.07), rgba(16,185,129,0.04));
+            border:1px solid rgba(100,210,255,0.22); border-radius:22px;
+            padding:20px; display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:14px;
+        }
+        .ec-title { font-size:14px; font-weight:800; }
+        .ec-sub { font-size:9px; color:var(--text2); margin-top:4px; }
+        .ec-btn { background:var(--sky); color:#000; border:none; padding:11px 20px; border-radius:13px; font-family:'Tajawal'; font-size:12px; font-weight:900; cursor:pointer; transition:all .3s; }
+        .ec-btn:hover { background:#4ac3ff; transform:scale(1.04); }
+
+        /* ===== عروض حصرية للضيف (Ad Engine) ===== */
+        .offer-card {
+            border-radius:20px; padding:16px; margin-bottom:9px;
+            cursor:pointer; transition:all .3s; position:relative; overflow:hidden;
+        }
+        .offer-card:hover { transform:translateY(-2px); }
+        .offer-gold { background:linear-gradient(135deg,rgba(212,168,83,0.1),rgba(212,168,83,0.03)); border:1px solid rgba(212,168,83,0.26); }
+        .offer-sky { background:linear-gradient(135deg,rgba(100,210,255,0.07),rgba(100,210,255,0.02)); border:1px solid rgba(100,210,255,0.18); }
+        .offer-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; }
+        .offer-gold::before { background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+        .offer-sky::before { background:linear-gradient(90deg,transparent,var(--sky),transparent); }
+        .oc-row { display:flex; align-items:center; gap:12px; }
+        .oc-icon { font-size:26px; }
+        .oc-body { flex:1; }
+        .oc-title { font-size:13px; font-weight:800; }
+        .oc-sub { font-size:9px; color:var(--text2); margin-top:3px; }
+        .oc-badge { font-size:8px; padding:2px 8px; border-radius:7px; display:inline-block; margin-top:7px; }
+        .ob-gold { background:rgba(212,168,83,0.18); color:var(--gold); }
+        .ob-sky { background:rgba(100,210,255,0.13); color:var(--sky); }
+        .oc-arr { font-size:18px; color:var(--text2); }
+
+        /* Support */
+        .support-row { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:14px; }
+        .sup-btn { background:var(--glass); border:1px solid var(--border); border-radius:18px; padding:16px; cursor:pointer; transition:all .3s; text-align:center; color:var(--text); font-family:'Tajawal'; }
+        .sup-btn:hover { border-color:rgba(100,210,255,0.25); }
+        .sup-btn .si { font-size:22px; margin-bottom:7px; }
+        .sup-btn .sl { font-size:11px; font-weight:700; }
+        .sup-btn .ss { font-size:9px; color:var(--text2); margin-top:3px; }
+
+        /* Heartbeat Footer */
+        .hb-footer { text-align:center; padding-top:16px; border-top:1px solid var(--border); font-size:9px; color:var(--text2); display:flex; align-items:center; justify-content:center; gap:7px; }
+        .hb-ring { width:9px; height:9px; border-radius:50%; border:2px solid var(--accent); position:relative; }
+        .hb-ring::after { content:''; position:absolute; inset:-4px; border-radius:50%; border:1px solid rgba(16,185,129,0.35); animation:hb-ring 2s ease-in-out infinite; }
+
+        /* Modal */
+        .modal-ov { position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:200; display:flex; align-items:flex-end; opacity:0; pointer-events:none; transition:opacity .3s; }
+        .modal-ov.open { opacity:1; pointer-events:all; }
+        .modal { background:var(--bg2); border:1px solid var(--border); border-radius:28px 28px 0 0; padding:28px 18px; width:100%; transform:translateY(100%); transition:transform .4s cubic-bezier(.32,.72,0,1); }
+        .modal-ov.open .modal { transform:translateY(0); }
+        .modal-handle { width:38px; height:3px; background:var(--border); border-radius:3px; margin:0 auto 22px; }
+        .modal-title { font-size:17px; font-weight:900; text-align:center; margin-bottom:18px; }
+        .time-opts { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:22px; }
+        .t-opt { background:var(--glass); border:1px solid var(--border); border-radius:13px; padding:13px 6px; text-align:center; cursor:pointer; transition:all .3s; }
+        .t-opt:hover,.t-opt.sel { background:rgba(100,210,255,0.14); border-color:var(--sky); }
+        .t-opt .dur { font-size:16px; font-weight:900; color:var(--sky); }
+        .t-opt .unit { font-size:8px; color:var(--text2); margin-top:2px; }
+        .t-opt .price { font-size:10px; color:var(--gold); margin-top:5px; font-weight:700; }
+        .confirm-btn { width:100%; background:var(--sky); color:#000; border:none; padding:15px; border-radius:15px; font-family:'Tajawal'; font-size:14px; font-weight:900; cursor:pointer; }
+
+        /* Toast */
+        .toast { position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--sky); color:#000; padding:10px 22px; border-radius:30px; font-size:12px; font-weight:700; opacity:0; transition:all .3s; pointer-events:none; z-index:500; }
+        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<div id="splash">
+    <div class="spl-logo">QDR<span>OS</span></div>
+    <div class="spl-tag">IN-ROOM TABLET · V2</div>
+    <div class="spl-bar"></div>
+</div>
+
+<div id="main">
+    <div class="header">
+        <div class="greeting">
+            <h1>مساء <span>الخير</span> 🌙</h1>
+            <p>نتمنى لك إقامة سعيدة في QDR</p>
+        </div>
+        <div class="weather-box">
+            <div class="w-temp">24°</div>
+            <div class="w-lbl">الطقس الآن</div>
+        </div>
+    </div>
+
+    <!-- كود الدخول -->
+    <div class="mini-code">
+        <div>
+            <div class="mc-lbl">رمز دخول الوحدة</div>
+            <div class="mc-num">4321</div>
+            <div class="mc-exp">✓ صالح حتى 2:00 PM</div>
+        </div>
+        <button class="mc-btn" onclick="toast('✓ تم نسخ الكود')">📋 نسخ</button>
+    </div>
+
+    <!-- شريط الوقت -->
+    <div class="time-strip">
+        <div class="ts-left">
+            <div class="lb">REMAINING</div>
+            <div class="vl">٣:٠٠</div>
+        </div>
+        <div class="ts-prog">
+            <div class="ts-track"><div class="ts-fill"></div></div>
+            <div class="ts-labels"><span>11:00 AM</span><span>2:00 PM</span></div>
+        </div>
+        <button class="ts-btn" onclick="openModal()">تمديد +</button>
+    </div>
+
+    <!-- التحكم بالبيئة -->
+    <div class="sec-lbl">التحكم بالبيئة</div>
+    <div class="ctrl-grid">
+        <div class="ctrl-tile on" onclick="toggleCtrl(this)">
+            <div class="ct-icon">💡</div>
+            <div class="ct-lbl">الإضاءة</div>
+            <div class="ct-val">20%</div>
+            <div class="ct-status cs-on">مفعّل</div>
+        </div>
+        <div class="ctrl-tile on" onclick="toggleCtrl(this)">
+            <div class="ct-icon">❄️</div>
+            <div class="ct-lbl">المكيف</div>
+            <div class="ct-val">22°C</div>
+            <div class="ct-status cs-on">مفعّل</div>
+        </div>
+        <div class="ctrl-tile" onclick="toggleCtrl(this)">
+            <div class="ct-icon">🔊</div>
+            <div class="ct-lbl">الصوت</div>
+            <div class="ct-val">65%</div>
+            <div class="ct-status cs-off">موقف</div>
+        </div>
+    </div>
+
+    <!-- الطلبات السريعة -->
+    <div class="sec-lbl">الطلبات السريعة</div>
+    <div class="req-grid">
+        <button class="req-btn" onclick="toast('✓ تم إرسال طلب التنظيف')">
+            <span class="rb-icon">🧹</span>
+            <span><div class="rb-t">تنظيف</div><div class="rb-s">خدمة الغرف</div></span>
+        </button>
+        <button class="req-btn" onclick="toast('✓ تم إرسال طلب مناشف')">
+            <span class="rb-icon">🛁</span>
+            <span><div class="rb-t">مناشف</div><div class="rb-s">تسليم فوري</div></span>
+        </button>
+        <button class="req-btn" onclick="toast('✓ جاري تجهيز الطلب')">
+            <span class="rb-icon">☕</span>
+            <span><div class="rb-t">فطور</div><div class="rb-s">٣٠ دقيقة</div></span>
+        </button>
+        <button class="req-btn" onclick="toast('✓ جاري حجز السيارة')">
+            <span class="rb-icon">🚗</span>
+            <span><div class="rb-t">توصيل</div><div class="rb-s">حجز سيارة</div></span>
+        </button>
+    </div>
+
+    <!-- تمديد الإقامة -->
+    <div class="extend-card">
+        <div>
+            <div class="ec-title">مدّد إقامتك 🎁</div>
+            <div class="ec-sub">خصومات حصرية عبر التابلت</div>
+        </div>
+        <button class="ec-btn" onclick="openModal()">احجز الآن</button>
+    </div>
+
+    <!-- العروض الحصرية (Ad Engine) -->
+    <div class="sec-lbl">⚡ عروض حصرية لك</div>
+
+    <div class="offer-card offer-gold" onclick="toast('✓ جاري فتح عرض البيك')">
+        <div class="oc-row">
+            <div class="oc-icon">🍗</div>
+            <div class="oc-body">
+                <div class="oc-title">خصم ١٥٪ في مطعم البيك</div>
+                <div class="oc-sub">حصري لضيوف QDR · صالح اليوم فقط</div>
+                <span class="oc-badge ob-gold">طعام · قريب منك</span>
+            </div>
+            <div class="oc-arr">←</div>
+        </div>
+    </div>
+
+    <div class="offer-card offer-sky" onclick="toast('✓ جاري حجز خدمة التوصيل')">
+        <div class="oc-row">
+            <div class="oc-icon">🚗</div>
+            <div class="oc-body">
+                <div class="oc-title">توصيل بـ ٤٠ ر.س فقط</div>
+                <div class="oc-sub">من وإلى الشقة · شراكة QDR</div>
+                <span class="oc-badge ob-sky">توصيل · فوري</span>
+            </div>
+            <div class="oc-arr">←</div>
+        </div>
+    </div>
+
+    <!-- الدعم -->
+    <div class="sec-lbl">الدعم والمساعدة</div>
+    <div class="support-row">
+        <button class="sup-btn" onclick="window.open('https://wa.me/966500000000','_blank')">
+            <div class="si">💬</div>
+            <div class="sl">تواصل معنا</div>
+            <div class="ss">واتساب · رد فوري</div>
+        </button>
+        <button class="sup-btn" onclick="toast('جاري فتح الدليل...')">
+            <div class="si">📋</div>
+            <div class="sl">دليل الاستخدام</div>
+            <div class="ss">الأجهزة والمرافق</div>
+        </button>
+    </div>
+
+    <!-- Heartbeat Footer -->
+    <div class="hb-footer">
+        <div class="hb-ring"></div>
+        <span id="hb-label">نبض الجلسة نشط · آخر تحديث: الآن</span>
+    </div>
+</div>
+
+<!-- Modal التمديد -->
+<div class="modal-ov" id="modal" onclick="closeModal(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">⏱️ تمديد الإقامة</div>
+        <div class="time-opts">
+            <div class="t-opt sel" onclick="selOpt(this)"><div class="dur">15</div><div class="unit">دقيقة</div><div class="price">15 ر.س</div></div>
+            <div class="t-opt" onclick="selOpt(this)"><div class="dur">30</div><div class="unit">دقيقة</div><div class="price">25 ر.س</div></div>
+            <div class="t-opt" onclick="selOpt(this)"><div class="dur">60</div><div class="unit">دقيقة</div><div class="price">45 ر.س</div></div>
+            <div class="t-opt" onclick="selOpt(this)"><div class="dur">٩٠</div><div class="unit">دقيقة</div><div class="price">60 ر.س</div></div>
+        </div>
+        <button class="confirm-btn" onclick="confirmExtend()">تأكيد التمديد · الدفع الآن</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    // Splash
+    setTimeout(() => {
+        const s = document.getElementById('splash');
+        s.style.opacity = '0';
+        setTimeout(() => s.style.display = 'none', 700);
+    }, 1800);
+
+    // Heartbeat
+    let hbCount = 0;
+    function sendHeartbeat() {
+        hbCount++;
+        const now = new Date().toLocaleTimeString('ar', {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('hb-label').textContent = `نبض الجلسة نشط · آخر تحديث: ${now}`;
+        console.log(`[QDR Tablet HB #${hbCount}] Unit: شقة الراكة | ${now}`);
+    }
+    setInterval(sendHeartbeat, 30000);
+    sendHeartbeat();
+
+    // Controls
+    function toggleCtrl(el) {
+        const on = el.classList.contains('on');
+        el.classList.toggle('on');
+        const s = el.querySelector('.ct-status');
+        s.textContent = on ? 'موقف' : 'مفعّل';
+        s.className = 'ct-status ' + (on ? 'cs-off' : 'cs-on');
+        toast(on ? '⏸ تم الإيقاف' : '✓ تم التفعيل');
+    }
+
+    // Modal
+    function openModal() { document.getElementById('modal').classList.add('open'); }
+    function closeModal(e) { if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('open'); }
+    function selOpt(el) { document.querySelectorAll('.t-opt').forEach(o => o.classList.remove('sel')); el.classList.add('sel'); }
+    function confirmExtend() { document.getElementById('modal').classList.remove('open'); toast('✓ تم تمديد الإقامة بنجاح 🎉'); }
+
+    // Toast
+    function toast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+</script>
+</body>
+</html>

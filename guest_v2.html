@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QDR OS · بوابة الضيف</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030305;
+            --bg2: #07070d;
+            --glass: rgba(255,255,255,0.04);
+            --glass2: rgba(255,255,255,0.08);
+            --border: rgba(255,255,255,0.08);
+            --sky: #64d2ff;
+            --gold: #d4a853;
+            --accent: #10b981;
+            --danger: #ff3b30;
+            --text: #ffffff;
+            --text2: rgba(255,255,255,0.45);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html,body { height:100%; overflow-x:hidden; }
+        body { font-family:'Tajawal',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+        body::before {
+            content:''; position:fixed; top:-20%; right:-15%;
+            width:500px; height:500px;
+            background:radial-gradient(circle, rgba(100,210,255,0.055) 0%, transparent 70%);
+            pointer-events:none; animation:pulse 9s ease-in-out infinite;
+        }
+        body::after {
+            content:''; position:fixed; bottom:-25%; left:-15%;
+            width:450px; height:450px;
+            background:radial-gradient(circle, rgba(16,185,129,0.04) 0%, transparent 70%);
+            pointer-events:none; animation:pulse 11s ease-in-out infinite reverse;
+        }
+        @keyframes pulse { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.15);opacity:1} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        /* === Splash === */
+        #splash {
+            position:fixed; inset:0; background:var(--bg);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            z-index:999; transition:opacity .7s;
+        }
+        .spl-logo { font-size:44px; font-weight:900; letter-spacing:5px; animation:fadeUp .8s ease; }
+        .spl-logo span { color:var(--sky); }
+        .spl-tag { font-size:10px; color:var(--text2); letter-spacing:4px; margin-top:6px; animation:fadeUp .8s .2s both; }
+        .spl-bar { width:110px; height:1px; background:var(--border); margin-top:40px; overflow:hidden; }
+        .spl-bar::after { content:''; display:block; height:100%; background:var(--sky); width:0; animation:ld 1.6s .4s forwards; }
+        @keyframes ld { to{width:100%} }
+
+        /* === Main === */
+        #main { padding:18px; padding-bottom:30px; opacity:0; animation:fadeUp .6s 2s forwards; }
+
+        /* Header */
+        .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+        .logo { font-weight:900; font-size:17px; letter-spacing:2px; }
+        .logo span { color:var(--sky); }
+
+        /* Heartbeat Pill */
+        .hb-pill {
+            display:flex; align-items:center; gap:7px;
+            background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25);
+            padding:7px 13px; border-radius:20px; font-size:10px; color:var(--accent);
+        }
+        .hb-ring {
+            width:10px; height:10px; border-radius:50%;
+            border:2px solid var(--accent);
+            animation:hb-pulse 2s ease-in-out infinite;
+            position:relative;
+        }
+        .hb-ring::after {
+            content:''; position:absolute; inset:-4px;
+            border-radius:50%; border:1px solid rgba(16,185,129,0.4);
+            animation:hb-ring 2s ease-in-out infinite;
+        }
+        @keyframes hb-pulse { 0%,100%{background:var(--accent);opacity:1} 50%{opacity:.4} }
+        @keyframes hb-ring { 0%{transform:scale(.6);opacity:1} 100%{transform:scale(1.8);opacity:0} }
+
+        /* Welcome */
+        .welcome-card {
+            background:linear-gradient(135deg, rgba(100,210,255,0.07), rgba(16,185,129,0.04));
+            border:1px solid rgba(100,210,255,0.18);
+            border-radius:24px; padding:22px; margin-bottom:16px;
+            position:relative; overflow:hidden;
+        }
+        .welcome-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--sky),transparent); }
+        .w-name { font-size:21px; font-weight:900; }
+        .w-name span { color:var(--sky); }
+        .w-sub { font-size:11px; color:var(--text2); margin-top:4px; }
+        .w-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:5px 12px; border-radius:10px; font-size:10px; margin-top:12px; }
+
+        /* Time Bar */
+        .time-bar {
+            background:var(--glass); border:1px solid var(--border);
+            border-radius:18px; padding:14px 18px;
+            display:flex; align-items:center; gap:14px; margin-bottom:16px;
+        }
+        .tb-left .lbl { font-size:9px; color:var(--text2); letter-spacing:1px; margin-bottom:5px; }
+        .tb-left .val { font-size:20px; font-weight:900; color:var(--gold); }
+        .tb-prog { flex:1; }
+        .tb-track { height:3px; background:var(--border); border-radius:3px; overflow:hidden; }
+        .tb-fill { height:100%; width:65%; background:linear-gradient(90deg,var(--accent),var(--sky)); border-radius:3px; }
+        .tb-ends { display:flex; justify-content:space-between; font-size:8px; color:var(--text2); margin-top:5px; }
+        .tb-right { font-size:9px; color:var(--text2); text-align:left; }
+        .tb-right strong { font-size:12px; color:var(--accent); display:block; }
+
+        /* Code Card */
+        .code-card {
+            background:var(--bg2); border:1px solid var(--border);
+            border-radius:28px; padding:28px 18px; text-align:center;
+            margin-bottom:16px; position:relative; overflow:hidden;
+        }
+        .code-card::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(100,210,255,0.07) 0%,transparent 65%); }
+        .code-lbl { font-size:9px; color:var(--text2); letter-spacing:3px; text-transform:uppercase; margin-bottom:18px; }
+        .code-num {
+            font-size:56px; font-weight:900; letter-spacing:18px;
+            color:var(--sky); text-shadow:0 0 40px rgba(100,210,255,0.35);
+            cursor:pointer; transition:all .3s; position:relative;
+            margin-bottom:6px;
+        }
+        .code-num:hover { text-shadow:0 0 65px rgba(100,210,255,0.65); }
+        .code-hint { font-size:8px; color:var(--text2); letter-spacing:1px; margin-bottom:16px; }
+        .code-exp { font-size:10px; color:var(--accent); background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); padding:6px 16px; border-radius:20px; display:inline-block; }
+
+        /* Info Grid */
+        .sec-lbl { font-size:9px; color:var(--text2); letter-spacing:2px; text-transform:uppercase; margin:18px 0 10px; }
+        .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+        .info-tile {
+            background:var(--glass); border:1px solid var(--border);
+            border-radius:18px; padding:16px; cursor:pointer; transition:all .3s;
+        }
+        .info-tile:hover { background:var(--glass2); border-color:rgba(100,210,255,0.25); }
+        .info-tile:active { transform:scale(.97); }
+        .it-icon { font-size:20px; margin-bottom:9px; }
+        .it-lbl { font-size:9px; color:var(--text2); letter-spacing:1px; margin-bottom:5px; }
+        .it-val { font-size:13px; font-weight:700; color:var(--sky); word-break:break-all; }
+        .it-act { font-size:8px; color:var(--text2); margin-top:5px; }
+
+        /* Services */
+        .svc-btn {
+            width:100%; background:var(--glass); border:1px solid var(--border);
+            color:var(--text); padding:15px 18px; border-radius:16px;
+            font-family:'Tajawal'; font-size:13px; font-weight:700;
+            cursor:pointer; display:flex; align-items:center; gap:12px;
+            transition:all .3s; margin-bottom:9px; text-align:right;
+        }
+        .svc-btn:hover { background:var(--glass2); border-color:rgba(100,210,255,0.25); }
+        .svc-btn:active { transform:scale(.98); }
+        .svc-btn .si { font-size:22px; }
+        .svc-btn .st { flex:1; }
+        .svc-btn .st .t { font-size:13px; }
+        .svc-btn .st .s { font-size:9px; color:var(--text2); margin-top:2px; }
+        .svc-btn .arr { color:var(--text2); font-size:13px; }
+
+        /* === قسم العروض الحصرية (Ad Engine) === */
+        .offers-section { margin-top:20px; }
+        .offers-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+        .offers-tag { font-size:9px; color:var(--gold); letter-spacing:2px; text-transform:uppercase; }
+        .offers-live { font-size:8px; color:var(--text2); display:flex; align-items:center; gap:5px; }
+        .offers-live::before { content:''; width:5px; height:5px; background:var(--accent); border-radius:50%; animation:blink 2s infinite; }
+
+        .offer-card {
+            border-radius:20px; padding:18px;
+            margin-bottom:10px; position:relative; overflow:hidden;
+            cursor:pointer; transition:all .3s;
+        }
+        .offer-card:hover { transform:translateY(-2px); }
+        .offer-card.gold-offer {
+            background:linear-gradient(135deg, rgba(212,168,83,0.12), rgba(212,168,83,0.04));
+            border:1px solid rgba(212,168,83,0.3);
+        }
+        .offer-card.sky-offer {
+            background:linear-gradient(135deg, rgba(100,210,255,0.08), rgba(100,210,255,0.03));
+            border:1px solid rgba(100,210,255,0.2);
+        }
+        .offer-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; }
+        .offer-card.gold-offer::before { background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+        .offer-card.sky-offer::before { background:linear-gradient(90deg,transparent,var(--sky),transparent); }
+        .oc-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+        .oc-badge { font-size:8px; font-weight:700; padding:3px 9px; border-radius:8px; }
+        .gold-badge { background:rgba(212,168,83,0.2); color:var(--gold); }
+        .sky-badge { background:rgba(100,210,255,0.15); color:var(--sky); }
+        .oc-icon { font-size:26px; }
+        .oc-title { font-size:14px; font-weight:800; margin-bottom:4px; }
+        .oc-sub { font-size:10px; color:var(--text2); }
+        .oc-cta { font-size:10px; font-weight:700; margin-top:12px; display:inline-flex; align-items:center; gap:5px; }
+        .gold-offer .oc-cta { color:var(--gold); }
+        .sky-offer .oc-cta { color:var(--sky); }
+
+        /* Support */
+        .support-card {
+            background:linear-gradient(135deg, rgba(212,168,83,0.1), rgba(16,185,129,0.06));
+            border:1px solid rgba(212,168,83,0.25); border-radius:20px;
+            padding:18px; margin-top:20px;
+            display:flex; align-items:center; gap:14px; cursor:pointer;
+        }
+        .sc-sos { font-size:28px; }
+        .sc-t { font-size:13px; font-weight:700; color:var(--gold); }
+        .sc-s { font-size:9px; color:var(--text2); margin-top:3px; }
+
+        /* Toast */
+        .toast {
+            position:fixed; bottom:28px; left:50%;
+            transform:translateX(-50%) translateY(10px);
+            background:var(--sky); color:#000;
+            padding:10px 22px; border-radius:30px;
+            font-size:12px; font-weight:700;
+            opacity:0; transition:all .3s; pointer-events:none; z-index:500;
+        }
+        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+        /* Heartbeat status footer */
+        .hb-footer {
+            text-align:center; margin-top:24px; padding-top:16px;
+            border-top:1px solid var(--border);
+            font-size:9px; color:var(--text2);
+            display:flex; align-items:center; justify-content:center; gap:8px;
+        }
+        .hb-dot { width:5px; height:5px; background:var(--accent); border-radius:50%; animation:blink 2s infinite; }
+    </style>
+</head>
+<body>
+
+<div id="splash">
+    <div class="spl-logo">QDR<span>OS</span></div>
+    <div class="spl-tag">GUEST PORTAL · V2</div>
+    <div class="spl-bar"></div>
+</div>
+
+<div id="main">
+    <div class="header">
+        <div class="logo">QDR<span>GUEST</span></div>
+        <div class="hb-pill"><div class="hb-ring"></div>نشط</div>
+    </div>
+
+    <!-- ترحيب -->
+    <div class="welcome-card">
+        <div class="w-name">أهلاً، <span>محمد</span> 👋</div>
+        <div class="w-sub">إقامتك جاهزة · استمتع بوقتك معنا</div>
+        <div class="w-badge">🏠 شقة الراكة · غرفة ١٠٢</div>
+    </div>
+
+    <!-- الوقت -->
+    <div class="time-bar">
+        <div class="tb-left">
+            <div class="lbl">REMAINING</div>
+            <div class="val">٣:٠٠</div>
+        </div>
+        <div class="tb-prog">
+            <div class="tb-track"><div class="tb-fill"></div></div>
+            <div class="tb-ends"><span>11:00 AM</span><span>2:00 PM</span></div>
+        </div>
+        <div class="tb-right">
+            <strong>٦٥٪</strong>مكتمل
+        </div>
+    </div>
+
+    <!-- الكود -->
+    <div class="code-card">
+        <div class="code-lbl">رمز دخول الوحدة</div>
+        <div class="code-num" onclick="copyCode()">4321</div>
+        <div class="code-hint">انقر للنسخ</div>
+        <div class="code-exp">✓ صالح حتى 14 مايو · 2:00 PM</div>
+    </div>
+
+    <!-- واي فاي -->
+    <div class="sec-lbl">بيانات الاتصال</div>
+    <div class="info-grid">
+        <div class="info-tile" onclick="copyText('QDR_Premium','تم نسخ اسم الشبكة ✓')">
+            <div class="it-icon">📶</div>
+            <div class="it-lbl">الشبكة</div>
+            <div class="it-val">QDR_Premium</div>
+            <div class="it-act">انقر للنسخ</div>
+        </div>
+        <div class="info-tile" onclick="copyText('QDR2024#','تم نسخ كلمة المرور ✓')">
+            <div class="it-icon">🔑</div>
+            <div class="it-lbl">كلمة المرور</div>
+            <div class="it-val">QDR2024#</div>
+            <div class="it-act">انقر للنسخ</div>
+        </div>
+    </div>
+
+    <!-- خدمات -->
+    <div class="sec-lbl">الخدمات</div>
+
+    <button class="svc-btn">
+        <span class="si">📍</span>
+        <span class="st"><div class="t">موقع الوحدة</div><div class="s">افتح الخريطة</div></span>
+        <span class="arr">←</span>
+    </button>
+    <button class="svc-btn">
+        <span class="si">⏱️</span>
+        <span class="st"><div class="t">تمديد الإقامة</div><div class="s">إضافة ساعات بالنقر</div></span>
+        <span class="arr">←</span>
+    </button>
+    <button class="svc-btn">
+        <span class="si">📖</span>
+        <span class="st"><div class="t">دليل الاستخدام</div><div class="s">الأجهزة والمرافق</div></span>
+        <span class="arr">←</span>
+    </button>
+
+    <!-- === قسم العروض الحصرية (Ad Engine) === -->
+    <div class="offers-section">
+        <div class="offers-header">
+            <div class="offers-tag">⚡ عروض حصرية لضيوف QDR</div>
+            <div class="offers-live">مباشر</div>
+        </div>
+
+        <div class="offer-card gold-offer" onclick="openOffer('مطعم البيك')">
+            <div class="oc-top">
+                <div class="oc-badge gold-badge">طعام · قريب منك</div>
+                <div class="oc-icon">🍗</div>
+            </div>
+            <div class="oc-title">خصم ١٥٪ في مطعم البيك</div>
+            <div class="oc-sub">حصري لضيوف شقة الراكة · صالح اليوم فقط</div>
+            <div class="oc-cta">استخدم العرض ←</div>
+        </div>
+
+        <div class="offer-card sky-offer" onclick="openOffer('سيارة')">
+            <div class="oc-top">
+                <div class="oc-badge sky-badge">توصيل · فوري</div>
+                <div class="oc-icon">🚗</div>
+            </div>
+            <div class="oc-title">احجز سيارة بـ ٤٠ ر.س فقط</div>
+            <div class="oc-sub">توصيل من وإلى الشقة · شراكة QDR</div>
+            <div class="oc-cta">احجز الآن ←</div>
+        </div>
+    </div>
+
+    <!-- الدعم -->
+    <div class="support-card" onclick="callSupport()">
+        <div class="sc-sos">🆘</div>
+        <div>
+            <div class="sc-t">تحتاج مساعدة؟</div>
+            <div class="sc-s">تواصل مع الدعم · رد فوري</div>
+        </div>
+    </div>
+
+    <!-- Heartbeat Footer -->
+    <div class="hb-footer">
+        <div class="hb-dot"></div>
+        <span>نبض الجلسة نشط · آخر تحديث: الآن</span>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    // إخفاء الـ Splash
+    setTimeout(() => {
+        const s = document.getElementById('splash');
+        s.style.opacity = '0';
+        setTimeout(() => s.style.display = 'none', 700);
+    }, 1800);
+
+    // === Heartbeat Logic ===
+    let lastSeen = Date.now();
+    let hbCount = 0;
+
+    function sendHeartbeat() {
+        lastSeen = Date.now();
+        hbCount++;
+        // في الواقع: fetch('/api/heartbeat', { method:'POST', body: JSON.stringify({ guestId:'G1042', unit:'الراكة', ts: lastSeen }) })
+        console.log(`[QDR Heartbeat #${hbCount}] Unit: الراكة | Time: ${new Date(lastSeen).toLocaleTimeString('ar')}`);
+        updateHbFooter();
+    }
+
+    function updateHbFooter() {
+        const footer = document.querySelector('.hb-footer span');
+        if (footer) footer.textContent = `نبض الجلسة نشط · آخر تحديث: ${new Date().toLocaleTimeString('ar')}`;
+    }
+
+    // إرسال كل 30 ثانية
+    setInterval(sendHeartbeat, 30000);
+    sendHeartbeat(); // أول ping فوري
+
+    // === Functions ===
+    function copyCode() {
+        navigator.clipboard.writeText('4321').catch(() => {});
+        showToast('تم نسخ الكود: 4321 ✓');
+    }
+
+    function copyText(text, msg) {
+        navigator.clipboard.writeText(text).catch(() => {});
+        showToast(msg);
+    }
+
+    function openOffer(name) {
+        showToast('✓ جاري فتح عرض: ' + name);
+    }
+
+    function callSupport() {
+        window.open('https://wa.me/966500000000', '_blank');
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // Page Visibility: detect when user leaves/returns
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            console.log('[QDR] الضيف أغلق الشاشة - آخر ظهور: ' + new Date().toLocaleTimeString('ar'));
+        } else {
+            sendHeartbeat();
+        }
+    });
+</script>
+</body>
+</html>

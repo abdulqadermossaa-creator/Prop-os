@@ -64,3 +64,11 @@ Backup_*
 # Python bytecode and cache files
 __pycache__/
 *.py[cod]
+
+# qlevl Python
+*.pyc
+*.db
+*.db-shm
+*.db-wal
+__pycache__/
+.env

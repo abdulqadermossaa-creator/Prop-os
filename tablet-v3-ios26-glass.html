@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QLVIN OS · Tablet · iOS 26 Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&family=Instrument+Serif:ital@0;1&display=swap');
+
+        *,*::before,*::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            height: 100%; overflow: hidden;
+            font-family: 'Inter', 'Tajawal', -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background: #0a0e1a;
+            color: #fff;
+        }
+
+        /* ============================================
+           🎨 iOS 26 SLATE & INDIGO PALETTE
+        ============================================ */
+        :root {
+            /* Base — Slate (رصاصي) */
+            --slate-900: #0a0e1a;
+            --slate-800: #151a2e;
+            --slate-700: #1e2540;
+            --slate-600: #2a3354;
+            --slate-500: #3a4566;
+            --slate-400: #5a6685;
+            --slate-300: #8090b0;
+            --slate-200: #b0bcd0;
+
+            /* Accent — Indigo (نيلي) */
+            --indigo-900: #1a1f4a;
+            --indigo-800: #252a6e;
+            --indigo-700: #3d40a8;
+            --indigo-600: #4f52c4;
+            --indigo-500: #6b6ed8;
+            --indigo-400: #8a8de8;
+            --indigo-300: #a8abf0;
+
+            /* Glass — Liquid Water */
+            --glass-light: rgba(255, 255, 255, 0.08);
+            --glass-medium: rgba(255, 255, 255, 0.14);
+            --glass-heavy: rgba(255, 255, 255, 0.22);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-shine: rgba(255, 255, 255, 0.35);
+
+            /* Mood-aware (changes per mode) */
+            --mood-primary: var(--indigo-500);
+            --mood-secondary: var(--indigo-700);
+            --mood-glow: rgba(107, 110, 216, 0.5);
+        }
+
+        body[data-mood="cinema"] {
+            --mood-primary: #8E7BF0;
+            --mood-secondary: #5E4CC4;
+            --mood-glow: rgba(142, 123, 240, 0.55);
+        }
+        body[data-mood="match"][data-team="hilal"] {
+            --mood-primary: #3A7BE8;
+            --mood-secondary: #1A4FB0;
+            --mood-glow: rgba(58, 123, 232, 0.55);
+        }
+        body[data-mood="match"][data-team="nassr"] {
+            --mood-primary: #F4D03F;
+            --mood-secondary: #C8A82C;
+            --mood-glow: rgba(244, 208, 63, 0.55);
+        }
+        body[data-mood="relax"] {
+            --mood-primary: #C58FE8;
+            --mood-secondary: #8E5DC4;
+            --mood-glow: rgba(197, 143, 232, 0.55);
+        }
+        body[data-alert="warning"] {
+            --mood-primary: #FF9F0A !important;
+            --mood-glow: rgba(255, 159, 10, 0.5) !important;
+        }
+        body[data-alert="critical"] {
+            --mood-primary: #FF3B30 !important;
+            --mood-glow: rgba(255, 59, 48, 0.55) !important;
+        }
+
+        /* ============================================
+           🌊 LIQUID BACKGROUND — Slate + Indigo blend
+        ============================================ */
+        .liquid-bg {
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse 70% 55% at 20% 15%, rgba(75, 80, 200, 0.35) 0%, transparent 55%),
+                radial-gradient(ellipse 65% 50% at 85% 30%, rgba(45, 60, 130, 0.4) 0%, transparent 60%),
+                radial-gradient(ellipse 100% 80% at 50% 100%, rgba(20, 30, 70, 0.5) 0%, transparent 70%),
+                linear-gradient(180deg, #1a2042 0%, #0d1029 45%, #050816 100%);
+            transition: all 2s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .liquid-bg::after {
+            content: '';
+            position: absolute; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.8' /%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: 0.55;
+        }
+
+        /* Floating orbs (liquid effect) */
+        .liquid-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+            transition: all 3s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .orb-1 { width: 450px; height: 450px; top: -120px; right: -100px; background: var(--mood-secondary); }
+        .orb-2 { width: 380px; height: 380px; bottom: -100px; left: -100px; background: var(--indigo-700); }
+        .orb-3 { width: 300px; height: 300px; top: 40%; left: 30%; background: var(--mood-primary); opacity: 0.3; }
+
+        /* ============================================
+           🎬 Animations
+        ============================================ */
+        @keyframes splashFade {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.08); }
+        }
+        @keyframes splashIn {
+            from { opacity: 0; transform: scale(0.7) rotate(-3deg); }
+            to { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glassShine {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.95; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes orbDrift {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(40px, -30px); }
+            66% { transform: translate(-30px, 40px); }
+        }
+        .orb-1, .orb-2, .orb-3 {
+            animation: orbDrift 18s ease-in-out infinite;
+        }
+        .orb-2 { animation-delay: -6s; }
+        .orb-3 { animation-delay: -12s; }
+
+        /* ============================================
+           🚀 SPLASH SCREEN
+        ============================================ */
+        .splash {
+            position: fixed; inset: 0; z-index: 9999;
+            background: #000;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .splash.fade-out {
+            opacity: 0; transform: scale(1.08);
+            pointer-events: none;
+        }
+        .splash-bg {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 50% 50%, rgba(75, 80, 200, 0.25) 0%, transparent 60%),
+                #000;
+        }
+        .splash-content {
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 24px;
+            animation: splashIn 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .splash-powered {
+            font-size: 13px; font-weight: 500;
+            color: rgba(255, 215, 130, 0.8);
+            letter-spacing: 8px;
+            display: flex; align-items: center; gap: 24px;
+        }
+        .splash-powered::before, .splash-powered::after {
+            content: '';
+            width: 60px; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 130, 0.6), transparent);
+        }
+        .qlvin-logo {
+            width: 240px; height: 240px;
+            filter: drop-shadow(0 0 40px rgba(74, 159, 245, 0.3));
+        }
+        .splash-tagline {
+            font-size: 12px;
+            color: rgba(255, 215, 130, 0.7);
+            letter-spacing: 6px;
+            display: flex; align-items: center; gap: 18px;
+        }
+        .splash-tagline::before, .splash-tagline::after {
+            content: '';
+            width: 50px; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 130, 0.5), transparent);
+        }
+        .splash-tagline .nxt {
+            color: #4A9FF5;
+            font-weight: 800;
+        }
+
+        /* ============================================
+           📺 TABLET FRAME
+        ============================================ */
+        .tablet {
+            position: relative; z-index: 2;
+            width: 100vw; height: 100vh;
+            opacity: 0;
+            animation: slideUpFade 0.8s 2.4s forwards;
+            display: flex; flex-direction: column;
+        }
+
+        /* ============================================
+           🔝 TOP BAR — Glass
+        ============================================ */
+        .top-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 32px;
+            background: rgba(20, 25, 45, 0.5);
+            backdrop-filter: blur(40px) saturate(180%);
+            border-bottom: 0.5px solid var(--glass-border);
+            position: relative;
+        }
+        .top-bar::after {
+            content: '';
+            position: absolute; left: 0; right: 0; bottom: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+        }
+        .tb-logo-wrap {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .tb-logo {
+            width: 42px; height: 42px;
+            filter: drop-shadow(0 2px 8px rgba(74, 159, 245, 0.4));
+        }
+        .tb-title {
+            font-size: 17px; font-weight: 800;
+            letter-spacing: 3px;
+            color: #E8EBF5;
+        }
+        .tb-title .os-blue { color: #4A9FF5; }
+        .tb-subtitle {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .tb-greeting {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 22px;
+            color: rgba(232, 235, 245, 0.85);
+        }
+
+        .tb-status-row {
+            display: flex; align-items: center; gap: 14px;
+        }
+        .tb-status {
+            background: var(--glass-light);
+            backdrop-filter: blur(20px);
+            border: 0.5px solid var(--glass-border);
+            padding: 7px 14px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #A8ABF0;
+            letter-spacing: 1.5px;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .tb-status::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: #30D158;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(48, 209, 88, 0.8);
+        }
+        .tb-unit {
+            font-family: 'Inter';
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 2px;
+        }
+
+        /* ============================================
+           🎯 MAIN GRID (3 columns landscape)
+        ============================================ */
+        .main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 24px;
+            padding: 28px 32px;
+            overflow: hidden;
+        }
+
+        /* ============================================
+           📊 LEFT — Environment glass cards
+        ============================================ */
+        .left-panel {
+            display: flex; flex-direction: column; gap: 14px;
+            animation: slideUpFade 0.7s 2.6s both;
+        }
+        .panel-header {
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(168, 171, 240, 0.7);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 0 8px;
+        }
+
+        /* Glass card style (iOS 26) */
+        .glass-card {
+            background: linear-gradient(135deg, var(--glass-medium), var(--glass-light));
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 16px 18px;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                inset 0 1px 0 var(--glass-shine),
+                0 4px 20px rgba(0, 0, 0, 0.25);
+            transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 60%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1), transparent);
+            border-radius: 24px 24px 0 0;
+            pointer-events: none;
+        }
+
+        .env-card .env-row {
+            display: flex; justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+        .env-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .env-icon {
+            width: 26px; height: 26px;
+            background: var(--glass-light);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px;
+        }
+        .env-value {
+            font-family: 'Instrument Serif', serif;
+            font-size: 38px;
+            font-weight: 400;
+            color: #fff;
+            line-height: 1;
+            letter-spacing: -1px;
+            margin-top: 4px;
+        }
+        .env-value small {
+            font-family: 'Inter';
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 500;
+            margin-right: 4px;
+        }
+        .env-trend {
+            font-size: 10px;
+            color: var(--mood-primary);
+            font-weight: 600;
+            margin-top: 5px;
+            letter-spacing: 0.5px;
+            transition: color 0.6s;
+        }
+        .env-card.accent .env-value {
+            color: var(--mood-primary);
+            transition: color 0.6s;
+        }
+
+        /* ============================================
+           ⭐ CENTER STAGE — Hero
+        ============================================ */
+        .center-stage {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .guest-block {
+            text-align: center;
+            margin-bottom: 24px;
+            animation: slideUpFade 0.7s 2.7s both;
+        }
+        .guest-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(168, 171, 240, 0.7);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .guest-name {
+            font-family: 'Instrument Serif', serif;
+            font-size: 44px;
+            font-weight: 400;
+            color: #fff;
+            letter-spacing: -0.8px;
+            line-height: 1.1;
+        }
+        .guest-unit {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        /* Time Ring */
+        .time-ring-wrap {
+            position: relative;
+            width: 300px; height: 300px;
+            animation: slideUpFade 0.8s 2.8s both;
+        }
+        .time-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .ring-bg-circle {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.06);
+            stroke-width: 11;
+        }
+        .ring-progress-circle {
+            fill: none;
+            stroke: var(--mood-primary);
+            stroke-width: 11;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s cubic-bezier(0.32, 0.72, 0, 1), stroke 0.8s;
+            filter: drop-shadow(0 0 20px var(--mood-glow));
+        }
+        .ring-center {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+        }
+        .ring-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .ring-hours {
+            font-family: 'Instrument Serif', serif;
+            font-size: 100px;
+            font-weight: 400;
+            letter-spacing: -4px;
+            line-height: 1;
+            color: #fff;
+            transition: color 0.8s;
+        }
+        body[data-alert="warning"] .ring-hours,
+        body[data-alert="critical"] .ring-hours {
+            color: var(--mood-primary);
+        }
+        .ring-minutes {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+        .ring-checkout {
+            font-size: 10px;
+            color: rgba(168, 171, 240, 0.55);
+            font-weight: 500;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        .stage-hint {
+            margin-top: 28px;
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.55);
+            animation: slideUpFade 0.7s 3s both;
+        }
+        .stage-hint .accent {
+            color: var(--mood-primary);
+            font-style: normal;
+            font-weight: 700;
+            transition: color 0.6s;
+        }
+
+        /* ============================================
+           🎭 RIGHT — Modes (Glass pills)
+        ============================================ */
+        .right-panel {
+            display: flex; flex-direction: column; gap: 12px;
+            animation: slideUpFade 0.7s 2.6s both;
+        }
+        .mode-pill {
+            background: var(--glass-medium);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 14px;
+            transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            box-shadow:
+                inset 0 1px 0 var(--glass-shine),
+                0 4px 16px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .mode-pill:active { transform: scale(0.97); }
+        .mode-pill::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent);
+            border-radius: 20px 20px 0 0;
+            pointer-events: none;
+        }
+        .mode-pill.active {
+            background: linear-gradient(135deg, var(--mood-primary), var(--mood-secondary));
+            border-color: var(--mood-primary);
+            box-shadow:
+                0 8px 32px var(--mood-glow),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+        }
+        .mode-pill.active::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+            background-size: 200% 100%;
+            animation: glassShine 4s infinite;
+            border-radius: 20px;
+        }
+
+        .mode-num {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.35);
+            width: 26px;
+            transition: color 0.3s;
+        }
+        .mode-pill.active .mode-num { color: rgba(255, 255, 255, 0.85); }
+
+        .mode-icon {
+            width: 38px; height: 38px;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(10px);
+            border: 0.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 19px;
+            position: relative;
+            z-index: 1;
+        }
+        .mode-meta { flex: 1; position: relative; z-index: 1; }
+        .mode-name {
+            font-size: 14px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.2px;
+            margin-bottom: 1px;
+        }
+        .mode-desc {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Tajawal';
+        }
+        .mode-bar {
+            width: 4px;
+            height: 22px;
+            background: var(--mood-primary);
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 0 8px var(--mood-glow);
+        }
+        .mode-pill.active .mode-bar {
+            opacity: 0;  /* hidden when full active style */
+        }
+
+        /* ============================================
+           🎚️ BOTTOM CONTROLS — Liquid sliders
+        ============================================ */
+        .bottom-controls {
+            padding: 0 32px 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 18px;
+            animation: slideUpFade 0.7s 2.9s both;
+        }
+
+        .control-card {
+            background: var(--glass-medium);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 22px;
+            padding: 14px 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                inset 0 1px 0 var(--glass-shine),
+                0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        .control-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.07), transparent);
+            border-radius: 22px 22px 0 0;
+            pointer-events: none;
+        }
+
+        .cc-row {
+            display: flex; justify-content: space-between;
+            align-items: center;
+            margin-bottom: 11px;
+            position: relative; z-index: 1;
+        }
+        .cc-left {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .cc-icon {
+            width: 28px; height: 28px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+        .cc-label {
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Tajawal';
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .cc-val {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--mood-primary);
+            letter-spacing: -0.5px;
+            transition: color 0.5s;
+        }
+        .cc-val small {
+            font-family: 'Inter';
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 500;
+            margin-right: 2px;
+        }
+
+        .liquid-slider {
+            position: relative;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 0.5px solid rgba(255, 255, 255, 0.06);
+            touch-action: none;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        .liquid-slider-fill {
+            position: absolute;
+            top: 0; bottom: 0; right: 0;
+            background: linear-gradient(180deg,
+                rgba(255,255,255,0.95) 0%,
+                rgba(255,255,255,0.8) 50%,
+                rgba(255,255,255,0.7) 100%);
+            border-radius: 14px;
+            transition: width 0.05s linear;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+        }
+        body[data-mood="cinema"] .liquid-slider-fill,
+        body[data-mood="match"] .liquid-slider-fill,
+        body[data-mood="relax"] .liquid-slider-fill {
+            background: linear-gradient(180deg, var(--mood-primary), var(--mood-secondary));
+        }
+
+        /* ============================================
+           🔄 LAYOUT SWITCHER (top-left floating)
+        ============================================ */
+        .layout-switcher {
+            position: fixed;
+            top: 18px; left: 18px;
+            z-index: 100;
+            display: flex; gap: 6px;
+            background: rgba(20, 25, 45, 0.7);
+            backdrop-filter: blur(30px) saturate(180%);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 100px;
+            padding: 5px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            animation: slideUpFade 0.7s 3.2s forwards;
+        }
+        .ls-btn {
+            width: 32px; height: 32px;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'Inter';
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+        }
+        .ls-btn:hover { color: #fff; }
+        .ls-btn.active {
+            background: linear-gradient(135deg, var(--mood-primary), var(--mood-secondary));
+            color: #fff;
+            box-shadow: 0 2px 8px var(--mood-glow);
+        }
+
+        /* ============================================
+           📌 Sync indicator
+        ============================================ */
+        .sync-indicator {
+            position: fixed;
+            bottom: 18px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(74, 159, 245, 0.12);
+            backdrop-filter: blur(30px);
+            border: 0.5px solid rgba(74, 159, 245, 0.3);
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(168, 171, 240, 0.95);
+            display: flex; align-items: center; gap: 9px;
+            letter-spacing: 0.5px;
+            opacity: 0;
+            animation: slideUpFade 0.8s 3s forwards;
+            z-index: 50;
+        }
+        .sync-dot {
+            width: 6px; height: 6px;
+            background: #4A9FF5;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(74, 159, 245, 0.9);
+            animation: breathe 2s infinite;
+        }
+
+        /* ============================================
+           🔔 Notification (Liquid Glass)
+        ============================================ */
+        .liquid-notif {
+            position: fixed;
+            top: 26px; left: 50%;
+            transform: translateX(-50%) translateY(-100px) scale(0.9);
+            background: var(--glass-heavy);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 0.5px solid var(--glass-border);
+            padding: 13px 24px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            display: flex; align-items: center; gap: 10px;
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s;
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            font-family: 'Tajawal';
+            box-shadow:
+                inset 0 1px 0 var(--glass-shine),
+                0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        .liquid-notif.show {
+            transform: translateX(-50%) translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main { grid-template-columns: 200px 1fr 200px; gap: 16px; padding: 20px; }
+            .bottom-controls { padding: 0 20px 18px; gap: 10px; }
+            .guest-name { font-size: 34px; }
+            .ring-hours { font-size: 80px; }
+            .time-ring-wrap { width: 250px; height: 250px; }
+        }
+    </style>
+</head>
+<body data-mood="default">
+
+<!-- 🚀 Splash -->
+<div class="splash" id="splash">
+    <div class="splash-bg"></div>
+    <div class="splash-content">
+        <div class="splash-powered">POWERED BY</div>
+
+        <!-- LOGO SVG -->
+        <svg class="qlvin-logo" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="silver-s" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#F5F5F5"/>
+                    <stop offset="40%" stop-color="#C0C0C0"/>
+                    <stop offset="70%" stop-color="#8E8E8E"/>
+                    <stop offset="100%" stop-color="#5A5A5A"/>
+                </linearGradient>
+                <linearGradient id="blue-s" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#42A5F5"/>
+                    <stop offset="40%" stop-color="#1E88E5"/>
+                    <stop offset="80%" stop-color="#0D47A1"/>
+                    <stop offset="100%" stop-color="#082A6B"/>
+                </linearGradient>
+                <linearGradient id="building-s" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#8DB4D8"/>
+                    <stop offset="50%" stop-color="#4A7BA8"/>
+                    <stop offset="100%" stop-color="#1E4F7C"/>
+                </linearGradient>
+                <radialGradient id="gold-s" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#FFE082"/>
+                    <stop offset="60%" stop-color="#FFB300"/>
+                    <stop offset="100%" stop-color="#FF8F00"/>
+                </radialGradient>
+            </defs>
+
+            <!-- Q ring -->
+            <path d="M 200 60 A 110 110 0 0 0 90 200 A 110 110 0 0 0 130 290"
+                  fill="none" stroke="url(#silver-s)" stroke-width="22" stroke-linecap="round"/>
+            <path d="M 200 60 A 110 110 0 0 1 310 200 A 110 110 0 0 1 270 290"
+                  fill="none" stroke="url(#blue-s)" stroke-width="22" stroke-linecap="round"/>
+
+            <!-- Building 3 towers -->
+            <path d="M 158 130 L 178 130 L 178 280 L 158 280 Z" fill="url(#building-s)"/>
+            <path d="M 183 160 L 208 160 L 208 280 L 183 280 Z" fill="url(#building-s)"/>
+            <path d="M 213 175 L 238 175 L 238 280 L 213 280 Z" fill="url(#building-s)"/>
+
+            <!-- R / arrow -->
+            <path d="M 235 175 L 270 175 L 290 200 L 290 240 L 270 240 L 290 280 L 260 280 L 240 245 L 235 245 Z"
+                  fill="url(#blue-s)"/>
+
+            <!-- House roof -->
+            <path d="M 130 290 L 200 240 L 270 290 Z" fill="url(#blue-s)"/>
+
+            <!-- Gold window -->
+            <rect x="187" y="280" width="26" height="20" fill="url(#gold-s)" rx="2"/>
+            <line x1="200" y1="282" x2="200" y2="298" stroke="#5A2C00" stroke-width="0.8"/>
+            <line x1="189" y1="290" x2="211" y2="290" stroke="#5A2C00" stroke-width="0.8"/>
+        </svg>
+
+        <div class="splash-tagline">
+            WELCOME TO THE <span class="nxt">NXT LVL</span>
+        </div>
+    </div>
+</div>
+
+<!-- 🌊 Liquid Background -->
+<div class="liquid-bg"></div>
+<div class="liquid-orb orb-1"></div>
+<div class="liquid-orb orb-2"></div>
+<div class="liquid-orb orb-3"></div>
+
+<!-- 🔄 Layout Switcher -->
+<div class="layout-switcher">
+    <button class="ls-btn" onclick="switchLayout(1)" title="Classic">1</button>
+    <button class="ls-btn" onclick="switchLayout(2)" title="Mobile-like">2</button>
+    <button class="ls-btn active" onclick="switchLayout(3)" title="iOS 26 Glass">3</button>
+</div>
+
+<!-- 🔔 Notif -->
+<div class="liquid-notif" id="notif">
+    <span id="notif-icon">✓</span>
+    <span id="notif-text">تم</span>
+</div>
+
+<!-- 📺 Tablet -->
+<div class="tablet">
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="tb-logo-wrap">
+            <svg class="tb-logo" viewBox="0 0 400 400">
+                <defs>
+                    <linearGradient id="silver-tb" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#F5F5F5"/>
+                        <stop offset="60%" stop-color="#8E8E8E"/>
+                        <stop offset="100%" stop-color="#5A5A5A"/>
+                    </linearGradient>
+                    <linearGradient id="blue-tb" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#42A5F5"/>
+                        <stop offset="60%" stop-color="#1E88E5"/>
+                        <stop offset="100%" stop-color="#0D47A1"/>
+                    </linearGradient>
+                    <linearGradient id="building-tb" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#8DB4D8"/>
+                        <stop offset="100%" stop-color="#1E4F7C"/>
+                    </linearGradient>
+                    <radialGradient id="gold-tb" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#FFE082"/>
+                        <stop offset="100%" stop-color="#FF8F00"/>
+                    </radialGradient>
+                </defs>
+                <path d="M 200 60 A 110 110 0 0 0 90 200 A 110 110 0 0 0 130 290"
+                      fill="none" stroke="url(#silver-tb)" stroke-width="22" stroke-linecap="round"/>
+                <path d="M 200 60 A 110 110 0 0 1 310 200 A 110 110 0 0 1 270 290"
+                      fill="none" stroke="url(#blue-tb)" stroke-width="22" stroke-linecap="round"/>
+                <path d="M 158 130 L 178 130 L 178 280 L 158 280 Z" fill="url(#building-tb)"/>
+                <path d="M 183 160 L 208 160 L 208 280 L 183 280 Z" fill="url(#building-tb)"/>
+                <path d="M 213 175 L 238 175 L 238 280 L 213 280 Z" fill="url(#building-tb)"/>
+                <path d="M 235 175 L 270 175 L 290 200 L 290 240 L 270 240 L 290 280 L 260 280 L 240 245 L 235 245 Z"
+                      fill="url(#blue-tb)"/>
+                <path d="M 130 290 L 200 240 L 270 290 Z" fill="url(#blue-tb)"/>
+                <rect x="187" y="280" width="26" height="20" fill="url(#gold-tb)" rx="2"/>
+            </svg>
+            <div>
+                <div class="tb-title">QLVIN <span class="os-blue">OS</span></div>
+                <div class="tb-subtitle">In-Suite · iOS 26</div>
+            </div>
+        </div>
+
+        <div class="tb-greeting" id="greeting">مساء الخير</div>
+
+        <div class="tb-status-row">
+            <div class="tb-unit">QLVN-1042</div>
+            <div class="tb-status">SYNCED</div>
+        </div>
+    </div>
+
+    <!-- Main 3-Column -->
+    <div class="main">
+
+        <!-- LEFT: Environment -->
+        <div class="left-panel">
+            <div class="panel-header">Environment</div>
+
+            <div class="glass-card env-card">
+                <div class="env-row">
+                    <span class="env-label">Climate</span>
+                    <div class="env-icon">❄</div>
+                </div>
+                <div class="env-value">22<small>°C</small></div>
+                <div class="env-trend">↓ cooling</div>
+            </div>
+
+            <div class="glass-card env-card accent">
+                <div class="env-row">
+                    <span class="env-label">Outside</span>
+                    <div class="env-icon">☀</div>
+                </div>
+                <div class="env-value">38<small>°C</small></div>
+                <div class="env-trend">↑ warm</div>
+            </div>
+
+            <div class="glass-card env-card">
+                <div class="env-row">
+                    <span class="env-label">Humidity</span>
+                    <div class="env-icon">≈</div>
+                </div>
+                <div class="env-value">45<small>%</small></div>
+                <div class="env-trend">— optimal</div>
+            </div>
+        </div>
+
+        <!-- CENTER -->
+        <div class="center-stage">
+            <div class="guest-block">
+                <div class="guest-label">Welcome back</div>
+                <div class="guest-name">Mohammed Al-Otaibi</div>
+                <div class="guest-unit">شقة الراكة · ALRAKAH</div>
+            </div>
+
+            <div class="time-ring-wrap">
+                <svg class="time-ring-svg" viewBox="0 0 300 300">
+                    <circle class="ring-bg-circle" cx="150" cy="150" r="138"></circle>
+                    <circle class="ring-progress-circle" id="ring-fill"
+                            cx="150" cy="150" r="138"
+                            stroke-dasharray="867.08"
+                            stroke-dashoffset="0"></circle>
+                </svg>
+                <div class="ring-center">
+                    <div class="ring-label">Remaining</div>
+                    <div class="ring-hours" id="ring-hours">05</div>
+                    <div class="ring-minutes" id="ring-minutes">hours · 12 min</div>
+                    <div class="ring-checkout">checkout · 14:00</div>
+                </div>
+            </div>
+
+            <div class="stage-hint" id="stage-hint">
+                اختر <span class="accent">مزاجك</span>
+            </div>
+        </div>
+
+        <!-- RIGHT: Modes -->
+        <div class="right-panel">
+            <div class="panel-header">Ambience</div>
+
+            <div class="mode-pill" onclick="selectMode('cinema', event)">
+                <div class="mode-num">01</div>
+                <div class="mode-icon">🎬</div>
+                <div class="mode-meta">
+                    <div class="mode-name">CINEMA</div>
+                    <div class="mode-desc">سينما</div>
+                </div>
+                <div class="mode-bar"></div>
+            </div>
+
+            <div class="mode-pill" onclick="selectMode('match', event)">
+                <div class="mode-num">02</div>
+                <div class="mode-icon">⚽</div>
+                <div class="mode-meta">
+                    <div class="mode-name">MATCH</div>
+                    <div class="mode-desc">الهلال · مباشر</div>
+                </div>
+                <div class="mode-bar"></div>
+            </div>
+
+            <div class="mode-pill" onclick="selectMode('coffee', event)">
+                <div class="mode-num">03</div>
+                <div class="mode-icon">☕</div>
+                <div class="mode-meta">
+                    <div class="mode-name">COFFEE</div>
+                    <div class="mode-desc">قهوة وضيافة</div>
+                </div>
+                <div class="mode-bar"></div>
+            </div>
+
+            <div class="mode-pill" onclick="selectMode('relax', event)">
+                <div class="mode-num">04</div>
+                <div class="mode-icon">🌙</div>
+                <div class="mode-meta">
+                    <div class="mode-name">RELAX</div>
+                    <div class="mode-desc">استرخاء</div>
+                </div>
+                <div class="mode-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Sliders -->
+    <div class="bottom-controls">
+        <div class="control-card">
+            <div class="cc-row">
+                <div class="cc-left">
+                    <div class="cc-icon">💡</div>
+                    <div class="cc-label">الإضاءة</div>
+                </div>
+                <div class="cc-val" id="light-val">60<small>%</small></div>
+            </div>
+            <div class="liquid-slider" data-slider="light" data-value="60">
+                <div class="liquid-slider-fill" style="width: 60%;"></div>
+            </div>
+        </div>
+
+        <div class="control-card">
+            <div class="cc-row">
+                <div class="cc-left">
+                    <div class="cc-icon">🔊</div>
+                    <div class="cc-label">الصوت</div>
+                </div>
+                <div class="cc-val" id="sound-val">45<small>%</small></div>
+            </div>
+            <div class="liquid-slider" data-slider="sound" data-value="45">
+                <div class="liquid-slider-fill" style="width: 45%;"></div>
+            </div>
+        </div>
+
+        <div class="control-card">
+            <div class="cc-row">
+                <div class="cc-left">
+                    <div class="cc-icon">🌈</div>
+                    <div class="cc-label">LED RGB</div>
+                </div>
+                <div class="cc-val" id="rgb-val">30<small>%</small></div>
+            </div>
+            <div class="liquid-slider" data-slider="rgb" data-value="30">
+                <div class="liquid-slider-fill" style="width: 30%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sync indicator -->
+<div class="sync-indicator">
+    <div class="sync-dot"></div>
+    <span>متصل ببطاقة الضيف · iPhone</span>
+</div>
+
+<script>
+// ============================================
+// 🎯 State
+// ============================================
+const state = {
+    mode: 'default',
+    selectedTeam: 'hilal',
+    light: 60,
+    sound: 45,
+    rgb: 30,
+    remainingMinutes: 5 * 60 + 12,
+};
+
+// ============================================
+// 🚀 Splash
+// ============================================
+setTimeout(() => {
+    document.getElementById('splash').classList.add('fade-out');
+}, 2400);
+
+// ============================================
+// 🕐 Greeting based on time
+// ============================================
+function updateGreeting() {
+    const h = new Date().getHours();
+    let g;
+    if (h >= 5 && h < 12) g = 'صباح الخير';
+    else if (h >= 12 && h < 17) g = 'يا هلا والله';
+    else if (h >= 17 && h < 21) g = 'مساء الخير';
+    else g = 'تصبح على خير';
+    document.getElementById('greeting').textContent = g;
+}
+updateGreeting();
+setInterval(updateGreeting, 60000);
+
+// ============================================
+// ⏱️ Time Ring
+// ============================================
+function updateRing() {
+    const total = 5 * 60 + 12;
+    const progress = state.remainingMinutes / total;
+    const circumference = 867.08;
+    const offset = circumference * (1 - progress);
+    document.getElementById('ring-fill').setAttribute('stroke-dashoffset', offset);
+
+    const hours = Math.floor(state.remainingMinutes / 60);
+    const minutes = state.remainingMinutes % 60;
+    document.getElementById('ring-hours').textContent = hours.toString().padStart(2, '0');
+    document.getElementById('ring-minutes').textContent = `hours · ${minutes} min`;
+}
+updateRing();
+
+// ============================================
+// 🎭 Mode Selection
+// ============================================
+function selectMode(mode, ev) {
+    haptic();
+    state.mode = mode;
+
+    if (mode === 'match') {
+        document.body.setAttribute('data-mood', 'match');
+        document.body.setAttribute('data-team', state.selectedTeam);
+    } else {
+        document.body.setAttribute('data-mood', mode);
+        document.body.removeAttribute('data-team');
+    }
+
+    document.querySelectorAll('.mode-pill').forEach(r => r.classList.remove('active'));
+    ev.currentTarget.classList.add('active');
+
+    const names = {
+        cinema: 'وضع السينما',
+        match: 'يا هلال · مباشر',
+        coffee: 'استراحة القهوة',
+        relax: 'وضع الاسترخاء'
+    };
+    showNotif('✓', names[mode]);
+
+    const hints = {
+        cinema: 'استمتع <span class="accent">بالسينما</span>',
+        match: '<span class="accent">يا هلال</span> · مباشر',
+        coffee: '<span class="accent">قهوة</span> دافئة',
+        relax: 'وقت <span class="accent">الاسترخاء</span>'
+    };
+    document.getElementById('stage-hint').innerHTML = hints[mode];
+}
+
+// ============================================
+// 🎚️ Sliders
+// ============================================
+document.querySelectorAll('.liquid-slider').forEach(slider => {
+    let dragging = false;
+    const fill = slider.querySelector('.liquid-slider-fill');
+    const name = slider.dataset.slider;
+    const valueEl = document.getElementById(name + '-val');
+
+    function update(clientX) {
+        const rect = slider.getBoundingClientRect();
+        const x = rect.right - clientX; // RTL
+        let pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
+        const rounded = Math.round(pct);
+        fill.style.width = pct + '%';
+        slider.dataset.value = rounded;
+        state[name] = rounded;
+        if (valueEl) valueEl.innerHTML = `${rounded}<small>%</small>`;
+    }
+
+    function start(e) {
+        dragging = true;
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        update(cx);
+        haptic();
+        e.preventDefault();
+    }
+    function move(e) {
+        if (!dragging) return;
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        update(cx);
+        e.preventDefault();
+    }
+    function end() {
+        if (dragging) { dragging = false; haptic(); }
+    }
+
+    slider.addEventListener('mousedown', start);
+    slider.addEventListener('touchstart', start, { passive: false });
+    document.addEventListener('mousemove', move);
+    document.addEventListener('touchmove', move, { passive: false });
+    document.addEventListener('mouseup', end);
+    document.addEventListener('touchend', end);
+});
+
+// ============================================
+// 🔄 Layout Switcher
+// ============================================
+function switchLayout(num) {
+    haptic();
+    document.querySelectorAll('.ls-btn').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    if (num === 1) {
+        window.location.href = 'tablet-v1-classic.html';
+    } else if (num === 2) {
+        window.location.href = 'tablet-v2-mobile.html';
+    } else if (num === 3) {
+        // We're already on V3
+        showNotif('✨', 'iOS 26 Glass · النسخة الحالية');
+    }
+}
+
+// ============================================
+// 🔔 Helpers
+// ============================================
+function showNotif(icon, text) {
+    const notif = document.getElementById('notif');
+    document.getElementById('notif-icon').textContent = icon;
+    document.getElementById('notif-text').textContent = text;
+    notif.classList.add('show');
+    setTimeout(() => notif.classList.remove('show'), 2800);
+}
+function haptic() { if (navigator.vibrate) navigator.vibrate(15); }
+
+console.log('🎨 QLVIN OS Tablet v3 · iOS 26 Glass Edition');
+</script>
+</body>
+</html>
