@@ -1,3 +1,11 @@
+-- QLVN OS — Full Database Setup
+-- شغّل هذا الملف مرة واحدة في SQL Editor
+-- ═══════════════════════════════════════════════════════
+-- يشمل: 001_schema + 002_rls + 003_realtime + 004_seed
+-- 15 جدول + RLS + Realtime + Seed Data
+-- ═══════════════════════════════════════════════════════
+
+
 -- ═══════════════════════════════════════════════════════
 -- Migration 001: Schema — QLVN OS
 -- المرجع: CLAUDE_FINAL.md §6 + §7 + §8
@@ -330,6 +338,8 @@ CREATE INDEX notifications_recip  ON notifications(recipient_id, read_at);
 CREATE INDEX automations_unit     ON automation_rules(unit_id, enabled);
 CREATE INDEX activity_unit_time   ON activity_logs(unit_id, created_at DESC);
 CREATE INDEX activity_session     ON activity_logs(guest_session_id);
+
+
 -- ═══════════════════════════════════════════════════════
 -- Migration 002: Row Level Security
 -- المرجع: CLAUDE_FINAL.md §8 (RLS section)
@@ -565,6 +575,8 @@ CREATE POLICY "own_notifications" ON notifications FOR ALL
 
 CREATE POLICY "founders_all_notifications" ON notifications FOR ALL
   USING (is_founder());
+
+
 -- ═══════════════════════════════════════════════════════
 -- Migration 003: Realtime Publications
 -- المرجع: CLAUDE_FINAL.md §8 (REALTIME section)
@@ -602,6 +614,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE automation_rules;
 -- channel: automation_rules:{unit_id}
 --   → Pi يعيد تحميل الـ rules عند التغيير
 -- ─────────────────────────────────────────────
+
+
 -- ═══════════════════════════════════════════════════════
 -- Migration 004: Seed Data
 -- بيانات أولية للنظام
