@@ -1,693 +1,582 @@
 -- QLVN OS — Full Database Setup
 -- شغّل هذا الملف مرة واحدة في SQL Editor
 -- ═══════════════════════════════════════════════════════
--- يشمل: 001_schema + 002_rls + 003_realtime + 004_seed
--- 15 جدول + RLS + Realtime + Seed Data
+-- يشمل: 001 → 009 بالترتيب الصحيح
+-- الجداول: users, units, guest_sessions, events,
+--          notifications, devices, automation_rules,
+--          automation_executions, audit_log,
+--          resource_limits, resource_usage, permissions
 -- ═══════════════════════════════════════════════════════
 
 
 -- ═══════════════════════════════════════════════════════
--- Migration 001: Schema — QLVN OS
--- المرجع: CLAUDE_FINAL.md §6 + §7 + §8
--- 15 جدول بالترتيب الصحيح (حسب الـ FK dependencies)
+-- Migration 001: Core users table
 -- ═══════════════════════════════════════════════════════
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE TABLE public.users (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    auth_id     UUID        UNIQUE NOT NULL
+                            REFERENCES auth.users(id) ON DELETE CASCADE,
+    name        TEXT        NOT NULL,
+    email       TEXT        UNIQUE NOT NULL,
+    phone       TEXT,
+    role        TEXT        NOT NULL
+                            CHECK (role IN ('founder', 'host')),
+    status      TEXT        NOT NULL DEFAULT 'active'
+                            CHECK (status IN ('active', 'suspended', 'invited')),
+    avatar_url  TEXT,
+    metadata    JSONB       NOT NULL DEFAULT '{}',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
--- دالة مساعدة: تحديث updated_at تلقائياً
-CREATE OR REPLACE FUNCTION update_updated_at()
+CREATE OR REPLACE FUNCTION public.update_updated_at()
 RETURNS TRIGGER AS $$
-BEGIN NEW.updated_at = now(); RETURN NEW; END;
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
 $$ LANGUAGE plpgsql;
 
+CREATE TRIGGER trg_users_updated_at
+    BEFORE UPDATE ON public.users
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
--- ============================================
--- 1. USERS (Founders + Hosts فقط — الضيف بدون auth)
--- ============================================
-CREATE TABLE users (
-  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  auth_id    uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
-  name       text NOT NULL,
-  role       text NOT NULL CHECK (role IN ('founder', 'host')),
-  phone      text,
-  email      text,
-  created_at timestamptz DEFAULT now()
-);
-
-
--- ============================================
--- 2. HOSTS
--- ============================================
-CREATE TABLE hosts (
-  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id             uuid REFERENCES users(id),
-  name                text NOT NULL,
-  phone               text,
-  email               text,
-  subscription_status text DEFAULT 'active',   -- active | suspended
-  units_count         int  DEFAULT 0,
-  monthly_fee         numeric DEFAULT 300,
-  created_at          timestamptz DEFAULT now()
-);
-
-
--- ============================================
--- 3. HOST_SETTINGS (Plug & Play — §6)
--- ============================================
-CREATE TABLE host_settings (
-  host_id uuid PRIMARY KEY REFERENCES hosts(id) ON DELETE CASCADE,
-
-  -- الواجهات
-  card_style     text DEFAULT 'cinema',   -- cinema | luxury
-  tablet_layout  text DEFAULT 'classic',  -- classic | immersive
-
-  -- الميزات
-  show_sports_widget          boolean DEFAULT true,
-  sports_league               text    DEFAULT 'saudi_pro_league',
-  show_local_ads              boolean DEFAULT true,
-  show_extras_menu            boolean DEFAULT true,
-  ad_engine_enabled           boolean DEFAULT true,
-  nawaf_enabled               boolean DEFAULT true,
-  netflix_confusion_detection boolean DEFAULT true,
-  extend_button               boolean DEFAULT true,
-  exit_button                 boolean DEFAULT true,
-  order_coffee                boolean DEFAULT false,
-  order_popcorn               boolean DEFAULT false,
-  rgb_slider                  boolean DEFAULT false,
-
-  -- الاتصال
-  whatsapp_notifications boolean DEFAULT true,
-  ical_sync_enabled      boolean DEFAULT true,
-
-  -- الحدود
-  max_automations          int DEFAULT 20,
-  max_devices              int DEFAULT 15,
-  max_gemini_calls_per_day int DEFAULT 500,
-
-  language text DEFAULT 'ar'
-);
-
-
--- ============================================
--- 4. UNITS
--- ============================================
-CREATE TABLE units (
-  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  host_id    uuid REFERENCES hosts(id),
-  name       text NOT NULL,
-  qlvn_code  text UNIQUE,        -- e.g. "QLVN-1042"
-  neighborhood text,              -- للـ Ad Engine
-  address    text,
-  pi_device_id text,
-  pi_api_key text,                -- مشفّر
-  pi_status  text DEFAULT 'offline',
-  pi_last_seen timestamptz,
-
-  -- Status
-  approval_status text DEFAULT 'pending_approval'
-    CHECK (approval_status IN ('pending_approval','approved','rejected','suspended')),
-  operational_status text DEFAULT 'available'
-    CHECK (operational_status IN ('available','occupied','cleaning','maintenance')),
-
-  -- WiFi
-  wifi_name     text,
-  wifi_password text,
-
-  -- Climate
-  current_temp numeric,
-  target_temp  numeric DEFAULT 22,
-
-  -- Pricing
-  base_price_per_night     numeric,
-  extension_price_per_hour numeric DEFAULT 50,
-
-  -- إعدادات إضافية
-  features       jsonb DEFAULT '{}',
-  tablet_layout  text  DEFAULT 'classic',
-
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-
-CREATE TRIGGER units_updated_at
-  BEFORE UPDATE ON units
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-
-
--- ============================================
--- 5. BOOKINGS (من iCal أو يدوي)
--- ============================================
-CREATE TABLE bookings (
-  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  unit_id             uuid REFERENCES units(id),
-  external_booking_id text,
-  source              text CHECK (source IN ('airbnb','gathern','booking','direct','manual')),
-  guest_name          text NOT NULL,
-  guest_phone         text,
-  checkin_at          timestamptz NOT NULL,
-  checkout_at         timestamptz NOT NULL,
-  nights              int,
-  total_price         numeric,
-  status              text DEFAULT 'confirmed',
-  created_at          timestamptz DEFAULT now(),
-  UNIQUE(external_booking_id, source)
-);
-
-
--- ============================================
--- 6. GUEST_SESSIONS (الإقامات النشطة + Tokens)
--- ============================================
-CREATE TABLE guest_sessions (
-  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  booking_id       uuid REFERENCES bookings(id),
-  unit_id          uuid REFERENCES units(id),
-  guest_name       text NOT NULL,
-  guest_phone      text,
-  access_code      text,
-  guest_token      text UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex'),
-  token_expires_at timestamptz NOT NULL,
-  status           text DEFAULT 'pending'
-    CHECK (status IN ('pending','active','completed','cancelled','expired')),
-  checked_in_at    timestamptz,
-  checked_out_at   timestamptz,
-  last_seen        timestamptz,    -- للـ Heartbeat
-  preferences      jsonb DEFAULT '{}',
-  created_at       timestamptz DEFAULT now()
-);
-
-
--- ============================================
--- 7. DEVICES
--- ============================================
-CREATE TABLE devices (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  unit_id     uuid REFERENCES units(id),
-  name        text NOT NULL,
-  type        text CHECK (type IN ('ac','light','led_strip','door','presence','plug','switch','lock','temp','tv')),
-  protocol    text CHECK (protocol IN ('zigbee','mqtt','wifi','ir','gpio')),
-  mqtt_topic  text,
-  state       jsonb DEFAULT '{}',
-  status      text DEFAULT 'offline',
-  last_seen   timestamptz,
-  created_at  timestamptz DEFAULT now()
-);
-
-
--- ============================================
--- 8. ACCESS_CODES
--- ============================================
-CREATE TABLE access_codes (
-  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  unit_id          uuid REFERENCES units(id),
-  guest_session_id uuid REFERENCES guest_sessions(id),
-  code             text NOT NULL,
-  valid_from       timestamptz,
-  valid_until      timestamptz,
-  delivered_via    text[],        -- ['whatsapp', 'sms']
-  created_at       timestamptz DEFAULT now()
-);
-
-
--- ============================================
--- 9. ACTIVITY_LOGS (كل شي يسجل هنا — Append-only)
--- ============================================
-CREATE TABLE activity_logs (
-  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  unit_id          uuid REFERENCES units(id),
-  guest_session_id uuid REFERENCES guest_sessions(id),
-  event_type       text NOT NULL,  -- unlock | sensor | mode_change | code_change | automation | ai_intent
-  source           text,           -- pi | host | guest | system | nawaf
-  severity         text DEFAULT 'info' CHECK (severity IN ('info','warning','critical')),
-  payload          jsonb DEFAULT '{}',
-  created_at       timestamptz DEFAULT now()
-);
-
-
--- ============================================
--- 10. AUTOMATION_RULES (§7)
--- ============================================
-CREATE TABLE automation_rules (
-  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  unit_id           uuid REFERENCES units(id),
-  scope             text,           -- platform | host | unit
-  name              text NOT NULL,
-  icon              text DEFAULT '⚡',
-  runs_on           text,           -- tablet | mobile_card | pi_local | cloud | multi
-  trigger_type      text NOT NULL,
-  trigger_config    jsonb DEFAULT '{}',
-  conditions        jsonb DEFAULT '[]',
-  actions           jsonb NOT NULL,
-  enabled           boolean DEFAULT true,
-  locked_by_founder boolean DEFAULT false,
-  created_by        uuid REFERENCES users(id),
-  last_edited_by    uuid REFERENCES users(id),
-  last_edited_at    timestamptz,
-  created_at        timestamptz DEFAULT now()
-);
-
-
--- ============================================
--- 11. MESSAGES (Nawaf conversations)
--- ============================================
-CREATE TABLE messages (
-  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  guest_session_id uuid REFERENCES guest_sessions(id),
-  role             text CHECK (role IN ('guest','nawaf','system')),
-  content          text NOT NULL,
-  intent           text,
-  used_gemini      boolean DEFAULT false,
-  created_at       timestamptz DEFAULT now()
-);
-
-
--- ============================================
--- 12. ICAL_FEEDS
--- ============================================
-CREATE TABLE ical_feeds (
-  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  unit_id        uuid REFERENCES units(id),
-  source         text CHECK (source IN ('airbnb','gathern','booking','other')),
-  url            text NOT NULL,
-  last_synced_at timestamptz,
-  sync_status    text DEFAULT 'pending',
-  created_at     timestamptz DEFAULT now()
-);
-
-
--- ============================================
--- 13. ADS (Ad Engine)
--- ============================================
-CREATE TABLE ads (
-  id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  title                text,
-  description          text,
-  image_url            text,
-  target_neighborhoods text[],
-  active               boolean DEFAULT true,
-  clicks               int DEFAULT 0,
-  impressions          int DEFAULT 0,
-  starts_at            timestamptz,
-  ends_at              timestamptz
-);
-
-
--- ============================================
--- 14. EXTENSIONS (تمديد الإقامة)
--- ============================================
-CREATE TABLE extensions (
-  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  guest_session_id uuid REFERENCES guest_sessions(id),
-  duration_hours   int NOT NULL,
-  price            numeric NOT NULL,
-  status           text DEFAULT 'requested'
-    CHECK (status IN ('requested','approved','rejected','paid')),
-  requested_at     timestamptz DEFAULT now(),
-  new_checkout_at  timestamptz
-);
-
-
--- ============================================
--- 15. NOTIFICATIONS
--- ============================================
-CREATE TABLE notifications (
-  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  recipient_id uuid REFERENCES users(id),
-  type         text NOT NULL,
-  title        text NOT NULL,
-  body         text,
-  payload      jsonb DEFAULT '{}',
-  read_at      timestamptz,
-  created_at   timestamptz DEFAULT now()
-);
-
-
--- ─────────────────────────────────────────────
--- Indexes على أكثر المسارات استخداماً
--- ─────────────────────────────────────────────
-CREATE INDEX units_host_id        ON units(host_id);
-CREATE INDEX units_status         ON units(operational_status);
-CREATE INDEX bookings_unit_id     ON bookings(unit_id);
-CREATE INDEX bookings_checkin     ON bookings(checkin_at);
-CREATE INDEX sessions_unit_id     ON guest_sessions(unit_id);
-CREATE INDEX sessions_token       ON guest_sessions(guest_token);
-CREATE INDEX sessions_status      ON guest_sessions(status);
-CREATE INDEX access_codes_session ON access_codes(guest_session_id);
-CREATE INDEX access_codes_unit    ON access_codes(unit_id);
-CREATE INDEX messages_session     ON messages(guest_session_id);
-CREATE INDEX notifications_recip  ON notifications(recipient_id, read_at);
-CREATE INDEX automations_unit     ON automation_rules(unit_id, enabled);
-CREATE INDEX activity_unit_time   ON activity_logs(unit_id, created_at DESC);
-CREATE INDEX activity_session     ON activity_logs(guest_session_id);
+COMMENT ON TABLE  public.users           IS 'Platform users: Founder and Host only. Guests → guest_sessions.';
+COMMENT ON COLUMN public.users.auth_id   IS 'Supabase Auth user. Cascades on deletion.';
+COMMENT ON COLUMN public.users.role      IS 'founder = full control. host = scoped to own units.';
+COMMENT ON COLUMN public.users.metadata  IS 'Arbitrary host/founder config (e.g. notification prefs).';
 
 
 -- ═══════════════════════════════════════════════════════
--- Migration 002: Row Level Security
--- المرجع: CLAUDE_FINAL.md §8 (RLS section)
+-- Migration 002: Units (furnished apartments)
 -- ═══════════════════════════════════════════════════════
 
--- ─────────────────────────────────────────────
--- دوال مساعدة (SECURITY DEFINER — تقرأ قبل تطبيق RLS)
--- ─────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION get_my_user_id()
-RETURNS uuid AS $$
-  SELECT id FROM users WHERE auth_id = auth.uid()
+CREATE TABLE public.units (
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    host_id             UUID        NOT NULL
+                                    REFERENCES public.users(id) ON DELETE RESTRICT,
+    name                TEXT        NOT NULL,
+    location            TEXT,
+    floor               TEXT,
+    building            TEXT,
+    features            JSONB       NOT NULL DEFAULT '{}',
+    wifi_ssid           TEXT,
+    wifi_password       TEXT,
+    ical_airbnb         TEXT,
+    ical_booking        TEXT,
+    ical_other          TEXT,
+    price_per_night     DECIMAL(10, 2),
+    currency            TEXT        NOT NULL DEFAULT 'SAR',
+    status              TEXT        NOT NULL DEFAULT 'pending_approval'
+                                    CHECK (status IN (
+                                        'pending_approval',
+                                        'approved',
+                                        'suspended',
+                                        'inactive'
+                                    )),
+    approved_by         UUID        REFERENCES public.users(id) ON DELETE SET NULL,
+    approved_at         TIMESTAMPTZ,
+    pi_pairing_code     TEXT        UNIQUE,
+    pi_connected        BOOLEAN     NOT NULL DEFAULT false,
+    pi_last_heartbeat   TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER trg_units_updated_at
+    BEFORE UPDATE ON public.units
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+COMMENT ON TABLE  public.units                  IS 'Furnished apartments managed by Qlvin OS.';
+COMMENT ON COLUMN public.units.features         IS 'Unit config: enabled features, tablet layout, device map. Never hardcoded.';
+COMMENT ON COLUMN public.units.pi_pairing_code  IS 'Generated at unit creation. Pi scans this to pair. e.g. QLVN-PAIR-7842.';
+COMMENT ON COLUMN public.units.status           IS 'pending_approval → approved (by founder) → live.';
+
+
+-- ═══════════════════════════════════════════════════════
+-- Migration 003: Guest sessions & tokens
+-- ═══════════════════════════════════════════════════════
+
+CREATE TABLE public.guest_sessions (
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    unit_id             UUID        NOT NULL
+                                    REFERENCES public.units(id) ON DELETE CASCADE,
+    guest_name          TEXT,
+    guest_phone         TEXT,
+    party_size          INT         NOT NULL DEFAULT 1
+                                    CHECK (party_size > 0),
+    check_in            TIMESTAMPTZ NOT NULL,
+    check_out           TIMESTAMPTZ NOT NULL,
+    token               TEXT        UNIQUE NOT NULL,
+    token_expires_at    TIMESTAMPTZ NOT NULL,
+    current_mode        TEXT        NOT NULL DEFAULT 'normal',
+    source              TEXT        NOT NULL DEFAULT 'manual'
+                                    CHECK (source IN (
+                                        'manual', 'airbnb', 'booking', 'direct'
+                                    )),
+    ical_uid            TEXT,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_checkout_after_checkin CHECK (check_out > check_in)
+);
+
+CREATE TRIGGER trg_sessions_updated_at
+    BEFORE UPDATE ON public.guest_sessions
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+COMMENT ON TABLE  public.guest_sessions             IS 'One row per booking. Token is the only credential. Expires at checkout.';
+COMMENT ON COLUMN public.guest_sessions.token       IS 'Unique, non-reusable. Created by guest-token-create Edge Function.';
+COMMENT ON COLUMN public.guest_sessions.current_mode IS 'Broadcast via Realtime to tablet + Pi on change (§7 Scenario 3).';
+COMMENT ON COLUMN public.guest_sessions.ical_uid    IS 'iCal UID — prevents duplicate imports from multiple syncs.';
+
+
+-- ═══════════════════════════════════════════════════════
+-- Migration 004: Events, Notifications, Devices
+-- ═══════════════════════════════════════════════════════
+
+CREATE TABLE public.events (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    unit_id     UUID        REFERENCES public.units(id)           ON DELETE SET NULL,
+    session_id  UUID        REFERENCES public.guest_sessions(id)  ON DELETE SET NULL,
+    actor_id    UUID        REFERENCES public.users(id)           ON DELETE SET NULL,
+    event_type  TEXT        NOT NULL,
+    source      TEXT        CHECK (source IN (
+                                'guest_card', 'tablet', 'founder',
+                                'host', 'pi', 'automation', 'ical', 'system'
+                            )),
+    payload     JSONB       NOT NULL DEFAULT '{}',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE  public.events            IS 'Immutable event log. Every system action appends here. Never updated or deleted.';
+COMMENT ON COLUMN public.events.event_type IS 'e.g. mode.changed, device.toggled, guest.checkin, automation.executed';
+
+CREATE TABLE public.notifications (
+    id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    recipient_id    UUID        NOT NULL
+                                REFERENCES public.users(id) ON DELETE CASCADE,
+    type            TEXT        NOT NULL,
+    title           TEXT,
+    body            TEXT,
+    payload         JSONB       NOT NULL DEFAULT '{}',
+    read_at         TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE  public.notifications          IS 'Push notifications for Founder/Host.';
+COMMENT ON COLUMN public.notifications.read_at  IS 'NULL = unread.';
+
+CREATE TABLE public.devices (
+    id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    unit_id         UUID        NOT NULL
+                                REFERENCES public.units(id) ON DELETE CASCADE,
+    device_type     TEXT        NOT NULL
+                                CHECK (device_type IN (
+                                    'ac', 'light', 'led_strip', 'door', 'presence',
+                                    'plug', 'switch', 'leak', 'temp', 'tv', 'lock'
+                                )),
+    name            TEXT        NOT NULL,
+    room            TEXT,
+    zigbee_id       TEXT,
+    mqtt_topic      TEXT,
+    state           JSONB       NOT NULL DEFAULT '{}',
+    online          BOOLEAN     NOT NULL DEFAULT false,
+    last_seen       TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER trg_devices_updated_at
+    BEFORE UPDATE ON public.devices
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+COMMENT ON TABLE  public.devices       IS 'IoT devices per unit. state JSONB updated in real-time by Pi.';
+COMMENT ON COLUMN public.devices.state IS 'e.g. {"power":"on","temp":22,"mode":"cool"} for AC.';
+
+
+-- ═══════════════════════════════════════════════════════
+-- Migration 005: Automation rules & executions
+-- ═══════════════════════════════════════════════════════
+
+CREATE TABLE public.automation_rules (
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    scope               TEXT        NOT NULL
+                                    CHECK (scope IN ('platform', 'host', 'unit')),
+    scope_id            UUID,
+    name                TEXT        NOT NULL,
+    icon                TEXT        NOT NULL DEFAULT '⚡',
+    category            TEXT,
+    runs_on             TEXT        NOT NULL
+                                    CHECK (runs_on IN (
+                                        'mobile_card', 'tablet', 'host_dashboard',
+                                        'founder_dashboard', 'pi_local', 'cloud', 'multi'
+                                    )),
+    runs_on_multi       TEXT[],
+    trigger_type        TEXT        NOT NULL,
+    trigger_config      JSONB       NOT NULL,
+    conditions          JSONB       NOT NULL DEFAULT '[]',
+    actions             JSONB       NOT NULL,
+    enabled             BOOLEAN     NOT NULL DEFAULT true,
+    is_template         BOOLEAN     NOT NULL DEFAULT false,
+    created_by          UUID        REFERENCES public.users(id) ON DELETE SET NULL,
+    locked_by_founder   BOOLEAN     NOT NULL DEFAULT false,
+    visible_to_host     BOOLEAN     NOT NULL DEFAULT true,
+    last_edited_by      UUID        REFERENCES public.users(id) ON DELETE SET NULL,
+    last_edited_at      TIMESTAMPTZ,
+    cost_weight         INT         NOT NULL DEFAULT 1,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER trg_automation_rules_updated_at
+    BEFORE UPDATE ON public.automation_rules
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TABLE public.automation_executions (
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    automation_id       UUID        REFERENCES public.automation_rules(id) ON DELETE CASCADE,
+    unit_id             UUID        REFERENCES public.units(id)             ON DELETE SET NULL,
+    triggered_by        TEXT,
+    executed_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    duration_ms         INT,
+    success             BOOLEAN,
+    error_message       TEXT,
+    actions_results     JSONB       NOT NULL DEFAULT '[]'
+);
+
+COMMENT ON TABLE  public.automation_rules                    IS 'Automation engine core. Scope: platform (Founder), host, or unit.';
+COMMENT ON COLUMN public.automation_rules.locked_by_founder IS 'true → Host sees 🔒 and cannot edit/delete.';
+COMMENT ON TABLE  public.automation_executions              IS 'Every run logged here for Founder audit viewer.';
+
+
+-- ═══════════════════════════════════════════════════════
+-- Migration 006: Audit log + auto-trigger
+-- ═══════════════════════════════════════════════════════
+
+CREATE TABLE public.audit_log (
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    actor_id            UUID        REFERENCES public.users(id) ON DELETE SET NULL,
+    actor_name          TEXT,
+    actor_role          TEXT,
+    action              TEXT        NOT NULL,
+    entity_type         TEXT,
+    entity_id           UUID,
+    target_scope        TEXT,
+    target_scope_id     UUID,
+    before_state        JSONB,
+    after_state         JSONB,
+    metadata            JSONB       NOT NULL DEFAULT '{}',
+    severity            TEXT        NOT NULL DEFAULT 'info'
+                                    CHECK (severity IN ('info', 'warning', 'critical')),
+    is_critical_change  BOOLEAN     NOT NULL DEFAULT false,
+    ip_address          INET,
+    user_agent          TEXT,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE  public.audit_log                    IS 'Immutable audit trail. Every automation change is recorded here.';
+COMMENT ON COLUMN public.audit_log.is_critical_change IS 'true → Founder gets real-time notification.';
+
+CREATE OR REPLACE FUNCTION public.log_automation_change()
+RETURNS TRIGGER AS $$
+DECLARE
+    actor_user_id   UUID;
+    actor_user_name TEXT;
+    actor_user_role TEXT;
+    is_critical     BOOLEAN := false;
+    current_row     public.automation_rules;
+BEGIN
+    current_row := CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+
+    SELECT id, name, role
+    INTO   actor_user_id, actor_user_name, actor_user_role
+    FROM   public.users
+    WHERE  auth_id = auth.uid();
+
+    IF actor_user_role = 'host' AND (
+        current_row.scope = 'platform' OR
+        current_row.locked_by_founder = true
+    ) THEN
+        is_critical := true;
+    END IF;
+
+    INSERT INTO public.audit_log (
+        actor_id, actor_name, actor_role,
+        action, entity_type, entity_id,
+        target_scope, target_scope_id,
+        before_state, after_state,
+        severity, is_critical_change
+    ) VALUES (
+        actor_user_id,
+        COALESCE(actor_user_name, 'system'),
+        COALESCE(actor_user_role, 'system'),
+        TG_OP,
+        'automation_rule',
+        current_row.id,
+        current_row.scope,
+        current_row.scope_id,
+        CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE to_jsonb(OLD) END,
+        CASE WHEN TG_OP = 'DELETE' THEN NULL ELSE to_jsonb(NEW) END,
+        CASE WHEN is_critical THEN 'critical' ELSE 'info' END,
+        is_critical
+    );
+
+    IF is_critical THEN
+        INSERT INTO public.notifications (
+            recipient_id, type, title, body, payload
+        )
+        SELECT
+            u.id,
+            'critical_automation_change',
+            '⚠️ تعديل حرج',
+            COALESCE(actor_user_name, 'مستخدم') || ' عدّل "' || current_row.name || '"',
+            jsonb_build_object(
+                'automation_id', current_row.id,
+                'action',        TG_OP,
+                'actor_role',    actor_user_role
+            )
+        FROM public.users u
+        WHERE u.role = 'founder';
+    END IF;
+
+    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_audit_automation
+    AFTER INSERT OR UPDATE OR DELETE ON public.automation_rules
+    FOR EACH ROW EXECUTE FUNCTION public.log_automation_change();
+
+
+-- ═══════════════════════════════════════════════════════
+-- Migration 007: Resource limits & usage tracking
+-- ═══════════════════════════════════════════════════════
+
+CREATE TABLE public.resource_limits (
+    id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+    scope       TEXT    NOT NULL
+                        CHECK (scope IN ('platform_default', 'host_override', 'unit_override')),
+    scope_id    UUID,
+    limit_key   TEXT    NOT NULL,
+    limit_value JSONB   NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (scope, scope_id, limit_key)
+);
+
+COMMENT ON TABLE public.resource_limits IS 'Platform-wide and per-host/unit limits. Checked by Permission Engine.';
+
+INSERT INTO public.resource_limits (scope, scope_id, limit_key, limit_value) VALUES
+    ('platform_default', NULL, 'max_automations_per_unit',     '20'::jsonb),
+    ('platform_default', NULL, 'max_devices_per_unit',         '15'::jsonb),
+    ('platform_default', NULL, 'max_features_per_unit',        '25'::jsonb),
+    ('platform_default', NULL, 'max_units_per_host',           '10'::jsonb),
+    ('platform_default', NULL, 'max_gemini_calls_per_day',     '500'::jsonb),
+    ('platform_default', NULL, 'max_whatsapp_messages_per_day','100'::jsonb),
+    ('platform_default', NULL, 'allowed_device_types',
+        '["ac","light","led_strip","door","presence","plug","switch","leak","temp","tv","lock"]'::jsonb),
+    ('platform_default', NULL, 'allowed_automation_runs_on',
+        '["mobile_card","tablet","host_dashboard","pi_local","cloud","multi"]'::jsonb);
+
+CREATE TABLE public.resource_usage (
+    id              UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+    unit_id         UUID    REFERENCES public.units(id)  ON DELETE CASCADE,
+    host_id         UUID    REFERENCES public.users(id)  ON DELETE CASCADE,
+    metric_key      TEXT    NOT NULL,
+    metric_value    INT     NOT NULL DEFAULT 0,
+    period_start    TIMESTAMPTZ,
+    period_end      TIMESTAMPTZ,
+    UNIQUE (unit_id, host_id, metric_key, period_start)
+);
+
+COMMENT ON TABLE public.resource_usage IS 'Tracks current usage per metric per period.';
+
+CREATE OR REPLACE FUNCTION public.get_resource_limit(
+    p_limit_key TEXT,
+    p_unit_id   UUID DEFAULT NULL,
+    p_host_id   UUID DEFAULT NULL
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_value JSONB;
+BEGIN
+    IF p_unit_id IS NOT NULL THEN
+        SELECT limit_value INTO v_value
+        FROM public.resource_limits
+        WHERE scope = 'unit_override' AND scope_id = p_unit_id AND limit_key = p_limit_key;
+        IF FOUND THEN RETURN v_value; END IF;
+    END IF;
+
+    IF p_host_id IS NOT NULL THEN
+        SELECT limit_value INTO v_value
+        FROM public.resource_limits
+        WHERE scope = 'host_override' AND scope_id = p_host_id AND limit_key = p_limit_key;
+        IF FOUND THEN RETURN v_value; END IF;
+    END IF;
+
+    SELECT limit_value INTO v_value
+    FROM public.resource_limits
+    WHERE scope = 'platform_default' AND scope_id IS NULL AND limit_key = p_limit_key;
+
+    RETURN v_value;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+
+COMMENT ON FUNCTION public.get_resource_limit IS
+    'Resolves effective limit: unit_override → host_override → platform_default.';
+
+
+-- ═══════════════════════════════════════════════════════
+-- Migration 008: Permission matrix + check function
+-- ═══════════════════════════════════════════════════════
+
+CREATE TABLE public.permissions (
+    id                      UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+    role                    TEXT    NOT NULL,
+    action                  TEXT    NOT NULL,
+    resource                TEXT    NOT NULL,
+    allowed                 BOOLEAN NOT NULL DEFAULT true,
+    requires_approval       BOOLEAN NOT NULL DEFAULT false,
+    triggers_notification   BOOLEAN NOT NULL DEFAULT false,
+    severity                TEXT    NOT NULL DEFAULT 'info'
+                                    CHECK (severity IN ('info', 'warning', 'critical')),
+    UNIQUE (role, action, resource)
+);
+
+COMMENT ON TABLE public.permissions IS 'RBAC matrix. Queried by check_permission() and the JS Permission Engine.';
+
+-- 👑 FOUNDER
+INSERT INTO public.permissions (role, action, resource, allowed, severity) VALUES
+    ('founder', 'automation.create', 'platform',  true, 'info'),
+    ('founder', 'automation.create', 'host',       true, 'info'),
+    ('founder', 'automation.create', 'unit',       true, 'info'),
+    ('founder', 'automation.edit',   'any',        true, 'info'),
+    ('founder', 'automation.delete', 'any',        true, 'info'),
+    ('founder', 'automation.lock',   'any',        true, 'info'),
+    ('founder', 'host.create',       'platform',   true, 'info'),
+    ('founder', 'host.suspend',      'any',        true, 'critical'),
+    ('founder', 'unit.create',       'any',        true, 'info'),
+    ('founder', 'unit.approve',      'any',        true, 'info'),
+    ('founder', 'limits.set',        'any',        true, 'critical'),
+    ('founder', 'audit.view',        'any',        true, 'info'),
+    ('founder', 'studio.access',     'any',        true, 'info');
+
+-- 🏠 HOST
+INSERT INTO public.permissions (role, action, resource, allowed, triggers_notification, severity) VALUES
+    ('host', 'automation.create', 'own_unit',          true,  true,  'info'),
+    ('host', 'automation.create', 'platform',          false, false, 'info'),
+    ('host', 'automation.edit',   'own_unit_unlocked',  true,  true,  'info'),
+    ('host', 'automation.edit',   'locked',             false, false, 'critical'),
+    ('host', 'automation.delete', 'own_unit_unlocked',  true,  true,  'warning'),
+    ('host', 'automation.delete', 'locked',             false, false, 'critical'),
+    ('host', 'unit.create',       'own',                true,  false, 'info'),
+    ('host', 'unit.edit',         'own_approved',       true,  true,  'warning'),
+    ('host', 'limits.set',        'any',                false, false, 'critical'),
+    ('host', 'studio.access',     'own_units',          true,  false, 'info');
+
+-- 🎫 GUEST
+INSERT INTO public.permissions (role, action, resource, allowed, triggers_notification, severity) VALUES
+    ('guest', 'mode.set',          'current_session', true,  false, 'info'),
+    ('guest', 'slider.adjust',     'current_session', true,  false, 'info'),
+    ('guest', 'order.create',      'current_session', true,  false, 'info'),
+    ('guest', 'extension.request', 'current_session', true,  false, 'info'),
+    ('guest', 'automation.create', 'any',             false, false, 'critical');
+
+CREATE OR REPLACE FUNCTION public.check_permission(
+    p_user_role TEXT,
+    p_action    TEXT,
+    p_resource  TEXT
+)
+RETURNS TABLE (
+    allowed               BOOLEAN,
+    requires_approval     BOOLEAN,
+    triggers_notification BOOLEAN,
+    severity              TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        COALESCE(p.allowed,               false)      AS allowed,
+        COALESCE(p.requires_approval,     false)      AS requires_approval,
+        COALESCE(p.triggers_notification, false)      AS triggers_notification,
+        COALESCE(p.severity,              'critical') AS severity
+    FROM       (SELECT true) base
+    LEFT JOIN  public.permissions p
+           ON  p.role     = p_user_role
+           AND p.action   = p_action
+           AND p.resource = p_resource;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+
+COMMENT ON FUNCTION public.check_permission IS
+    'RBAC lookup. Returns allowed/requires_approval/triggers_notification/severity. Defaults to denied+critical if no rule found.';
+
+
+-- ═══════════════════════════════════════════════════════
+-- Migration 009: Indexes + RLS preparation
+-- ═══════════════════════════════════════════════════════
+
+CREATE OR REPLACE FUNCTION public.get_my_user_id()
+RETURNS UUID AS $$
+    SELECT id FROM public.users WHERE auth_id = auth.uid()
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION get_my_role()
-RETURNS text AS $$
-  SELECT role FROM users WHERE auth_id = auth.uid()
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS TEXT AS $$
+    SELECT role FROM public.users WHERE auth_id = auth.uid()
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION is_founder()
-RETURNS boolean AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM users
-    WHERE auth_id = auth.uid() AND role = 'founder'
-  )
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION get_my_host_id()
-RETURNS uuid AS $$
-  SELECT h.id FROM hosts h
-  JOIN users u ON u.id = h.user_id
-  WHERE u.auth_id = auth.uid()
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
-
-
--- ═══════════════════════════════════════════════════════
--- تفعيل RLS على جميع الجداول
--- ═══════════════════════════════════════════════════════
-ALTER TABLE users             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE hosts             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE host_settings     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE units             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE bookings          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE guest_sessions    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE devices           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE access_codes      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE activity_logs     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE automation_rules  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE messages          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ical_feeds        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ads               ENABLE ROW LEVEL SECURITY;
-ALTER TABLE extensions        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notifications     ENABLE ROW LEVEL SECURITY;
-
-
--- ═══════════════════════════════════════════════════════
--- POLICIES
--- المبدأ من CLAUDE_FINAL.md:
---   Founders يشوفون كل شي
---   Hosts يشوفون شققهم فقط
---   Guest: NO direct DB access — فقط عبر Edge Functions
--- ═══════════════════════════════════════════════════════
-
--- ─────────────────────────────────────────────
--- users
--- ─────────────────────────────────────────────
-CREATE POLICY "users_own_row" ON users FOR ALL
-  USING (auth_id = auth.uid());
-
-CREATE POLICY "founders_see_all_users" ON users FOR SELECT
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- hosts
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_record" ON hosts FOR ALL
-  USING (user_id = get_my_user_id());
-
-CREATE POLICY "founders_all_hosts" ON hosts FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- host_settings
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_settings" ON host_settings FOR ALL
-  USING (host_id = get_my_host_id());
-
-CREATE POLICY "founders_all_settings" ON host_settings FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- units — المرجع: CLAUDE_FINAL.md §8
--- ─────────────────────────────────────────────
-CREATE POLICY "hosts_own_units" ON units FOR ALL
-  USING (host_id IN (
-    SELECT id FROM hosts WHERE user_id = auth.uid()
-  ));
-
-CREATE POLICY "founders_all" ON units FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- bookings
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_bookings" ON bookings FOR ALL
-  USING (unit_id IN (
-    SELECT id FROM units WHERE host_id = get_my_host_id()
-  ));
-
-CREATE POLICY "founders_all_bookings" ON bookings FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- guest_sessions — المرجع: CLAUDE_FINAL.md §8
--- الضيف: لا وصول مباشر للـ DB — فقط عبر Edge Functions
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_sessions" ON guest_sessions FOR ALL
-  USING (unit_id IN (
-    SELECT id FROM units WHERE host_id = get_my_host_id()
-  ));
-
-CREATE POLICY "founders_all_sessions" ON guest_sessions FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- devices
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_devices" ON devices FOR ALL
-  USING (unit_id IN (
-    SELECT id FROM units WHERE host_id = get_my_host_id()
-  ));
-
-CREATE POLICY "founders_all_devices" ON devices FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- access_codes
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_codes" ON access_codes FOR ALL
-  USING (unit_id IN (
-    SELECT id FROM units WHERE host_id = get_my_host_id()
-  ));
-
-CREATE POLICY "founders_all_codes" ON access_codes FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- activity_logs — Append-only للنظام
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_logs" ON activity_logs FOR SELECT
-  USING (unit_id IN (
-    SELECT id FROM units WHERE host_id = get_my_host_id()
-  ));
-
-CREATE POLICY "founders_all_logs" ON activity_logs FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- automation_rules
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_automations" ON automation_rules FOR ALL
-  USING (unit_id IN (
-    SELECT id FROM units WHERE host_id = get_my_host_id()
-  ));
-
-CREATE POLICY "founders_all_automations" ON automation_rules FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- messages (Nawaf)
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_messages" ON messages FOR SELECT
-  USING (guest_session_id IN (
-    SELECT id FROM guest_sessions WHERE unit_id IN (
-      SELECT id FROM units WHERE host_id = get_my_host_id()
+CREATE OR REPLACE FUNCTION public.is_founder()
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.users
+        WHERE auth_id = auth.uid() AND role = 'founder'
     )
-  ));
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
 
-CREATE POLICY "founders_all_messages" ON messages FOR ALL
-  USING (is_founder());
+COMMENT ON FUNCTION public.get_my_user_id IS 'Returns users.id for current Supabase Auth session. Used in RLS policies.';
+COMMENT ON FUNCTION public.get_my_role    IS 'Returns role (founder/host) for current session. Used in RLS policies.';
+COMMENT ON FUNCTION public.is_founder     IS 'Returns true if current user is founder. Used in RLS policies.';
 
+-- تفعيل RLS
+ALTER TABLE public.users                 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.units                 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.guest_sessions        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.events                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.devices               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.automation_rules      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.automation_executions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_log             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.resource_limits       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.resource_usage        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.permissions           ENABLE ROW LEVEL SECURITY;
 
--- ─────────────────────────────────────────────
--- ical_feeds
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_ical" ON ical_feeds FOR ALL
-  USING (unit_id IN (
-    SELECT id FROM units WHERE host_id = get_my_host_id()
-  ));
-
-CREATE POLICY "founders_all_ical" ON ical_feeds FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- ads — المؤسس فقط يدير الإعلانات
--- ─────────────────────────────────────────────
-CREATE POLICY "founders_manage_ads" ON ads FOR ALL
-  USING (is_founder());
-
-CREATE POLICY "hosts_view_active_ads" ON ads FOR SELECT
-  USING (active = true);
-
-
--- ─────────────────────────────────────────────
--- extensions
--- ─────────────────────────────────────────────
-CREATE POLICY "host_own_extensions" ON extensions FOR ALL
-  USING (guest_session_id IN (
-    SELECT id FROM guest_sessions WHERE unit_id IN (
-      SELECT id FROM units WHERE host_id = get_my_host_id()
-    )
-  ));
-
-CREATE POLICY "founders_all_extensions" ON extensions FOR ALL
-  USING (is_founder());
-
-
--- ─────────────────────────────────────────────
--- notifications
--- ─────────────────────────────────────────────
-CREATE POLICY "own_notifications" ON notifications FOR ALL
-  USING (recipient_id = get_my_user_id());
-
-CREATE POLICY "founders_all_notifications" ON notifications FOR ALL
-  USING (is_founder());
-
-
--- ═══════════════════════════════════════════════════════
--- Migration 003: Realtime Publications
--- المرجع: CLAUDE_FINAL.md §8 (REALTIME section)
---
--- هذه الجداول تُبثّ تلقائياً لكل المشتركين
--- عبر Supabase Realtime WebSocket.
--- ═══════════════════════════════════════════════════════
-
--- الجداول التي تحتاج Realtime (من CLAUDE_FINAL.md §8 بالضبط)
-ALTER PUBLICATION supabase_realtime ADD TABLE units;
-ALTER PUBLICATION supabase_realtime ADD TABLE guest_sessions;
-ALTER PUBLICATION supabase_realtime ADD TABLE activity_logs;
-ALTER PUBLICATION supabase_realtime ADD TABLE devices;
-ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
-ALTER PUBLICATION supabase_realtime ADD TABLE automation_rules;
-
--- ─────────────────────────────────────────────
--- ملاحظات القنوات (تُستخدم في الواجهات):
---
--- channel: units:{unit_id}
---   → host_v6.html يشترك — يشوف تحديث الحالة فوراً
---
--- channel: guest_sessions:{unit_id}
---   → tablet + mobile_card يشتركان — mode change يُطبّق < 200ms
---
--- channel: activity_logs:{unit_id}
---   → host_v6.html Live Feed
---
--- channel: devices:{unit_id}
---   → كل الواجهات تشترك — state sync فوري
---
--- channel: notifications:{user_id}
---   → founder + host يستقبلان تنبيهات فورية
---
--- channel: automation_rules:{unit_id}
---   → Pi يعيد تحميل الـ rules عند التغيير
--- ─────────────────────────────────────────────
-
-
--- ═══════════════════════════════════════════════════════
--- Migration 004: Seed Data
--- بيانات أولية للنظام
--- ═══════════════════════════════════════════════════════
-
--- ─────────────────────────────────────────────
--- إعلان demo (للاختبار — يُحذف في Production)
--- ─────────────────────────────────────────────
-INSERT INTO ads (title, description, target_neighborhoods, active, starts_at, ends_at)
-VALUES (
-  'مطعم الأصيل',
-  'خصم 15% للضيوف القادمين من Qlvin — أرقى مطاعم المنطقة',
-  ARRAY['حي النرجس', 'حي الياسمين', 'حي الملقا'],
-  true,
-  NOW(),
-  NOW() + INTERVAL '90 days'
-);
-
-
--- ─────────────────────────────────────────────
--- Automation templates عامة (scope = 'platform')
--- تُطبّق على كل الوحدات تلقائياً
--- ─────────────────────────────────────────────
-INSERT INTO automation_rules
-  (scope, name, icon, runs_on, trigger_type, trigger_config, actions, locked_by_founder)
-VALUES
-  (
-    'platform',
-    'الترحيب عند الوصول',
-    '🎉',
-    'tablet',
-    'guest_checked_in',
-    '{}',
-    '[
-      {"type": "set_lights",      "params": {"brightness": 80}},
-      {"type": "set_ac",          "params": {"power": "on", "temperature": 22, "mode": "cool"}},
-      {"type": "show_nawaf_card", "params": {"message": "أهلاً وسهلاً! نواف في خدمتك 24/7"}}
-    ]'::jsonb,
-    true
-  ),
-  (
-    'platform',
-    'وضع الليل عند منتصف الليل',
-    '🌙',
-    'pi_local',
-    'time_of_day',
-    '{"time": "00:00", "days": ["sun","mon","tue","wed","thu","fri","sat"]}'::jsonb,
-    '[
-      {"type": "set_lights", "params": {"brightness": 0}},
-      {"type": "set_ac",     "params": {"temperature": 23}}
-    ]'::jsonb,
-    false
-  ),
-  (
-    'platform',
-    'تنبيه الخروج الصامت',
-    '👻',
-    'cloud',
-    'presence_lost',
-    '{"timeout_minutes": 180}'::jsonb,
-    '[
-      {"type": "change_unit_status", "params": {"operational_status": "cleaning"}},
-      {"type": "notify_host",        "params": {"title": "🧹 الشقة جاهزة للتنظيف", "body": "لم يُكتشف وجود منذ 3 ساعات"}}
-    ]'::jsonb,
-    true
-  );
-
-
--- ─────────────────────────────────────────────
--- ملاحظة: المؤسس الأول يُنشأ يدوياً من Supabase Auth Dashboard
--- ثم يُضاف صف في جدول users بالـ auth_id المقابل:
---
--- INSERT INTO users (auth_id, name, role, email, phone)
--- VALUES ('<auth_id_from_dashboard>', 'عبدالقادر', 'founder', 'abdulqader.mossaa@gmail.com', '...');
--- ─────────────────────────────────────────────
+-- Indexes
+CREATE INDEX idx_users_auth_id      ON public.users(auth_id);
+CREATE INDEX idx_users_role         ON public.users(role);
+CREATE INDEX idx_units_host_id      ON public.units(host_id);
+CREATE INDEX idx_units_status       ON public.units(status);
+CREATE INDEX idx_units_pi           ON public.units(pi_pairing_code) WHERE pi_pairing_code IS NOT NULL;
+CREATE INDEX idx_sessions_unit_id   ON public.guest_sessions(unit_id);
+CREATE INDEX idx_sessions_expires   ON public.guest_sessions(token_expires_at);
+CREATE INDEX idx_sessions_dates     ON public.guest_sessions(check_in, check_out);
+CREATE INDEX idx_events_unit        ON public.events(unit_id, created_at DESC);
+CREATE INDEX idx_events_session     ON public.events(session_id);
+CREATE INDEX idx_events_type        ON public.events(event_type, created_at DESC);
+CREATE INDEX idx_notifs_recipient   ON public.notifications(recipient_id, created_at DESC);
+CREATE INDEX idx_notifs_unread      ON public.notifications(recipient_id) WHERE read_at IS NULL;
+CREATE INDEX idx_devices_unit       ON public.devices(unit_id);
+CREATE INDEX idx_devices_type       ON public.devices(unit_id, device_type);
+CREATE INDEX idx_devices_online     ON public.devices(unit_id, online);
+CREATE INDEX idx_auto_scope         ON public.automation_rules(scope, scope_id);
+CREATE INDEX idx_auto_enabled       ON public.automation_rules(enabled, scope) WHERE enabled = true;
+CREATE INDEX idx_auto_runs_on       ON public.automation_rules(runs_on);
+CREATE INDEX idx_auto_locked        ON public.automation_rules(locked_by_founder) WHERE locked_by_founder = true;
+CREATE INDEX idx_exec_automation    ON public.automation_executions(automation_id, executed_at DESC);
+CREATE INDEX idx_exec_unit          ON public.automation_executions(unit_id, executed_at DESC);
+CREATE INDEX idx_audit_entity       ON public.audit_log(entity_type, entity_id, created_at DESC);
+CREATE INDEX idx_audit_actor        ON public.audit_log(actor_id, created_at DESC);
+CREATE INDEX idx_audit_critical     ON public.audit_log(created_at DESC) WHERE is_critical_change = true;
+CREATE INDEX idx_limits_lookup      ON public.resource_limits(scope, limit_key);
+CREATE INDEX idx_usage_lookup       ON public.resource_usage(unit_id, metric_key, period_start);
