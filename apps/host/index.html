@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QLVIN OS · Host Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030305;
+            --bg2: #07070d;
+            --bg3: #0a0a14;
+            --glass: rgba(255,255,255,0.04);
+            --glass2: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.08);
+            --sky: #64d2ff;
+            --gold: #c5a059;
+            --gold-soft: #d4a853;
+            --accent: #10b981;
+            --danger: #ff3b30;
+            --warn: #ff9f0a;
+            --purple: #8B5CF6;
+            --text: #ffffff;
+            --text2: rgba(255,255,255,0.5);
+            --text3: rgba(255,255,255,0.35);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow-x: hidden; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        body::before { content: ''; position: fixed; top: -20%; right: -10%; width: 550px; height: 550px; background: radial-gradient(circle, rgba(100,210,255,0.045) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+        body::after { content: ''; position: fixed; bottom: -25%; left: -15%; width: 450px; height: 450px; background: radial-gradient(circle, rgba(16,185,129,0.03) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+
+        @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+        @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.6)} 50%{box-shadow:0 0 0 6px rgba(16,185,129,0)} }
+        @keyframes pulseRed { 0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.6)} 50%{box-shadow:0 0 0 6px rgba(255,59,48,0)} }
+        @keyframes pulseWarn { 0%,100%{box-shadow:0 0 0 0 rgba(255,159,10,0.6)} 50%{box-shadow:0 0 0 8px rgba(255,159,10,0)} }
+        @keyframes sIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes ld { to{width:100%} }
+        @keyframes countUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideInRight { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+
+        /* Splash */
+        #splash { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; transition: opacity .7s; }
+        .spl-logo { font-size: 38px; font-weight: 900; letter-spacing: 4px; animation: sIn .8s ease; display: flex; align-items: baseline; gap: 6px; }
+        .spl-logo span { color: var(--sky); font-size: 12px; font-weight: 400; letter-spacing: 3px; }
+        .spl-tag { font-size: 10px; color: var(--text2); letter-spacing: 4px; margin-top: 6px; animation: sIn .8s .2s both; }
+        .spl-bar { width: 110px; height: 1px; background: var(--border); margin-top: 38px; overflow: hidden; }
+        .spl-bar::after { content: ''; display: block; height: 100%; background: var(--sky); width: 0; animation: ld 1.5s .4s forwards; }
+
+        /* Main */
+        #main { padding: 18px; padding-bottom: 90px; opacity: 0; animation: fadeUp .6s 2s forwards; position: relative; z-index: 1; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeUp .35s ease; }
+
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .logo { font-weight: 900; font-size: 18px; letter-spacing: 2px; display: flex; align-items: baseline; gap: 6px; }
+        .logo span { color: var(--sky); font-size: 11px; font-weight: 400; letter-spacing: 2px; }
+        .header-actions { display: flex; gap: 7px; align-items: center; }
+
+        /* Notifications Bell */
+        .notif-bell { position: relative; background: var(--glass); border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all .3s; }
+        .notif-bell:hover { background: var(--glass2); }
+        .notif-bell.has-alerts { border-color: var(--danger); animation: pulseRed 2s infinite; }
+        .notif-count { position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: 9px; font-weight: 900; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        .user-pill { display: flex; align-items: center; gap: 6px; background: var(--glass); border: 1px solid var(--border); padding: 7px 12px; border-radius: 18px; font-size: 10px; }
+        .u-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: blink 2s infinite; }
+
+        /* Income Hero */
+        .income-card { background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(100,210,255,0.04)); border: 1px solid rgba(16,185,129,0.22); border-radius: 24px; padding: 20px; margin-bottom: 14px; position: relative; overflow: hidden; }
+        .income-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,transparent,var(--accent),transparent); }
+        .ic-lbl { font-size: 10px; color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+        .ic-val { font-size: 32px; font-weight: 900; color: var(--accent); animation: countUp .6s ease; }
+        .ic-val small { font-size: 13px; opacity: .7; }
+        .ic-meta { display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap; }
+        .ic-meta .it { font-size: 9px; color: var(--text2); }
+        .ic-meta .it strong { color: var(--sky); font-size: 13px; display: block; margin-bottom: 1px; }
+
+        /* Income Breakdown */
+        .income-breakdown { background: var(--glass); border: 1px solid var(--border); border-radius: 18px; padding: 14px; margin-bottom: 14px; }
+        .ib-title { font-size: 10px; color: var(--text2); letter-spacing: 1.5px; margin-bottom: 11px; font-weight: 700; }
+        .ib-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .ib-row:last-child { border-bottom: none; }
+        .ib-source { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .ib-amount { font-size: 13px; font-weight: 800; }
+        .ib-bar { height: 4px; background: var(--glass2); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+        .ib-fill { height: 100%; border-radius: 2px; transition: width .8s ease; }
+
+        /* Section Label */
+        .sec-lbl { font-size: 10px; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; margin: 18px 0 11px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+        .sec-lbl .count { color: var(--sky); background: rgba(100,210,255,0.08); padding: 2px 8px; border-radius: 7px; font-size: 9px; }
+
+        /* Property Cards */
+        .prop-card {
+            background: var(--glass); border: 1px solid var(--border);
+            border-radius: 20px; padding: 16px; margin-bottom: 10px;
+            cursor: pointer; transition: all .3s;
+            display: flex; align-items: center; gap: 13px;
+            position: relative; overflow: hidden;
+            animation: fadeUp .4s ease;
+        }
+        .prop-card:hover { border-color: rgba(100,210,255,0.28); transform: translateY(-2px); }
+        .prop-card:active { transform: scale(.99); }
+
+        /* Card with Alert */
+        .prop-card.has-alert { border-color: rgba(255,159,10,0.35); animation: pulseWarn 3s infinite, fadeUp .4s ease; }
+
+        .pc-icon { width: 46px; height: 46px; background: rgba(100,210,255,0.08); border: 1px solid rgba(100,210,255,0.18); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; position: relative; }
+        .pc-info { flex: 1; }
+        .pc-name { font-size: 13px; font-weight: 800; }
+        .pc-guest { font-size: 9px; color: var(--text2); margin-top: 3px; }
+        .pc-right { text-align: left; }
+        .pc-income { font-size: 13px; font-weight: 900; color: var(--accent); }
+        .pc-status { font-size: 8px; margin-top: 4px; padding: 3px 8px; border-radius: 7px; display: inline-block; font-weight: 700; }
+        .st-active { background: rgba(16,185,129,0.14); color: var(--accent); }
+        .st-clean { background: rgba(255,159,10,0.14); color: var(--warn); }
+        .st-ready { background: rgba(100,210,255,0.1); color: var(--sky); }
+
+        /* Alert Badge على البطاقة */
+        .pc-alert-badge { font-size: 8px; color: var(--warn); display: flex; align-items: center; gap: 4px; margin-top: 4px; font-weight: 700; }
+        .pc-alert-badge::before { content: ''; width: 5px; height: 5px; background: var(--warn); border-radius: 50%; animation: blink 1.5s infinite; }
+        .pc-alert-badge.danger { color: var(--danger); }
+        .pc-alert-badge.danger::before { background: var(--danger); }
+
+        /* Pi Status Lamp */
+        .pc-pi-lamp { position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; }
+        .pc-pi-lamp.online { background: var(--accent); animation: pulse 2s infinite; }
+        .pc-pi-lamp.offline { background: var(--danger); animation: pulseRed 2s infinite; }
+
+        .add-btn { background: transparent; border: 1px dashed rgba(100,210,255,0.25); border-radius: 18px; padding: 14px; width: 100%; color: var(--sky); font-family: 'Tajawal'; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .3s; }
+        .add-btn:hover { background: rgba(100,210,255,0.04); border-color: rgba(100,210,255,0.4); }
+
+        /* ===== Detail Page ===== */
+        .back-btn { display: flex; align-items: center; gap: 7px; color: var(--sky); font-size: 12px; cursor: pointer; margin-bottom: 18px; background: var(--glass); border: 1px solid var(--border); padding: 9px 14px; border-radius: 11px; font-weight: 700; transition: all .3s; font-family: 'Tajawal'; }
+        .back-btn:hover { background: var(--glass2); }
+        .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+        .detail-name { font-size: 22px; font-weight: 900; }
+        .detail-sub { font-size: 10px; color: var(--text2); margin-top: 3px; }
+        .detail-pi-status { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 18px; font-size: 10px; font-weight: 700; background: var(--glass); border: 1px solid var(--border); }
+        .detail-pi-status.online { color: var(--accent); border-color: rgba(16,185,129,0.3); }
+        .detail-pi-status.offline { color: var(--danger); border-color: rgba(255,59,48,0.3); }
+        .detail-pi-status .lamp { width: 6px; height: 6px; border-radius: 50%; }
+        .detail-pi-status.online .lamp { background: var(--accent); animation: pulse 2s infinite; }
+        .detail-pi-status.offline .lamp { background: var(--danger); }
+
+        .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 14px; }
+        .stat-box { background: var(--glass); border: 1px solid var(--border); border-radius: 13px; padding: 11px 5px; text-align: center; }
+        .stat-box .lb { font-size: 8px; color: var(--text2); letter-spacing: .5px; margin-bottom: 4px; }
+        .stat-box .vl { font-size: 15px; font-weight: 900; }
+
+        /* Alert Banners */
+        .alert-banner { border-radius: 14px; padding: 13px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 11px; cursor: pointer; transition: all .3s; animation: slideInRight .4s ease; }
+        .alert-banner:hover { transform: translateX(-3px); }
+        .alert-banner.warn { background: rgba(255,159,10,0.08); border: 1px solid rgba(255,159,10,0.25); }
+        .alert-banner.danger { background: rgba(255,59,48,0.08); border: 1px solid rgba(255,59,48,0.25); }
+        .ab-icon { font-size: 22px; flex-shrink: 0; }
+        .ab-text { flex: 1; }
+        .ab-text strong { display: block; font-size: 12px; margin-bottom: 3px; }
+        .ab-text.warn strong { color: var(--warn); }
+        .ab-text.danger strong { color: var(--danger); }
+        .ab-text small { font-size: 10px; color: var(--text2); }
+        .ab-arrow { color: var(--text2); font-size: 16px; }
+
+        /* Guest Card */
+        .guest-card { background: var(--glass); border: 1px solid rgba(100,210,255,0.18); border-radius: 22px; padding: 18px; margin-bottom: 12px; position: relative; overflow: hidden; }
+        .guest-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,transparent,var(--sky),transparent); }
+        .gc-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .gc-name-lbl { font-size: 9px; color: var(--text2); margin-bottom: 4px; }
+        .gc-name { font-size: 14px; font-weight: 800; color: var(--sky); }
+        .gc-right .lb { font-size: 9px; color: var(--text2); }
+        .gc-right .vl { font-size: 13px; font-weight: 900; color: var(--gold); display: block; margin-top: 2px; }
+
+        /* Code Display */
+        .code-host { font-size: 42px; font-weight: 900; letter-spacing: 12px; color: var(--gold); text-align: center; border: 1px dashed rgba(197,160,89,0.28); padding: 14px; border-radius: 14px; margin-bottom: 12px; text-shadow: 0 0 24px rgba(197,160,89,0.28); }
+
+        .acts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 9px; }
+        .act-btn { background: var(--glass); border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: var(--text); font-family: 'Tajawal'; font-size: 11px; font-weight: 700; cursor: pointer; transition: all .3s; text-align: center; }
+        .act-btn:hover { background: var(--glass2); border-color: rgba(100,210,255,0.28); }
+        .act-btn.sky { background: var(--sky); color: #000; border: none; }
+        .act-btn.sky:hover { background: #4ac3ff; }
+        .act-btn.full { width: 100%; margin-bottom: 8px; }
+        .act-btn.danger { color: var(--danger); border-color: rgba(255,59,48,0.3); }
+        .act-btn.danger:hover { background: rgba(255,59,48,0.08); }
+        .act-btn.accent { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: var(--accent); }
+        .act-btn.accent:hover { background: rgba(16,185,129,0.2); }
+
+        /* Activity Logs */
+        .logs-section { margin-top: 4px; }
+        .log-item { display: flex; align-items: flex-start; gap: 11px; padding: 11px 0; border-bottom: 1px solid var(--border); animation: fadeUp .3s ease; }
+        .log-item:last-child { border-bottom: none; }
+        .log-icon { font-size: 15px; flex-shrink: 0; margin-top: 2px; }
+        .log-body { flex: 1; }
+        .log-event { font-size: 11px; font-weight: 700; }
+        .log-unit { font-size: 9px; color: var(--text2); margin-top: 2px; }
+        .log-time { font-size: 9px; color: var(--text2); white-space: nowrap; }
+        .log-type { font-size: 7px; padding: 2px 7px; border-radius: 5px; margin-top: 4px; display: inline-block; font-weight: 700; }
+        .lt-nfc { background: rgba(100,210,255,0.12); color: var(--sky); }
+        .lt-sys { background: rgba(16,185,129,0.12); color: var(--accent); }
+        .lt-warn { background: rgba(255,159,10,0.12); color: var(--warn); }
+        .lt-hb { background: rgba(197,160,89,0.12); color: var(--gold); }
+        .lt-danger { background: rgba(255,59,48,0.12); color: var(--danger); }
+        .lt-checkin { background: rgba(100,210,255,0.12); color: var(--sky); }
+        .lt-checkout { background: rgba(139,92,246,0.12); color: var(--purple); }
+
+        /* Bottom Nav - Updated */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(3,3,5,0.96); backdrop-filter: blur(20px); border-top: 1px solid var(--border); padding: 9px 8px 22px; display: flex; justify-content: space-around; z-index: 100; }
+        .nav-item { flex: 1; text-align: center; cursor: pointer; padding: 8px 2px; border-radius: 11px; transition: all .3s; font-size: 8.5px; color: var(--text2); font-weight: 700; }
+        .nav-item .ni { font-size: 18px; display: block; margin-bottom: 3px; }
+        .nav-item.active { background: rgba(100,210,255,0.09); color: var(--sky); }
+        .nav-item.checkin.active { background: rgba(16,185,129,0.1); color: var(--accent); }
+        .nav-item.checkout.active { background: rgba(139,92,246,0.1); color: var(--purple); }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--sky); color: #000; padding: 10px 22px; border-radius: 30px; font-size: 12px; font-weight: 700; opacity: 0; transition: all .3s; pointer-events: none; z-index: 500; max-width: 92%; text-align: center; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.success { background: var(--accent); color: #fff; }
+        .toast.danger { background: var(--danger); color: #fff; }
+
+        /* Modal */
+        .modal-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .3s; }
+        .modal-ov.open { opacity: 1; pointer-events: all; }
+        .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 26px 26px 0 0; padding: 26px 18px 28px; width: 100%; max-height: 92vh; overflow-y: auto; transform: translateY(100%); transition: transform .4s cubic-bezier(.32,.72,0,1); }
+        .modal-ov.open .modal { transform: translateY(0); }
+        .modal-handle { width: 38px; height: 3px; background: var(--border); border-radius: 3px; margin: 0 auto 20px; }
+        .modal-title { font-size: 16px; font-weight: 900; text-align: center; margin-bottom: 6px; }
+        .modal-sub { font-size: 10px; color: var(--text2); text-align: center; margin-bottom: 18px; }
+
+        /* Alert Modal Header (للخروج الصامت) */
+        .alert-modal-header { background: rgba(255,159,10,0.08); border: 1px solid rgba(255,159,10,0.25); border-radius: 14px; padding: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 11px; }
+        .alert-modal-header.danger { background: rgba(255,59,48,0.08); border-color: rgba(255,59,48,0.25); }
+        .alert-modal-header .icon { font-size: 26px; }
+        .alert-modal-header .info strong { display: block; font-size: 12px; margin-bottom: 2px; }
+        .alert-modal-header.warn .info strong { color: var(--warn); }
+        .alert-modal-header.danger .info strong { color: var(--danger); }
+        .alert-modal-header .info span { font-size: 10px; color: var(--text2); }
+
+        /* Action Options (الإجراءات) */
+        .action-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+        .action-opt { background: var(--glass); border: 1px solid var(--border); border-radius: 13px; padding: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all .3s; text-align: right; color: var(--text); font-family: 'Tajawal'; }
+        .action-opt:hover { background: var(--glass2); transform: translateX(-3px); }
+        .ao-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .ao-icon.sky { background: rgba(100,210,255,0.13); color: var(--sky); }
+        .ao-icon.accent { background: rgba(16,185,129,0.13); color: var(--accent); }
+        .ao-icon.gold { background: rgba(197,160,89,0.13); color: var(--gold); }
+        .ao-icon.purple { background: rgba(139,92,246,0.13); color: var(--purple); }
+        .ao-icon.danger { background: rgba(255,59,48,0.13); color: var(--danger); }
+        .ao-text { flex: 1; }
+        .ao-text strong { display: block; font-size: 12px; margin-bottom: 2px; }
+        .ao-text span { font-size: 9px; color: var(--text2); }
+
+        /* Extension Options */
+        .extend-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+        .ext-opt { background: var(--glass); border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: all .3s; text-align: center; }
+        .ext-opt:hover, .ext-opt.sel { background: rgba(100,210,255,0.1); border-color: var(--sky); }
+        .ext-opt .dur { font-size: 16px; font-weight: 900; color: var(--sky); }
+        .ext-opt .unit { font-size: 9px; color: var(--text2); margin-top: 2px; }
+        .ext-opt .price { font-size: 11px; color: var(--gold); margin-top: 6px; font-weight: 700; }
+
+        .confirm-btn { width: 100%; background: var(--sky); color: #000; border: none; padding: 14px; border-radius: 13px; font-family: 'Tajawal'; font-size: 13px; font-weight: 900; cursor: pointer; }
+        .confirm-btn:hover { background: #4ac3ff; }
+        .cancel-btn { width: 100%; background: var(--glass); border: 1px solid var(--border); color: var(--text); padding: 11px; border-radius: 12px; font-family: 'Tajawal'; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+        .danger-confirm { background: var(--danger); color: #fff; }
+        .danger-confirm:hover { background: #e02d22; }
+
+        .warning-text { font-size: 12px; color: var(--text2); text-align: center; margin-bottom: 18px; line-height: 1.5; }
+        .warning-text strong { color: var(--danger); }
+
+        /* Notifications Panel */
+        .notif-panel { position: fixed; top: 0; right: -100%; width: 90%; max-width: 380px; height: 100%; background: var(--bg2); border-left: 1px solid var(--border); z-index: 250; transition: right .4s ease; padding: 20px 18px; overflow-y: auto; }
+        .notif-panel.open { right: 0; }
+        .notif-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+        .notif-title { font-size: 16px; font-weight: 900; }
+        .notif-close { background: var(--glass); border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 10px; color: var(--text); cursor: pointer; font-size: 14px; }
+        .notif-list { display: flex; flex-direction: column; gap: 9px; }
+        .notif-card { background: var(--glass); border: 1px solid var(--border); border-radius: 14px; padding: 13px; cursor: pointer; transition: all .3s; }
+        .notif-card:hover { background: var(--glass2); }
+        .notif-card.warn { border-color: rgba(255,159,10,0.3); }
+        .notif-card.danger { border-color: rgba(255,59,48,0.3); }
+        .notif-card.sky { border-color: rgba(100,210,255,0.3); }
+        .notif-card.accent { border-color: rgba(16,185,129,0.3); }
+        .nc-row { display: flex; align-items: flex-start; gap: 10px; }
+        .nc-icon { font-size: 20px; flex-shrink: 0; }
+        .nc-body { flex: 1; }
+        .nc-title { font-size: 12px; font-weight: 800; }
+        .nc-desc { font-size: 10px; color: var(--text2); margin-top: 3px; line-height: 1.5; }
+        .nc-time { font-size: 9px; color: var(--text2); margin-top: 6px; }
+    </style>
+</head>
+<body>
+
+<div id="splash">
+    <div class="spl-logo">QLVIN<span>HOST</span></div>
+    <div class="spl-tag">HOST COMMAND CENTER</div>
+    <div class="spl-bar"></div>
+</div>
+
+<div id="main">
+
+    <!-- ===== الصفحة الرئيسية ===== -->
+    <div id="page-list" class="page active">
+        <div class="header">
+            <div class="logo">QLVIN<span>HOST</span></div>
+            <div class="header-actions">
+                <div class="notif-bell has-alerts" onclick="openNotifs()">
+                    🔔
+                    <span class="notif-count" id="notif-count">٢</span>
+                </div>
+                <div class="user-pill"><div class="u-dot"></div>سليمان</div>
+            </div>
+        </div>
+
+        <!-- إجمالي الدخل -->
+        <div class="income-card">
+            <div class="ic-lbl">إجمالي الدخل المحصّل · هذا الشهر</div>
+            <div class="ic-val">٢٨,٩٠٠ <small>ر.س</small></div>
+            <div class="ic-meta">
+                <div class="it"><strong>٣</strong>وحدات</div>
+                <div class="it"><strong>٢٥</strong>حجز</div>
+                <div class="it"><strong>٨٧٪</strong>تشغيل</div>
+                <div class="it"><strong>٩٠٠</strong>اشتراك ر.س</div>
+            </div>
+        </div>
+
+        <!-- تفصيل الدخل من المنصات -->
+        <div class="income-breakdown">
+            <div class="ib-title">📊 توزيع الدخل حسب المصدر</div>
+            
+            <div class="ib-row">
+                <div class="ib-source">
+                    <span>🟢</span>
+                    <span>Gathern</span>
+                </div>
+                <div class="ib-amount" style="color:var(--accent);">١٦,٤٠٠ ر.س</div>
+            </div>
+            <div class="ib-bar"><div class="ib-fill" style="width:56%;background:var(--accent);"></div></div>
+
+            <div class="ib-row" style="margin-top:8px;">
+                <div class="ib-source">
+                    <span>🔵</span>
+                    <span>Airbnb</span>
+                </div>
+                <div class="ib-amount" style="color:var(--sky);">٩,٥٠٠ ر.س</div>
+            </div>
+            <div class="ib-bar"><div class="ib-fill" style="width:33%;background:var(--sky);"></div></div>
+
+            <div class="ib-row" style="margin-top:8px;">
+                <div class="ib-source">
+                    <span>🟡</span>
+                    <span>تمديدات مباشرة</span>
+                </div>
+                <div class="ib-amount" style="color:var(--gold);">٣,٠٠٠ ر.س</div>
+            </div>
+            <div class="ib-bar"><div class="ib-fill" style="width:11%;background:var(--gold);"></div></div>
+        </div>
+
+        <!-- وحداتي -->
+        <div class="sec-lbl">
+            <span>🏠 وحداتي</span>
+            <span class="count" id="units-count">٣ وحدات</span>
+        </div>
+
+        <!-- البطاقات تتولّد من JavaScript ديناميكياً -->
+        <div id="units-container"></div>
+
+        <button class="add-btn">➕ إضافة وحدة جديدة</button>
+
+        <!-- سجل الأنشطة -->
+        <div class="sec-lbl">
+            <span>⚡ سجل الأنشطة · مباشر</span>
+            <span class="count">آخر ١٠</span>
+        </div>
+        <div class="logs-section" id="logs-list"></div>
+    </div>
+
+    <!-- ===== صفحة التفاصيل ===== -->
+    <div id="page-detail" class="page">
+        <button class="back-btn" onclick="goBack()">← العودة للوحدات</button>
+
+        <div class="detail-header">
+            <div>
+                <div class="detail-name" id="d-name">شقة الراكة</div>
+                <div class="detail-sub" id="d-sub">تحكم مباشر · مزامنة فورية</div>
+            </div>
+            <div class="detail-pi-status online" id="d-pi-status">
+                <span class="lamp"></span>
+                <span id="d-pi-text">Pi متصل</span>
+            </div>
+        </div>
+
+        <!-- إحصائيات -->
+        <div class="stats-row">
+            <div class="stat-box"><div class="lb">Gathern</div><div class="vl">١٢</div></div>
+            <div class="stat-box"><div class="lb">Airbnb</div><div class="vl">٥</div></div>
+            <div class="stat-box"><div class="lb">تمديد</div><div class="vl">٣</div></div>
+            <div class="stat-box"><div class="lb">الدخل</div><div class="vl" style="color:var(--accent);font-size:12px;" id="d-income">٩.٤ك</div></div>
+        </div>
+
+        <!-- بطاقة الضيف -->
+        <div class="guest-card">
+            <div class="gc-row">
+                <div>
+                    <div class="gc-name-lbl">الضيف الحالي</div>
+                    <div class="gc-name" id="d-guest">محمد العتيبي</div>
+                    <div style="font-size:9px;color:var(--text2);margin-top:4px;" id="d-booking">حجز #1042 · Gathern</div>
+                </div>
+                <div class="gc-right">
+                    <div class="lb">الوقت المتبقي</div>
+                    <div class="vl" id="d-time">٥ ساعات</div>
+                </div>
+            </div>
+
+            <div class="code-host" id="d-code">4321</div>
+        </div>
+
+        <!-- ✨ أزرار الإجراءات الأساسية (نفس روح Silent Exit) -->
+        <div class="sec-lbl"><span>⚡ إجراءات الإقامة</span></div>
+        <div class="action-list">
+            <button class="action-opt" onclick="contactGuest()">
+                <div class="ao-icon sky">💬</div>
+                <div class="ao-text">
+                    <strong>تواصل عبر واتساب</strong>
+                    <span>إرسال رسالة فورية للضيف</span>
+                </div>
+            </button>
+
+            <button class="action-opt" onclick="openExtendModal()">
+                <div class="ao-icon gold">⏳</div>
+                <div class="ao-text">
+                    <strong>تمديد الإقامة</strong>
+                    <span>إضافة وقت + استلام الدفع</span>
+                </div>
+            </button>
+
+            <button class="action-opt" onclick="changeCode()">
+                <div class="ao-icon accent">🔐</div>
+                <div class="ao-text">
+                    <strong>تغيير رمز الباب</strong>
+                    <span>توليد كود جديد وإرساله للراسبيري</span>
+                </div>
+            </button>
+
+            <button class="action-opt" onclick="sendCleaningNow()">
+                <div class="ao-icon purple">🧹</div>
+                <div class="ao-text">
+                    <strong>إرسال طلب نظافة</strong>
+                    <span>تنبيه عامل النظافة فوراً</span>
+                </div>
+            </button>
+
+            <button class="action-opt" onclick="openCheckoutModal()">
+                <div class="ao-icon danger">🚪</div>
+                <div class="ao-text">
+                    <strong>تسجيل خروج الضيف</strong>
+                    <span>إنهاء الحجز + قفل الباب</span>
+                </div>
+            </button>
+        </div>
+
+        <!-- سجل أنشطة الوحدة -->
+        <div class="sec-lbl">
+            <span>📋 سجل أنشطة الوحدة</span>
+        </div>
+        <div id="detail-logs"></div>
+    </div>
+
+</div>
+
+<!-- ===== Bottom Nav - موسّع ===== -->
+<div class="bottom-nav" id="bottom-nav" style="display:none;">
+    <div class="nav-item active" onclick="navClick(this,'page-list')"><span class="ni">🏠</span>وحداتي</div>
+    <div class="nav-item checkin" onclick="navClick(this,null,'checkin')"><span class="ni">✅</span>دخول ضيف</div>
+    <div class="nav-item checkout" onclick="navClick(this,null,'checkout')"><span class="ni">🚪</span>خروج ضيف</div>
+    <div class="nav-item" onclick="toast('قريباً: التقارير التفصيلية')"><span class="ni">📊</span>التقارير</div>
+    <div class="nav-item" onclick="toast('قريباً: الإعدادات')"><span class="ni">⚙️</span>الإعدادات</div>
+</div>
+
+<!-- ===== Modal الخروج الصامت / إجراءات الإقامة ===== -->
+<div class="modal-ov" id="silent-modal" onclick="closeModals(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+
+        <div class="alert-modal-header warn" id="modal-header">
+            <div class="icon">⚠️</div>
+            <div class="info">
+                <strong id="modal-alert-title">خروج صامت محتمل</strong>
+                <span id="modal-alert-desc">شقة بن خلدون · انقطع النبض منذ ٣.٢ ساعة</span>
+            </div>
+        </div>
+
+        <div class="modal-sub" style="margin-bottom:14px;">اختر الإجراء المناسب:</div>
+
+        <div class="action-list">
+            <button class="action-opt" onclick="silentAction('contact')">
+                <div class="ao-icon sky">💬</div>
+                <div class="ao-text">
+                    <strong>تواصل مع الضيف</strong>
+                    <span>إرسال واتساب · تأكد إذا غادر فعلاً</span>
+                </div>
+            </button>
+
+            <button class="action-opt" onclick="silentAction('checkout')">
+                <div class="ao-icon purple">🚪</div>
+                <div class="ao-text">
+                    <strong>تسجيل خروج الضيف</strong>
+                    <span>إنهاء الحجز رسمياً</span>
+                </div>
+            </button>
+
+            <button class="action-opt" onclick="silentAction('code')">
+                <div class="ao-icon accent">🔐</div>
+                <div class="ao-text">
+                    <strong>تغيير رمز الباب</strong>
+                    <span>أمان إضافي بعد الخروج</span>
+                </div>
+            </button>
+
+            <button class="action-opt" onclick="silentAction('cleaning')">
+                <div class="ao-icon gold">🧹</div>
+                <div class="ao-text">
+                    <strong>إرسال طلب نظافة</strong>
+                    <span>تنبيه عامل النظافة فوراً</span>
+                </div>
+            </button>
+        </div>
+
+        <button class="cancel-btn" onclick="closeModals()">إغلاق</button>
+    </div>
+</div>
+
+<!-- Modal التمديد -->
+<div class="modal-ov" id="extend-modal" onclick="closeModals(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">⏳ خيارات التمديد</div>
+        <div class="modal-sub">إضافة وقت إضافي للحجز الحالي</div>
+
+        <div class="extend-opts">
+            <div class="ext-opt sel" onclick="selOpt(this)" data-time="1h" data-price="50">
+                <div class="dur">١</div>
+                <div class="unit">ساعة</div>
+                <div class="price">٥٠ ر.س</div>
+            </div>
+            <div class="ext-opt" onclick="selOpt(this)" data-time="3h" data-price="120">
+                <div class="dur">٣</div>
+                <div class="unit">ساعات</div>
+                <div class="price">١٢٠ ر.س</div>
+            </div>
+            <div class="ext-opt" onclick="selOpt(this)" data-time="6h" data-price="200">
+                <div class="dur">٦</div>
+                <div class="unit">ساعات</div>
+                <div class="price">٢٠٠ ر.س</div>
+            </div>
+            <div class="ext-opt" onclick="selOpt(this)" data-time="24h" data-price="350">
+                <div class="dur">٢٤</div>
+                <div class="unit">يوم كامل</div>
+                <div class="price">٣٥٠ ر.س</div>
+            </div>
+        </div>
+
+        <button class="confirm-btn" onclick="confirmExtend()">✓ تأكيد التمديد · الدفع</button>
+        <button class="cancel-btn" onclick="closeModals()">إلغاء</button>
+    </div>
+</div>
+
+<!-- Modal تسجيل الخروج -->
+<div class="modal-ov" id="checkout-modal" onclick="closeModals(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title" style="color:var(--purple);">🚪 تسجيل خروج الضيف</div>
+        <div class="modal-sub">إنهاء الحجز + إجراءات تلقائية</div>
+
+        <div class="warning-text">
+            هل تريد تسجيل خروج <strong style="color:var(--sky);" id="checkout-guest">الضيف</strong>؟<br>
+            سيتم:
+        </div>
+
+        <div style="background:var(--glass);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:18px;">
+            <div style="font-size:11px;line-height:2;">
+                ✓ إنهاء الحجز رسمياً<br>
+                ✓ قفل الباب وتعطيل الكود الحالي<br>
+                ✓ تغيير حالة الشقة إلى "للتنظيف"<br>
+                ✓ إرسال إشعار للضيف بشكر الإقامة
+            </div>
+        </div>
+
+        <button class="confirm-btn" style="background:var(--purple);color:#fff;" onclick="confirmCheckout()">✓ تأكيد الخروج</button>
+        <button class="cancel-btn" onclick="closeModals()">إلغاء</button>
+    </div>
+</div>
+
+<!-- Modal دخول ضيف جديد (Manual Check-in) -->
+<div class="modal-ov" id="checkin-modal" onclick="closeModals(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title" style="color:var(--accent);">✅ تسجيل دخول ضيف جديد</div>
+        <div class="modal-sub">إضافة حجز مباشر (بدون Airbnb/Gathern)</div>
+
+        <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:14px;">
+            <div>
+                <label style="font-size:10px;color:var(--text2);margin-bottom:5px;display:block;">اسم الضيف</label>
+                <input type="text" id="ci-name" placeholder="مثال: عبدالله المالكي" style="width:100%;padding:11px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Tajawal';font-size:12px;">
+            </div>
+            <div>
+                <label style="font-size:10px;color:var(--text2);margin-bottom:5px;display:block;">رقم الجوال (واتساب)</label>
+                <input type="tel" id="ci-phone" placeholder="+966501234567" style="width:100%;padding:11px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Tajawal';font-size:12px;">
+            </div>
+            <div>
+                <label style="font-size:10px;color:var(--text2);margin-bottom:5px;display:block;">الوحدة</label>
+                <select id="ci-unit" style="width:100%;padding:11px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Tajawal';font-size:12px;">
+                    <option>شقة الراكة</option>
+                    <option>شقة بن خلدون</option>
+                    <option>شقة المنار</option>
+                </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+                <div>
+                    <label style="font-size:10px;color:var(--text2);margin-bottom:5px;display:block;">مدة الإقامة</label>
+                    <select id="ci-duration" style="width:100%;padding:11px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Tajawal';font-size:12px;">
+                        <option>٦ ساعات</option>
+                        <option>١٢ ساعة</option>
+                        <option selected>٢٤ ساعة (يوم)</option>
+                        <option>٤٨ ساعة (يومين)</option>
+                        <option>٧٢ ساعة (٣ أيام)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:10px;color:var(--text2);margin-bottom:5px;display:block;">السعر (ر.س)</label>
+                    <input type="number" id="ci-price" placeholder="500" style="width:100%;padding:11px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Tajawal';font-size:12px;">
+                </div>
+            </div>
+        </div>
+
+        <button class="confirm-btn" style="background:var(--accent);color:#fff;" onclick="confirmCheckin()">✓ تسجيل الدخول + إرسال الكود</button>
+        <button class="cancel-btn" onclick="closeModals()">إلغاء</button>
+    </div>
+</div>
+
+<!-- ===== لوحة الإشعارات الجانبية ===== -->
+<div class="notif-panel" id="notif-panel">
+    <div class="notif-header">
+        <div class="notif-title">🔔 الإشعارات</div>
+        <button class="notif-close" onclick="closeNotifs()">✕</button>
+    </div>
+    <div class="notif-list" id="notif-list">
+        <!-- Notifications inserted here -->
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    let currentProp = {};
+
+    // ========================================
+    // 📦 STATE: بيانات الوحدات (مكان قاعدة البيانات)
+    // ========================================
+    let units = [
+        {
+            id: 1,
+            name: 'شقة الراكة (الفاخرة)',
+            shortName: 'الراكة',
+            icon: '🏠',
+            guest: 'محمد العتيبي',
+            phone: '+966501234567',
+            income: '٩,٤٠٠',
+            time: '٥ ساعات',
+            status: 'active',          // active | clean | empty | silent
+            pi: 'online',              // online | offline
+            code: '4321',
+            booking: '#1042',
+            source: 'Gathern',
+            alert: null                // null | 'silent' | 'pi_offline'
+        },
+        {
+            id: 2,
+            name: 'شقة بن خلدون',
+            shortName: 'بن خلدون',
+            icon: '🛠',
+            guest: 'خالد الزهراني',
+            phone: '+966507654321',
+            income: '١٢,٥٠٠',
+            time: '٠',
+            status: 'clean',
+            pi: 'online',
+            code: '7891',
+            booking: 'سابق #1041',
+            source: 'Gathern',
+            alert: 'silent'
+        },
+        {
+            id: 3,
+            name: 'شقة المنار',
+            shortName: 'المنار',
+            icon: '🌟',
+            guest: 'فهد الدوسري',
+            phone: '+966509876543',
+            income: '٧,٠٠٠',
+            time: '١٢ ساعة',
+            status: 'active',
+            pi: 'offline',
+            code: '5582',
+            booking: '#1043',
+            source: 'Airbnb',
+            alert: 'pi_offline'
+        }
+    ];
+
+    // ========================================
+    // 🎨 RENDER: توليد البطاقات من البيانات
+    // ========================================
+    function renderUnits() {
+        const container = document.getElementById('units-container');
+        container.innerHTML = '';
+
+        units.forEach(u => {
+            // تحديد محتوى التنبيه
+            let alertHTML = '';
+            let cardClass = 'prop-card';
+            
+            if (u.alert === 'silent') {
+                alertHTML = '<div class="pc-alert-badge">⚠ خروج صامت · منذ ٣.٢ ساعة · اضغط للإجراء</div>';
+                cardClass += ' has-alert';
+            } else if (u.alert === 'pi_offline') {
+                alertHTML = '<div class="pc-alert-badge danger">⚠ Pi مفصول · يحتاج فحص</div>';
+            }
+
+            // تحديد نص الضيف
+            let guestText = '';
+            if (u.status === 'clean') {
+                guestText = `آخر ضيف: ${u.guest}`;
+            } else if (u.status === 'empty') {
+                guestText = 'لا يوجد ضيف · جاهزة للحجز';
+            } else {
+                guestText = `👤 ${u.guest} · باقي ${u.time}`;
+            }
+
+            // تحديد الـ status badge
+            let statusBadge = '';
+            if (u.status === 'active') statusBadge = '<div class="pc-status st-active">● نشط</div>';
+            else if (u.status === 'clean') statusBadge = '<div class="pc-status st-clean">🧹 للتنظيف</div>';
+            else if (u.status === 'empty') statusBadge = '<div class="pc-status st-ready">✓ جاهزة</div>';
+
+            // الـ click handler - إذا silent يفتح modal التنبيه، غير كذا يفتح التفاصيل
+            const clickAction = u.alert === 'silent' 
+                ? `openSilentExitAlert(${u.id})` 
+                : `openDetail(${u.id})`;
+
+            container.innerHTML += `
+                <div class="${cardClass}" onclick="${clickAction}">
+                    <div class="pc-icon">
+                        ${u.icon}
+                        <div class="pc-pi-lamp ${u.pi}"></div>
+                    </div>
+                    <div class="pc-info">
+                        <div class="pc-name">${u.name}</div>
+                        <div class="pc-guest">${guestText}</div>
+                        ${alertHTML}
+                    </div>
+                    <div class="pc-right">
+                        <div class="pc-income">${u.income} ر.س</div>
+                        ${statusBadge}
+                    </div>
+                </div>
+            `;
+        });
+
+        // تحديث العداد
+        document.getElementById('units-count').textContent = `${units.length} وحدات`;
+    }
+
+    // دالة مساعدة: جيب وحدة بالـ ID
+    function getUnit(id) {
+        return units.find(u => u.id === id);
+    }
+
+    // دالة مساعدة: حدّث وحدة معينة
+    function updateUnit(id, changes) {
+        const idx = units.findIndex(u => u.id === id);
+        if (idx >= 0) {
+            units[idx] = { ...units[idx], ...changes };
+            renderUnits();  // ✨ إعادة الرسم تلقائياً
+        }
+    }
+
+    // ===== Notifications =====
+    const notifications = [
+        {
+            type: 'warn',
+            icon: '⚠️',
+            title: 'خروج صامت محتمل',
+            desc: 'شقة بن خلدون · خالد الزهراني · انقطع النبض منذ ٣.٢ ساعة',
+            time: 'منذ ١٢ دقيقة',
+            action: () => openSilentExitAlert({name:'شقة بن خلدون', guest:'خالد الزهراني', phone:'+966507654321', income:'١٢,٥٠٠'})
+        },
+        {
+            type: 'danger',
+            icon: '📡',
+            title: 'Raspberry Pi مفصول',
+            desc: 'شقة المنار · فُقد الاتصال منذ ١٥ دقيقة · تحقق من الإنترنت',
+            time: 'منذ ١٥ دقيقة',
+            action: () => toast('⚠️ افحص اتصال Pi في شقة المنار', 'danger')
+        }
+    ];
+
+    function renderNotifs() {
+        const list = document.getElementById('notif-list');
+        list.innerHTML = '';
+        notifications.forEach((n, idx) => {
+            list.innerHTML += `
+                <div class="notif-card ${n.type}" onclick="handleNotifClick(${idx})">
+                    <div class="nc-row">
+                        <div class="nc-icon">${n.icon}</div>
+                        <div class="nc-body">
+                            <div class="nc-title">${n.title}</div>
+                            <div class="nc-desc">${n.desc}</div>
+                            <div class="nc-time">${n.time}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('notif-count').textContent = notifications.length;
+    }
+
+    function handleNotifClick(idx) {
+        closeNotifs();
+        notifications[idx].action();
+    }
+
+    function openNotifs() {
+        renderNotifs();
+        document.getElementById('notif-panel').classList.add('open');
+    }
+    function closeNotifs() {
+        document.getElementById('notif-panel').classList.remove('open');
+    }
+
+    // ===== Activity Logs =====
+    const globalLogs = [
+        { icon:'✅', event:'تسجيل دخول: محمد العتيبي', unit:'شقة الراكة', time:'06:00 AM', type:'checkin', typeLabel:'CHECK-IN' },
+        { icon:'🔑', event:'فتح الباب بـ NFC', unit:'شقة الراكة', time:'06:02 AM', type:'nfc', typeLabel:'NFC ACCESS' },
+        { icon:'⚠️', event:'خروج صامت · انقطاع النبض', unit:'شقة بن خلدون', time:'8:15 AM', type:'warn', typeLabel:'SILENT EXIT' },
+        { icon:'🚪', event:'تسجيل خروج: عبدالله المالكي', unit:'شقة بن خلدون', time:'8:00 AM', type:'checkout', typeLabel:'CHECK-OUT' },
+        { icon:'🔐', event:'تغيير كود الباب', unit:'شقة المنار', time:'7:00 AM', type:'sys', typeLabel:'CODE CHANGE' },
+        { icon:'⚠️', event:'Raspberry Pi مفصول', unit:'شقة المنار', time:'6:45 AM', type:'danger', typeLabel:'PI OFFLINE' }
+    ];
+
+    function renderLogs(container, logs) {
+        container.innerHTML = '';
+        logs.forEach(l => {
+            container.innerHTML += `
+            <div class="log-item">
+                <div class="log-icon">${l.icon}</div>
+                <div class="log-body">
+                    <div class="log-event">${l.event}</div>
+                    <div class="log-unit">${l.unit}</div>
+                    <span class="log-type lt-${l.type}">${l.typeLabel}</span>
+                </div>
+                <div class="log-time">${l.time}</div>
+            </div>`;
+        });
+    }
+
+    // ===== Splash =====
+    setTimeout(() => {
+        const s = document.getElementById('splash');
+        s.style.opacity = '0';
+        setTimeout(() => {
+            s.style.display = 'none';
+            document.getElementById('bottom-nav').style.display = 'flex';
+            renderUnits();  // ✨ توليد بطاقات الوحدات
+            renderLogs(document.getElementById('logs-list'), globalLogs);
+        }, 700);
+    }, 1800);
+
+    // ===== Navigation =====
+    function openDetail(idOrData) {
+        // دعم القديم والجديد
+        const data = typeof idOrData === 'number' ? getUnit(idOrData) : idOrData;
+        if (!data) return;
+        
+        currentProp = data;
+        document.getElementById('d-name').textContent = data.name;
+        document.getElementById('d-guest').textContent = data.guest === '—' || !data.guest ? 'لا يوجد ضيف حالياً' : data.guest;
+        document.getElementById('d-booking').textContent = `${data.booking} · ${data.source}`;
+        document.getElementById('d-income').textContent = data.income + ' ر.س';
+        document.getElementById('d-time').textContent = data.time;
+        document.getElementById('d-code').textContent = data.code;
+
+        const piStatus = document.getElementById('d-pi-status');
+        const piText = document.getElementById('d-pi-text');
+        piStatus.className = 'detail-pi-status ' + data.pi;
+        piText.textContent = data.pi === 'online' ? 'Pi متصل' : '⚠ Pi مفصول';
+
+        const unitLogs = globalLogs.filter(l => l.unit.includes(data.shortName || data.name.replace('شقة ', '')));
+        renderLogs(document.getElementById('detail-logs'), unitLogs);
+
+        showPage('page-detail');
+    }
+
+    function goBack() { showPage('page-list'); }
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function navClick(el, pageId, action) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+
+        if (pageId) {
+            showPage(pageId);
+        } else if (action === 'checkin') {
+            document.getElementById('checkin-modal').classList.add('open');
+            setTimeout(() => {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                document.querySelector('.nav-item').classList.add('active');
+            }, 100);
+        } else if (action === 'checkout') {
+            toast('💡 افتح أي وحدة وتسجل خروج الضيف منها', 'success');
+            setTimeout(() => {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                document.querySelector('.nav-item').classList.add('active');
+            }, 100);
+        }
+    }
+
+    // ===== Silent Exit Alert (الإشعار التفاعلي) =====
+    let silentExitData = {};
+    function openSilentExitAlert(idOrData) {
+        const data = typeof idOrData === 'number' ? getUnit(idOrData) : idOrData;
+        if (!data) return;
+        
+        silentExitData = data;
+        document.getElementById('modal-alert-title').textContent = '⚠️ خروج صامت محتمل';
+        document.getElementById('modal-alert-desc').textContent = `${data.name} · ${data.guest} · انقطع النبض منذ ٣.٢ ساعة`;
+        document.getElementById('modal-header').className = 'alert-modal-header warn';
+        document.getElementById('silent-modal').classList.add('open');
+    }
+
+    function silentAction(type) {
+        const unitData = silentExitData;
+        const guest = unitData.guest;
+        const unit = unitData.name;
+        const unitId = unitData.id;
+        const shortName = unitData.shortName || unit.replace('شقة ', '');
+        const now = new Date().toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
+
+        closeModals();
+
+        switch(type) {
+            case 'contact':
+                toast(`📱 فتح واتساب للتواصل مع ${guest}`, 'success');
+                addLog({ icon:'💬', event:`محاولة تواصل مع ${guest}`, unit: shortName, time: now, type:'sys', typeLabel:'CONTACT' });
+                break;
+            case 'checkout':
+                // ✨ تحديث حالة الوحدة فعلياً
+                updateUnit(unitId, {
+                    guest: '—',
+                    status: 'clean',
+                    alert: null,
+                    time: '٠',
+                    code: '0000'
+                });
+                toast(`🚪 تم تسجيل خروج ${guest} · الباب مقفل`, 'success');
+                addLog({ icon:'🚪', event:`تسجيل خروج: ${guest}`, unit: shortName, time: now, type:'checkout', typeLabel:'CHECK-OUT' });
+                // إزالة الإشعار من جرس التنبيه
+                const notifIdx = notifications.findIndex(n => n.title === 'خروج صامت محتمل');
+                if (notifIdx >= 0) {
+                    notifications.splice(notifIdx, 1);
+                    document.getElementById('notif-count').textContent = notifications.length;
+                    if (notifications.length === 0) document.querySelector('.notif-bell').classList.remove('has-alerts');
+                }
+                break;
+            case 'code':
+                const newCode = Math.floor(1000 + Math.random() * 9000);
+                updateUnit(unitId, { code: newCode.toString() });
+                toast(`🔐 تم تغيير الكود إلى: ${newCode}`, 'success');
+                addLog({ icon:'🔐', event:`تغيير كود الباب → ${newCode}`, unit: shortName, time: now, type:'sys', typeLabel:'CODE CHANGE' });
+                break;
+            case 'cleaning':
+                toast(`🧹 تم إرسال طلب نظافة لـ ${unit}`, 'success');
+                addLog({ icon:'🧹', event:'طلب نظافة فوري', unit: shortName, time: now, type:'sys', typeLabel:'CLEANING' });
+                break;
+        }
+        renderLogs(document.getElementById('logs-list'), globalLogs);
+    }
+
+    // ===== Actions (في صفحة التفاصيل) =====
+    function changeCode() {
+        if (currentProp.pi === 'offline') {
+            toast('⚠️ لا يمكن تغيير الكود · Raspberry Pi مفصول', 'danger');
+            return;
+        }
+        const code = Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('d-code').textContent = code;
+        currentProp.code = code.toString();
+        
+        // ✨ تحديث state للوحدة
+        if (currentProp.id) {
+            updateUnit(currentProp.id, { code: code.toString() });
+        }
+
+        const now = new Date().toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
+        const shortName = currentProp.shortName || currentProp.name.replace('شقة ', '');
+        addLog({ icon:'🔐', event:`تغيير كود الباب → ${code}`, unit: shortName, time: now, type:'sys', typeLabel:'CODE CHANGE' });
+
+        renderLogs(document.getElementById('logs-list'), globalLogs);
+        renderLogs(document.getElementById('detail-logs'), globalLogs.filter(l => l.unit.includes(shortName)));
+
+        toast(`✓ الكود الجديد: ${code} · أُرسل للراسبيري`, 'success');
+    }
+
+    function contactGuest() {
+        toast(`📱 فتح واتساب للتواصل مع ${currentProp.guest}`, 'success');
+    }
+
+    function sendCleaningNow() {
+        toast(`🧹 تم إرسال طلب نظافة فوري`, 'success');
+        const now = new Date().toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
+        addLog({ icon:'🧹', event:'طلب نظافة فوري', unit: currentProp.name, time: now, type:'sys', typeLabel:'CLEANING' });
+        renderLogs(document.getElementById('logs-list'), globalLogs);
+        renderLogs(document.getElementById('detail-logs'), globalLogs.filter(l => l.unit.includes(currentProp.name.replace('شقة ', ''))));
+    }
+
+    // ===== Modals =====
+    function openExtendModal() {
+        document.getElementById('extend-modal').classList.add('open');
+    }
+
+    function openCheckoutModal() {
+        document.getElementById('checkout-guest').textContent = currentProp.guest;
+        document.getElementById('checkout-modal').classList.add('open');
+    }
+
+    function closeModals(e) {
+        if (!e || e.target.classList.contains('modal-ov') || e.type === 'click') {
+            document.querySelectorAll('.modal-ov').forEach(m => m.classList.remove('open'));
+        }
+    }
+
+    function selOpt(el) {
+        document.querySelectorAll('.ext-opt').forEach(o => o.classList.remove('sel'));
+        el.classList.add('sel');
+    }
+
+    function confirmExtend() {
+        const selected = document.querySelector('.ext-opt.sel');
+        const price = selected.dataset.price;
+        const timeLabel = selected.querySelector('.dur').textContent + ' ' + selected.querySelector('.unit').textContent;
+
+        closeModals();
+        toast(`✓ تم تمديد الحجز ${timeLabel} (${price} ر.س)`, 'success');
+
+        const now = new Date().toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
+        addLog({ icon:'⏱️', event:`تمديد الإقامة (${timeLabel}) - ${price} ر.س`, unit: currentProp.name, time: now, type:'sys', typeLabel:'EXTENSION' });
+        renderLogs(document.getElementById('logs-list'), globalLogs);
+        renderLogs(document.getElementById('detail-logs'), globalLogs.filter(l => l.unit.includes(currentProp.name.replace('شقة ', ''))));
+    }
+
+    function confirmCheckout() {
+        closeModals();
+        document.getElementById('d-code').textContent = '0000';
+
+        // ✨ تحديث state للوحدة
+        if (currentProp.id) {
+            updateUnit(currentProp.id, {
+                guest: '—',
+                status: 'clean',
+                alert: null,
+                time: '٠',
+                code: '0000'
+            });
+        }
+
+        const now = new Date().toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
+        const shortName = currentProp.shortName || currentProp.name.replace('شقة ', '');
+        addLog({ icon:'🚪', event:`تسجيل خروج: ${currentProp.guest}`, unit: shortName, time: now, type:'checkout', typeLabel:'CHECK-OUT' });
+        renderLogs(document.getElementById('logs-list'), globalLogs);
+        renderLogs(document.getElementById('detail-logs'), globalLogs.filter(l => l.unit.includes(shortName)));
+
+        toast('🚪 تم تسجيل الخروج · الباب مقفل · بانتظار التنظيف', 'success');
+        setTimeout(() => goBack(), 1500);
+    }
+
+    function confirmCheckin() {
+        const name = document.getElementById('ci-name').value;
+        const phone = document.getElementById('ci-phone').value;
+        const unitName = document.getElementById('ci-unit').value;
+        const duration = document.getElementById('ci-duration').value;
+        const price = document.getElementById('ci-price').value;
+
+        if (!name || !phone || !price) {
+            toast('⚠️ الرجاء تعبئة جميع الحقول', 'danger');
+            return;
+        }
+
+        // ✨ ابحث عن الوحدة في الـ state وحدّثها
+        const targetUnit = units.find(u => u.name.includes(unitName.replace('شقة ', '')));
+        const newCode = Math.floor(1000 + Math.random() * 9000);
+        
+        if (targetUnit) {
+            updateUnit(targetUnit.id, {
+                guest: name,
+                phone: phone,
+                time: duration,
+                status: 'active',
+                alert: null,                          // مسح أي تنبيهات سابقة
+                code: newCode.toString(),
+                booking: '#' + (1050 + Math.floor(Math.random() * 50)),
+                source: 'مباشر'
+            });
+        }
+
+        const shortName = unitName.replace('شقة ', '');
+        closeModals();
+        toast(`✅ تم تسجيل دخول ${name} في ${unitName} · الكود: ${newCode}`, 'success');
+
+        const now = new Date().toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
+        addLog({ icon:'✅', event:`تسجيل دخول جديد: ${name} (${duration})`, unit: shortName, time: now, type:'checkin', typeLabel:'CHECK-IN' });
+        addLog({ icon:'🔐', event:`توليد كود: ${newCode} + إرسال واتساب`, unit: shortName, time: now, type:'sys', typeLabel:'CODE GENERATED' });
+        renderLogs(document.getElementById('logs-list'), globalLogs);
+
+        // Clear form
+        document.getElementById('ci-name').value = '';
+        document.getElementById('ci-phone').value = '';
+        document.getElementById('ci-price').value = '';
+    }
+
+    function addLog(log) {
+        globalLogs.unshift(log);
+    }
+
+    function toast(msg, type = '') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show ' + type;
+        setTimeout(() => t.classList.remove('show'), 2800);
+    }
+</script>
+<script type="module" src="./src/supabase-client.js"></script>
+</body>
+</html>
