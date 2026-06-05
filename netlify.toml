@@ -1,14 +1,14 @@
 [build]
-  publish = "frontend"
+  publish = "apps"
 
 [[headers]]
   for = "/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
     Cache-Control = "no-cache"
-  base = "qlvin-os-ui"
-  command = "npm run build"
-  publish = "dist"
 
-[build.environment]
-  NODE_VERSION = "22"
+# Redirect جذر الموقع لداشبورد المؤسس
+[[redirects]]
+  from = "/"
+  to = "/founder/index.html"
+  status = 302
