@@ -10,6 +10,10 @@ CREATE POLICY "founder_read_all_users" ON public.users
 CREATE POLICY "host_read_own_user" ON public.users
   FOR SELECT USING (auth_id = auth.uid());
 
+-- المؤسس يضيف مضيفين جدد مباشرة
+CREATE POLICY "founder_insert_users" ON public.users
+  FOR INSERT WITH CHECK (public.is_founder());
+
 CREATE POLICY "founder_update_users" ON public.users
   FOR UPDATE USING (public.is_founder());
 

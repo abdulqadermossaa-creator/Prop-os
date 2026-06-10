@@ -194,6 +194,7 @@ async function renderRealHosts() {
         <div style="font-size:32px;margin-bottom:12px;">🏠</div>
         <div style="font-size:13px;">لا يوجد ملاك بعد — ابدأ بإضافة أول مضيف</div>
       </div>`;
+    updateStats([], []);
     return;
   }
 
@@ -201,6 +202,32 @@ async function renderRealHosts() {
 
   const countEl = document.getElementById('owners-count');
   if (countEl) countEl.textContent = `${data.length} ملاك`;
+
+  // تحديث الـ stats
+  const allUnits = data.flatMap(h => h.units || []);
+  updateStats(data, allUnits);
+}
+
+function updateStats(hosts, units) {
+  const now = new Date();
+  const activeHosts = hosts.filter(h => h.status !== 'suspended').length;
+  const piOnline    = units.filter(u => u.pi_connected).length;
+  const activeGuests = units.reduce((acc, u) =>
+    acc + (u.guest_sessions?.filter(s =>
+      new Date(s.check_in) <= now && new Date(s.check_out) >= now
+    ).length || 0), 0);
+
+  const elH  = document.getElementById('stat-hosts');
+  const elHS = document.getElementById('stat-hosts-sub');
+  const elU  = document.getElementById('stat-units');
+  const elUS = document.getElementById('stat-units-sub');
+  const elG  = document.getElementById('stat-guests');
+
+  if (elH)  elH.textContent  = activeHosts;
+  if (elHS) elHS.textContent = `من ${hosts.length} مسجلين`;
+  if (elU)  elU.textContent  = units.length;
+  if (elUS) elUS.textContent = `${piOnline} متصلة · ${units.length - piOnline} مفصولة`;
+  if (elG)  elG.textContent  = activeGuests;
 }
 
 function buildHostCard(host) {
@@ -437,7 +464,7 @@ window.qlvnOpenAddUnit = function(hostId, hostName) {
 };
 
 // ─────────────────────────────────────────────
-// Override submitNewClient (modal إضافة مالك)
+// submitNewClient — INSERT مباشر في Supabase
 // ─────────────────────────────────────────────
 window.submitNewClient = async function(e) {
   e.preventDefault();
@@ -456,29 +483,46 @@ window.submitNewClient = async function(e) {
   if (btn) { btn.textContent = 'جاري الإضافة...'; btn.disabled = true; }
 
   try {
-    const { data, error } = await supabase.functions.invoke('onboard-host', {
-      body: {
-        name, phone,
-        email: email || null,
-        units: [{ name: unitName || `شقة ${name}`, location: area || null }],
-        send_welcome: true,
-      },
-    });
+    // 1. إضافة المضيف في users مباشرة
+    const { data: newHost, error: hostErr } = await supabase
+      .from('users')
+      .insert({ name, phone, email: email || null, role: 'host', status: 'active' })
+      .select('id, name')
+      .single();
 
-    if (error) throw new Error(error.message || JSON.stringify(error));
+    if (hostErr) throw hostErr;
 
-    // تحديث iCal مباشرة على جدول units (يحل محل ical_feeds)
-    const firstUnitId = data?.units_created?.[0]?.id;
-    if (firstUnitId && (airbnbUrl || gathernUrl)) {
-      await supabase.from('units').update({
+    // 2. إضافة الوحدة الأولى
+    const { data: newUnit, error: unitErr } = await supabase
+      .from('units')
+      .insert({
+        host_id:      newHost.id,
+        name:         unitName || `شقة ${name}`,
+        location:     area    || null,
+        status:       'pending_approval',
         ical_airbnb:  airbnbUrl  || null,
         ical_booking: gathernUrl || null,
-      }).eq('id', firstUnitId);
-    }
+      })
+      .select('id')
+      .single();
+
+    if (unitErr) throw unitErr;
+
+    // 3. سجّل الحدث في events
+    await supabase.from('events').insert({
+      unit_id:    newUnit.id,
+      event_type: 'host_added',
+      actor_type: 'founder',
+      actor_id:   currentUserId,
+      payload:    { host_name: name, phone },
+    });
 
     window.closeAddClient?.();
     document.getElementById('addClientForm')?.reset();
-    window.toast?.(`✅ تم إضافة ${name} + إرسال ترحيب واتساب`, 'success');
+    document.querySelectorAll?.('.plan-opt')?.forEach?.((o, i) => o.classList.toggle('sel', i === 0));
+    window.toast?.(`✅ تم إضافة ${name} بنجاح`, 'success');
+
+    // أعد تحميل القائمة من Supabase
     await renderRealHosts();
     await loadPlatformLogs();
 
@@ -535,9 +579,8 @@ async function handleSession(session) {
   removeSupabaseAuth();
   patchPinSystem();
 
-  // إذا كان الـ dashboard مرئياً مسبقاً (بدون PIN)
-  const dash = document.getElementById('dashboard');
-  if (dash && getComputedStyle(dash).display !== 'none') await loadFounderData();
+  // جلب البيانات مسبقاً حتى تكون جاهزة فور ظهور الـ dashboard
+  loadFounderData();
 
   subscribeRealtime();
 }
