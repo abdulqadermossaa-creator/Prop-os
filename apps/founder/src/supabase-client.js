@@ -1,8 +1,5 @@
 // apps/founder/src/supabase-client.js
 // QLVN OS — Founder Dashboard Supabase Integration
-// يُضاف كـ <script type="module"> في نهاية الصفحة
-// الاستراتيجية: Supabase auth → PIN → dashboard بيانات حقيقية
-// المرجع: CLAUDE_FINAL.md §8 + §9
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -16,7 +13,7 @@ let isFounderAuthed = false;
 let hostsData       = [];
 
 // ─────────────────────────────────────────────
-// STEP 1 — Supabase Auth يظهر قبل شاشة الـ PIN
+// Supabase Auth overlay
 // ─────────────────────────────────────────────
 function injectSupabaseAuth() {
   const lockScreen = document.getElementById('lock-screen');
@@ -117,7 +114,6 @@ function injectSupabaseAuth() {
 
     setBtn('sb-verify', 'تأكيد الدخول', false);
     if (error) setErr(error.message);
-    // onAuthStateChange يتولى الباقي
   });
 
   document.getElementById('sb-back').addEventListener('click', () => {
@@ -142,10 +138,9 @@ function removeSupabaseAuth() {
 }
 
 // ─────────────────────────────────────────────
-// بعد نجاح الـ PIN — حمّل البيانات الحقيقية
+// PIN observer — يحمّل البيانات بعد نجاح الـ PIN
 // ─────────────────────────────────────────────
 function patchPinSystem() {
-  // نراقب ظهور الـ dashboard بعد نجاح الـ PIN
   const lockScreen = document.getElementById('lock-screen');
   if (!lockScreen) return;
 
@@ -167,18 +162,20 @@ async function loadFounderData() {
 
 async function renderRealHosts() {
   const { data, error } = await supabase
-    .from('hosts')
+    .from('users')
     .select(`
-      id, name, phone, email, subscription_status, units_count, monthly_fee, created_at,
+      id, name, phone, email, status, created_at,
       units (
-        id, name, qlvn_code, operational_status, approval_status, pi_status,
-        base_price_per_night,
-        guest_sessions ( id, guest_name, status )
+        id, name, location, building, floor,
+        status, pi_connected, pi_pairing_code, pi_last_heartbeat,
+        price_per_night,
+        guest_sessions ( id, guest_name, check_in, check_out, current_mode )
       )
     `)
+    .eq('role', 'host')
     .order('created_at', { ascending: false });
 
-  if (error) { console.error('[QLVN Founder] renderRealHosts:', error); return; }
+  if (error) { console.error('[QLVN] renderRealHosts:', error); return; }
 
   hostsData = data;
   const tree = document.getElementById('owners-tree');
@@ -192,6 +189,7 @@ async function renderRealHosts() {
         <div style="font-size:32px;margin-bottom:12px;">🏠</div>
         <div style="font-size:13px;">لا يوجد ملاك بعد — ابدأ بإضافة أول مضيف</div>
       </div>`;
+    updateStats([], []);
     return;
   }
 
@@ -199,16 +197,46 @@ async function renderRealHosts() {
 
   const countEl = document.getElementById('owners-count');
   if (countEl) countEl.textContent = `${data.length} ملاك`;
+
+  const allUnits = data.flatMap(h => h.units || []);
+  updateStats(data, allUnits);
+}
+
+function updateStats(hosts, units) {
+  const now = new Date();
+  const activeHosts  = hosts.filter(h => h.status !== 'suspended').length;
+  const piOnline     = units.filter(u => u.pi_connected).length;
+  const activeGuests = units.reduce((acc, u) =>
+    acc + (u.guest_sessions?.filter(s =>
+      new Date(s.check_in) <= now && new Date(s.check_out) >= now
+    ).length || 0), 0);
+
+  const elH  = document.getElementById('stat-hosts');
+  const elHS = document.getElementById('stat-hosts-sub');
+  const elU  = document.getElementById('stat-units');
+  const elUS = document.getElementById('stat-units-sub');
+  const elG  = document.getElementById('stat-guests');
+
+  if (elH)  elH.textContent  = activeHosts;
+  if (elHS) elHS.textContent = `من ${hosts.length} مسجلين`;
+  if (elU)  elU.textContent  = units.length;
+  if (elUS) elUS.textContent = `${piOnline} متصلة · ${units.length - piOnline} مفصولة`;
+  if (elG)  elG.textContent  = activeGuests;
 }
 
 function buildHostCard(host) {
-  const units  = host.units || [];
-  const isActive = host.subscription_status !== 'suspended';
+  const units    = host.units || [];
+  const isActive = host.status !== 'suspended';
+  const now      = new Date();
+
   const totalGuests = units.reduce((acc, u) =>
-    acc + (u.guest_sessions?.filter(s => s.status === 'active').length || 0), 0);
-  const pendingCount = units.filter(u => u.approval_status === 'pending_approval').length;
+    acc + (u.guest_sessions?.filter(s =>
+      new Date(s.check_in) <= now && new Date(s.check_out) >= now
+    ).length || 0), 0);
+
+  const pendingCount  = units.filter(u => u.status === 'pending_approval').length;
   const avatarLetters = host.name.substring(0, 2);
-  const pendingBadge = pendingCount
+  const pendingBadge  = pendingCount
     ? `<span style="background:rgba(255,159,10,.18);color:#ff9f0a;font-size:9px;padding:2px 7px;border-radius:8px;margin-right:6px;">⏳ ${pendingCount}</span>`
     : '';
 
@@ -244,10 +272,18 @@ function buildHostCard(host) {
 }
 
 function buildUnitRow(unit) {
-  const activeSession = unit.guest_sessions?.find(s => s.status === 'active');
-  const statusMap = { available: '✓ جاهزة', occupied: '● نشط', cleaning: '🧹 تنظيف', maintenance: '🔧 صيانة' };
-  const isPending = unit.approval_status === 'pending_approval';
-  const piOnline  = unit.pi_status === 'online';
+  const now           = new Date();
+  const activeSession = unit.guest_sessions?.find(s =>
+    new Date(s.check_in) <= now && new Date(s.check_out) >= now
+  );
+  const statusMap = {
+    approved:         '✓ جاهزة',
+    pending_approval: '⏳ بانتظار',
+    suspended:        '⛔ موقوفة',
+    inactive:         '🔧 معطلة',
+  };
+  const isPending = unit.status === 'pending_approval';
+  const piOnline  = unit.pi_connected === true;
 
   return `
     <div class="apt-row" id="qlvn-unit-${unit.id}">
@@ -259,8 +295,8 @@ function buildUnitRow(unit) {
         </div>
       </div>
       <div class="apt-stats">
-        <div class="apt-stat-item"><span class="stat-lbl">الكود</span><div class="stat-val" style="font-size:11px">${unit.qlvn_code || '—'}</div></div>
-        <div class="apt-stat-item"><span class="stat-lbl">الحالة</span><div class="stat-val" style="font-size:11px">${statusMap[unit.operational_status] || '—'}</div></div>
+        <div class="apt-stat-item"><span class="stat-lbl">الكود</span><div class="stat-val" style="font-size:11px">${unit.pi_pairing_code || '—'}</div></div>
+        <div class="apt-stat-item"><span class="stat-lbl">الحالة</span><div class="stat-val" style="font-size:11px">${statusMap[unit.status] || unit.status || '—'}</div></div>
         <div class="apt-stat-item"><span class="stat-lbl">الضيف</span><div class="stat-val" style="font-size:11px;color:${activeSession ? 'var(--accent)' : 'inherit'}">${activeSession?.guest_name || '—'}</div></div>
       </div>
       ${isPending
@@ -280,8 +316,8 @@ function buildUnitRow(unit) {
 // ─────────────────────────────────────────────
 async function loadPlatformLogs() {
   const { data } = await supabase
-    .from('activity_logs')
-    .select('event_type, source, payload, created_at, units(name, hosts(name))')
+    .from('events')
+    .select('event_type, actor_type, payload, created_at, units!unit_id(name, host:users!host_id(name))')
     .order('created_at', { ascending: false })
     .limit(25);
 
@@ -290,7 +326,7 @@ async function loadPlatformLogs() {
 
   container.innerHTML = '';
   if (!data.length) {
-    container.innerHTML = '<div style="padding:16px;color:rgba(255,255,255,.3);font-size:11px;text-align:center;">لا يوجد نشاط</div>';
+    container.innerHTML = '<div style="padding:16px;color:rgba(255,255,255,.3);font-size:11px;text-align:center;">لا يوجد نشاط بعد</div>';
     return;
   }
 
@@ -300,6 +336,7 @@ async function loadPlatformLogs() {
     code_generated:    { icon: '🔐', type: 'ota',  label: 'CODE GEN' },
     unit_created:      { icon: '🆕', type: 'new',  label: 'NEW UNIT' },
     unit_approved:     { icon: '✅', type: 'new',  label: 'APPROVED' },
+    host_added:        { icon: '👤', type: 'new',  label: 'NEW HOST' },
     whatsapp_sent:     { icon: '📲', type: 'ad',   label: 'WHATSAPP' },
     presence_lost:     { icon: '👻', type: 'stop', label: 'SILENT EXIT' },
   };
@@ -313,7 +350,7 @@ async function loadPlatformLogs() {
       <div class="log-icon">${meta.icon}</div>
       <div class="log-body">
         <div class="log-event">${log.payload?.message || log.event_type}</div>
-        <div class="log-host">${log.units?.hosts?.name || '—'} · ${log.units?.name || '—'}</div>
+        <div class="log-host">${log.units?.host?.name || '—'} · ${log.units?.name || '—'}</div>
         <span class="log-type lt-${meta.type}">${meta.label}</span>
       </div>
       <div class="log-time">${time}</div>`;
@@ -326,14 +363,14 @@ async function loadPlatformLogs() {
 // ─────────────────────────────────────────────
 window.qlvnToggleHost = async function(hostId, isCurrentlyActive) {
   const newStatus = isCurrentlyActive ? 'suspended' : 'active';
-  await supabase.from('hosts').update({ subscription_status: newStatus }).eq('id', hostId);
+  await supabase.from('users').update({ status: newStatus }).eq('id', hostId);
   window.toast?.(isCurrentlyActive ? '⏸ تم إيقاف المضيف' : '✓ تم تفعيل المضيف', isCurrentlyActive ? 'danger' : 'success');
   await renderRealHosts();
 };
 
 window.qlvnApproveUnit = async function(unitId) {
-  await supabase.from('units').update({ approval_status: 'approved' }).eq('id', unitId);
-  await supabase.from('activity_logs').insert({ unit_id: unitId, event_type: 'unit_approved', source: 'founder', payload: {} });
+  await supabase.from('units').update({ status: 'approved' }).eq('id', unitId);
+  await supabase.from('events').insert({ unit_id: unitId, event_type: 'unit_approved', actor_type: 'founder', actor_id: currentUserId, payload: {} });
   window.toast?.('✅ تمت الموافقة على الوحدة', 'success');
   await renderRealHosts();
   await loadPlatformLogs();
@@ -341,19 +378,18 @@ window.qlvnApproveUnit = async function(unitId) {
 
 window.qlvnRejectUnit = async function(unitId) {
   if (!confirm('هل تريد رفض هذه الوحدة؟')) return;
-  await supabase.from('units').update({ approval_status: 'rejected' }).eq('id', unitId);
+  await supabase.from('units').update({ status: 'inactive' }).eq('id', unitId);
   window.toast?.('❌ تم رفض الوحدة', 'danger');
   await renderRealHosts();
 };
 
 window.qlvnKillUnit = async function(unitId, name) {
   if (!confirm(`⚠️ تعطيل ${name}؟`)) return;
-  await supabase.from('units').update({ operational_status: 'maintenance' }).eq('id', unitId);
+  await supabase.from('units').update({ status: 'inactive' }).eq('id', unitId);
   window.toast?.(`⛔ تم تعطيل ${name}`, 'danger');
   await renderRealHosts();
 };
 
-// Modal إضافة شقة
 window.qlvnOpenAddUnit = function(hostId, hostName) {
   const modal = document.createElement('div');
   modal.id = 'qlvn-add-unit-modal';
@@ -365,10 +401,7 @@ window.qlvnOpenAddUnit = function(hostId, hostName) {
       <input id="qu-name" type="text" placeholder="اسم الشقة *"
         style="width:100%;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
         border-radius:10px;color:#fff;font-family:'Tajawal';font-size:13px;margin-bottom:8px;">
-      <input id="qu-hood" type="text" placeholder="الحي (اختياري)"
-        style="width:100%;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
-        border-radius:10px;color:#fff;font-family:'Tajawal';font-size:13px;margin-bottom:8px;">
-      <input id="qu-addr" type="text" placeholder="العنوان (اختياري)"
+      <input id="qu-location" type="text" placeholder="الموقع / الحي (اختياري)"
         style="width:100%;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
         border-radius:10px;color:#fff;font-family:'Tajawal';font-size:13px;margin-bottom:14px;">
       <div style="display:flex;gap:8px;">
@@ -383,44 +416,39 @@ window.qlvnOpenAddUnit = function(hostId, hostName) {
   document.body.appendChild(modal);
 
   document.getElementById('qu-save').addEventListener('click', async () => {
-    const name = document.getElementById('qu-name').value.trim();
+    const name     = document.getElementById('qu-name').value.trim();
+    const location = document.getElementById('qu-location').value.trim();
     if (!name) { document.getElementById('qu-err').textContent = 'أدخل اسم الشقة'; return; }
 
-    const code = `QLVN-${Math.floor(1000 + Math.random() * 9000)}`;
     const { data: unit, error } = await supabase.from('units').insert({
-      host_id: hostId, name,
-      qlvn_code: code,
-      neighborhood: document.getElementById('qu-hood').value.trim() || null,
-      address: document.getElementById('qu-addr').value.trim() || null,
-      approval_status: 'pending_approval',
-      operational_status: 'available',
+      host_id: hostId, name, location: location || null, status: 'pending_approval',
     }).select().single();
 
     if (error) { document.getElementById('qu-err').textContent = error.message; return; }
 
-    await supabase.from('activity_logs').insert({
-      unit_id: unit.id, event_type: 'unit_created', source: 'founder',
-      payload: { unit_name: name, qlvn_code: code },
+    await supabase.from('events').insert({
+      unit_id: unit.id, event_type: 'unit_created', actor_type: 'founder',
+      actor_id: currentUserId, payload: { unit_name: name },
     });
 
     modal.remove();
-    window.toast?.(`✅ تم إضافة ${name} · بانتظار الموافقة`, 'success');
+    window.toast?.(`✅ تم إضافة ${name}`, 'success');
     await renderRealHosts();
     await loadPlatformLogs();
   });
 };
 
 // ─────────────────────────────────────────────
-// Override submitNewClient (modal إضافة مالك)
+// إضافة مالك جديد — INSERT مباشر في Supabase
 // ─────────────────────────────────────────────
 window.submitNewClient = async function(e) {
   e.preventDefault();
 
-  const name     = document.getElementById('host_name')?.value?.trim();
-  const phone    = document.getElementById('host_phone')?.value?.trim();
-  const email    = document.getElementById('host_email')?.value?.trim();
-  const area     = document.getElementById('host_area')?.value?.trim();
-  const unitName = document.getElementById('unit_name')?.value?.trim();
+  const name       = document.getElementById('host_name')?.value?.trim();
+  const phone      = document.getElementById('host_phone')?.value?.trim();
+  const email      = document.getElementById('host_email')?.value?.trim();
+  const area       = document.getElementById('host_area')?.value?.trim();
+  const unitName   = document.getElementById('unit_name')?.value?.trim();
   const airbnbUrl  = document.getElementById('airbnb_ical')?.value?.trim();
   const gathernUrl = document.getElementById('gathern_ical')?.value?.trim();
 
@@ -430,37 +458,50 @@ window.submitNewClient = async function(e) {
   if (btn) { btn.textContent = 'جاري الإضافة...'; btn.disabled = true; }
 
   try {
-    const { data, error } = await supabase.functions.invoke('onboard-host', {
-      body: {
-        name, phone,
-        email: email || null,
-        units: [{ name: unitName || `شقة ${name}`, neighborhood: area || null }],
-        send_welcome: true,
-      },
+    // 1. إضافة المضيف في users مباشرة بـ role='host'
+    const { data: newHost, error: hostErr } = await supabase
+      .from('users')
+      .insert({ name, phone, email: email || null, role: 'host', status: 'active' })
+      .select('id, name')
+      .single();
+
+    if (hostErr) throw hostErr;
+
+    // 2. إضافة الوحدة الأولى
+    const { data: newUnit, error: unitErr } = await supabase
+      .from('units')
+      .insert({
+        host_id:      newHost.id,
+        name:         unitName   || `شقة ${name}`,
+        location:     area       || null,
+        status:       'pending_approval',
+        ical_airbnb:  airbnbUrl  || null,
+        ical_booking: gathernUrl || null,
+      })
+      .select('id')
+      .single();
+
+    if (unitErr) throw unitErr;
+
+    // 3. سجّل الحدث
+    await supabase.from('events').insert({
+      unit_id: newUnit.id, event_type: 'host_added',
+      actor_type: 'founder', actor_id: currentUserId,
+      payload: { host_name: name, phone },
     });
-
-    if (error) throw new Error(error.message || JSON.stringify(error));
-
-    // iCal feeds
-    const firstUnitId = data?.units_created?.[0]?.id;
-    if (firstUnitId) {
-      const feeds = [];
-      if (airbnbUrl)  feeds.push({ unit_id: firstUnitId, source: 'airbnb',  url: airbnbUrl });
-      if (gathernUrl) feeds.push({ unit_id: firstUnitId, source: 'gathern', url: gathernUrl });
-      if (feeds.length) await supabase.from('ical_feeds').insert(feeds);
-    }
 
     window.closeAddClient?.();
     document.getElementById('addClientForm')?.reset();
-    window.toast?.(`✅ تم إضافة ${name} + إرسال ترحيب واتساب`, 'success');
+    document.querySelectorAll('.plan-opt').forEach((o, i) => o.classList.toggle('sel', i === 0));
+    window.toast?.(`✅ تم إضافة ${name} بنجاح`, 'success');
     await renderRealHosts();
     await loadPlatformLogs();
 
   } catch (err) {
-    console.error('[QLVN Founder] submitNewClient:', err);
+    console.error('[QLVN] submitNewClient:', err);
     window.toast?.(`❌ فشل: ${err.message}`, 'danger');
   } finally {
-    if (btn) { btn.textContent = '✓ إضافة وإرسال الترحيب'; btn.disabled = false; }
+    if (btn) { btn.textContent = '✓ إضافة المالك'; btn.disabled = false; }
   }
 };
 
@@ -469,9 +510,9 @@ window.submitNewClient = async function(e) {
 // ─────────────────────────────────────────────
 function subscribeRealtime() {
   supabase.channel('founder-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'units'  }, () => renderRealHosts())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'hosts'  }, () => renderRealHosts())
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_logs' }, () => loadPlatformLogs())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'units' }, () => renderRealHosts())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => renderRealHosts())
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, () => loadPlatformLogs())
     .subscribe();
 }
 
@@ -480,13 +521,14 @@ function subscribeRealtime() {
 // ─────────────────────────────────────────────
 async function init() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { injectSupabaseAuth(); return; }
-  await handleSession(session);
+  if (!session) { injectSupabaseAuth(); }
 
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) { removeSupabaseAuth(); await handleSession(session); }
-    else if (event === 'SIGNED_OUT')      { location.reload(); }
+    else if (event === 'SIGNED_OUT') { location.reload(); }
   });
+
+  if (session) await handleSession(session);
 }
 
 async function handleSession(session) {
@@ -509,10 +551,8 @@ async function handleSession(session) {
   removeSupabaseAuth();
   patchPinSystem();
 
-  // إذا كان الـ dashboard مرئياً مسبقاً
-  const dash = document.getElementById('dashboard');
-  if (dash && getComputedStyle(dash).display !== 'none') await loadFounderData();
-
+  // جلب البيانات مسبقاً — تكون جاهزة فور ظهور الـ dashboard
+  loadFounderData();
   subscribeRealtime();
 }
 

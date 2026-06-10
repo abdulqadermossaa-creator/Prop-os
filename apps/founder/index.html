@@ -74,7 +74,7 @@
         .add-client-btn { background: var(--sky); color: #000; border: none; padding: 8px 13px; border-radius: 11px; font-family: 'Tajawal'; font-size: 11px; font-weight: 900; cursor: pointer; transition: all .3s; }
         .add-client-btn:hover { background: #4ac3ff; transform: translateY(-1px); }
 
-        /* ===== HQ Wallet (أرباح المؤسسين) ===== */
+        /* ===== HQ Wallet ===== */
         .hq-wallet {
             background: linear-gradient(135deg, rgba(197,160,89,0.08), rgba(16,185,129,0.03));
             border: 1px solid rgba(197,160,89,0.22); border-radius: 24px;
@@ -102,7 +102,7 @@
         .sec-lbl .btn-add { background: var(--gold); color: #000; border: none; padding: 5px 11px; border-radius: 9px; font-size: 10px; font-weight: 900; cursor: pointer; font-family: 'Tajawal'; transition: all .3s; }
         .sec-lbl .btn-add:hover { background: var(--gold-soft); }
 
-        /* ===== Owners Tree (شجرة الملاك) ===== */
+        /* ===== Owners Tree ===== */
         .owner-card { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; margin-bottom: 11px; overflow: hidden; transition: all .3s; }
         .owner-card:hover { border-color: rgba(197,160,89,0.2); }
         .owner-card.open { border-color: rgba(197,160,89,0.3); }
@@ -122,7 +122,6 @@
         .btn-active:hover { background: rgba(16,185,129,0.22); }
         .btn-suspended { background: rgba(255,59,48,0.13); color: var(--danger); border: 1px solid rgba(255,59,48,0.3); }
 
-        /* قائمة الشقق المنزلقة */
         .apartments-container { max-height: 0; overflow: hidden; transition: max-height .4s ease; background: rgba(0,0,0,0.25); }
         .owner-card.open .apartments-container { max-height: 1500px; animation: slideDown .5s ease; }
         .apartments-inner { padding: 12px; border-top: 1px solid var(--border); }
@@ -177,7 +176,7 @@
         .slot-on { background: rgba(16,185,129,0.14); color: var(--accent); }
         .slot-empty { background: var(--glass); color: var(--text2); }
 
-        /* ===== Updates Center (OTA) ===== */
+        /* ===== Updates Center ===== */
         .updates-center { background: var(--glass); border: 1px solid var(--border); border-radius: 22px; padding: 18px; margin-bottom: 14px; }
         .uc-title { font-size: 13px; font-weight: 900; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
         .uc-sub { font-size: 10px; color: var(--text2); margin-bottom: 14px; }
@@ -212,7 +211,7 @@
         .logout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255,59,48,0.06); border: 1px solid rgba(255,59,48,0.18); color: var(--danger); padding: 13px; border-radius: 14px; width: 100%; cursor: pointer; font-family: 'Tajawal'; font-size: 12px; font-weight: 700; transition: all .3s; margin-top: 18px; }
         .logout-btn:hover { background: rgba(255,59,48,0.14); }
 
-        /* ===== Modal إضافة عميل ===== */
+        /* ===== Modal ===== */
         .modal-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .3s; backdrop-filter: blur(8px); }
         .modal-ov.open { opacity: 1; pointer-events: all; }
         .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 26px 26px 0 0; padding: 22px 16px 28px; width: 100%; max-height: 92vh; overflow-y: auto; transform: translateY(100%); transition: transform .4s cubic-bezier(.32,.72,0,1); }
@@ -320,136 +319,31 @@
     <div class="stats-row">
         <div class="sg-card">
             <div class="sg-lbl">ملاك نشطين</div>
-            <div class="sg-val" style="color:var(--accent);">٢</div>
-            <div class="sg-sub">من ٣ مسجلين</div>
+            <div class="sg-val" style="color:var(--accent);" id="stat-hosts">—</div>
+            <div class="sg-sub" id="stat-hosts-sub">جاري التحميل</div>
         </div>
         <div class="sg-card">
             <div class="sg-lbl">إجمالي الوحدات</div>
-            <div class="sg-val" style="color:var(--gold);">٤</div>
-            <div class="sg-sub">٣ متصلة · ١ مفصولة</div>
+            <div class="sg-val" style="color:var(--gold);" id="stat-units">—</div>
+            <div class="sg-sub" id="stat-units-sub">من Supabase</div>
         </div>
         <div class="sg-card">
-            <div class="sg-lbl">دخل المنصة</div>
-            <div class="sg-val" style="color:var(--sky);">٤٦٫٨ك</div>
-            <div class="sg-sub">ر.س / شهر</div>
+            <div class="sg-lbl">ضيوف نشطين</div>
+            <div class="sg-val" style="color:var(--sky);" id="stat-guests">—</div>
+            <div class="sg-sub">الآن</div>
         </div>
     </div>
 
     <!-- شجرة الملاك -->
     <div class="sec-lbl">
         <span>👥 شجرة الملاك المتصلين</span>
-        <span class="count" id="owners-count">٢ ملاك</span>
+        <span class="count" id="owners-count">—</span>
     </div>
 
     <div id="owners-tree">
-
-        <!-- المالك 1: خالد السديري -->
-        <div class="owner-card" id="owner-card-1">
-            <div class="owner-header" onclick="toggleOwner(1)">
-                <div class="owner-info">
-                    <div class="owner-avatar" style="background:linear-gradient(135deg,var(--sky),var(--accent));">خا</div>
-                    <div>
-                        <h3>خالد السديري</h3>
-                        <p>٢ شقق · شرق الدمام · QLVN-1001</p>
-                    </div>
-                </div>
-                <div class="owner-actions" onclick="event.stopPropagation()">
-                    <button class="btn-status btn-active" id="status-1" onclick="toggleOwnerStatus(1)">🟢 نشط</button>
-                    <span class="chevron">▼</span>
-                </div>
-            </div>
-
-            <div class="apartments-container">
-                <div class="apartments-inner" id="content-1">
-
-                    <!-- شقة الراكة -->
-                    <div class="apt-row" id="apt-1-1">
-                        <div class="apt-header-meta">
-                            <div class="apt-name">🏠 شقة الراكة (الفاخرة)</div>
-                            <div class="iot-status">
-                                <span class="pulse-lamp lamp-online"></span>
-                                <span class="txt-lamp">Pi متصل</span>
-                            </div>
-                        </div>
-                        <div class="apt-stats">
-                            <div class="apt-stat-item"><span class="stat-lbl">حجوزات الشهر</span><div class="stat-val">١٢</div></div>
-                            <div class="apt-stat-item"><span class="stat-lbl">دخل المالك</span><div class="stat-val" style="color:var(--accent);">٩٫٤ك</div></div>
-                            <div class="apt-stat-item"><span class="stat-lbl">حصتنا</span><div class="stat-val" style="color:var(--sky);">١٫٢ك</div></div>
-                        </div>
-                        <div class="apt-controls">
-                            <button class="btn-control btn-ota" onclick="pushOTA('شقة الراكة')">🔄 OTA Update</button>
-                            <button class="btn-control btn-kill" onclick="toggleAptKill(1,1)">⛔ إطفاء</button>
-                        </div>
-                    </div>
-
-                    <!-- شقة بن خلدون -->
-                    <div class="apt-row" id="apt-1-2">
-                        <div class="apt-header-meta">
-                            <div class="apt-name">🏠 شقة بن خلدون</div>
-                            <div class="iot-status">
-                                <span class="pulse-lamp lamp-online"></span>
-                                <span class="txt-lamp">Pi متصل</span>
-                            </div>
-                        </div>
-                        <div class="apt-stats">
-                            <div class="apt-stat-item"><span class="stat-lbl">حجوزات الشهر</span><div class="stat-val">٨</div></div>
-                            <div class="apt-stat-item"><span class="stat-lbl">دخل المالك</span><div class="stat-val" style="color:var(--accent);">١٢٫٥ك</div></div>
-                            <div class="apt-stat-item"><span class="stat-lbl">حصتنا</span><div class="stat-val" style="color:var(--sky);">١٫٨ك</div></div>
-                        </div>
-                        <div class="apt-controls">
-                            <button class="btn-control btn-ota" onclick="pushOTA('شقة بن خلدون')">🔄 OTA Update</button>
-                            <button class="btn-control btn-kill" onclick="toggleAptKill(1,2)">⛔ إطفاء</button>
-                        </div>
-                    </div>
-
-                    <button class="add-apt-btn" onclick="toast('فتح إضافة شقة لـ خالد السديري')">+ إضافة شقة جديدة لنفس المالك</button>
-                </div>
-            </div>
+        <div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.3);" id="owners-loading">
+            <div style="font-size:13px;">⏳ جاري تحميل البيانات...</div>
         </div>
-
-        <!-- المالك 2: عبدالعزيز الفهد -->
-        <div class="owner-card" id="owner-card-2">
-            <div class="owner-header" onclick="toggleOwner(2)">
-                <div class="owner-info">
-                    <div class="owner-avatar" style="background:linear-gradient(135deg,var(--gold),var(--danger));">عب</div>
-                    <div>
-                        <h3>عبدالعزيز الفهد</h3>
-                        <p>١ شقة · حي المنار · QLVN-1002</p>
-                    </div>
-                </div>
-                <div class="owner-actions" onclick="event.stopPropagation()">
-                    <button class="btn-status btn-active" id="status-2" onclick="toggleOwnerStatus(2)">🟢 نشط</button>
-                    <span class="chevron">▼</span>
-                </div>
-            </div>
-
-            <div class="apartments-container">
-                <div class="apartments-inner" id="content-2">
-
-                    <div class="apt-row" id="apt-2-1">
-                        <div class="apt-header-meta">
-                            <div class="apt-name">🏠 شقة المنار</div>
-                            <div class="iot-status">
-                                <span class="pulse-lamp lamp-offline"></span>
-                                <span class="txt-lamp off">Pi مفصول</span>
-                            </div>
-                        </div>
-                        <div class="apt-stats">
-                            <div class="apt-stat-item"><span class="stat-lbl">حجوزات الشهر</span><div class="stat-val">٥</div></div>
-                            <div class="apt-stat-item"><span class="stat-lbl">دخل المالك</span><div class="stat-val" style="color:var(--accent);">٧٫٠ك</div></div>
-                            <div class="apt-stat-item"><span class="stat-lbl">حصتنا</span><div class="stat-val" style="color:var(--sky);">٧٧٠</div></div>
-                        </div>
-                        <div class="apt-controls">
-                            <button class="btn-control btn-ota" disabled onclick="toast('⚠️ تعذّر: Pi مفصول، تحقق من اتصال الإنترنت', 'danger')">🔄 OTA Update</button>
-                            <button class="btn-control btn-kill" onclick="toggleAptKill(2,1)">⛔ إطفاء</button>
-                        </div>
-                    </div>
-
-                    <button class="add-apt-btn" onclick="toast('فتح إضافة شقة لـ عبدالعزيز الفهد')">+ إضافة شقة جديدة لنفس المالك</button>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <!-- Ad Engine -->
@@ -460,26 +354,8 @@
             <div class="ae-live">مباشر</div>
         </div>
         <div class="ae-sub">إعلانات موجّهة للضيوف حسب موقع العقار</div>
-
-        <div class="ad-slots">
-            <div class="ad-slot">
-                <div class="slot-lbl">الراكة · SLOT 1</div>
-                <div class="slot-unit">البيك · ١٥٪</div>
-                <span class="slot-status slot-on">● نشط</span>
-            </div>
-            <div class="ad-slot">
-                <div class="slot-lbl">المنار · SLOT 1</div>
-                <div class="slot-unit">— فارغ</div>
-                <span class="slot-status slot-empty">متاح</span>
-            </div>
-        </div>
-
         <select class="select-target">
             <option>اختر الوحدة المستهدفة</option>
-            <option>شقة الراكة</option>
-            <option>شقة بن خلدون</option>
-            <option>شقة المنار</option>
-            <option>جميع الوحدات</option>
         </select>
         <input type="text" class="ae-input" placeholder="اسم العرض · مثال: خصم ٢٠٪">
         <input type="text" class="ae-input" placeholder="رابط صورة الإعلان">
@@ -491,47 +367,20 @@
     <div class="updates-center">
         <div class="uc-title">📡 دفع تحديث OTA عالمي</div>
         <div class="uc-sub">بث برمجي مشفر لكل الواجهات والأجهزة</div>
-
         <select class="select-target" id="update-target">
             <option value="owner">→ واجهة الملاك (لوحة المضيف)</option>
-            <option value="staff">→ تطبيق الكادر التشغيلي (نظافة + صيانة)</option>
-            <option value="unit">→ داشبورد شاشة الشقة (تابلت الضيف)</option>
-            <option value="raspberry">→ كل أجهزة Raspberry Pi (Firmware)</option>
+            <option value="staff">→ تطبيق الكادر التشغيلي</option>
+            <option value="unit">→ داشبورد شاشة الشقة</option>
+            <option value="raspberry">→ كل أجهزة Raspberry Pi</option>
         </select>
-        <textarea class="text-area-update" id="update-notes" placeholder="مذكرات التحديث · مثلاً: إصلاح خطأ في العد التنازلي + إضافة صوت ترحيب"></textarea>
+        <textarea class="text-area-update" id="update-notes" placeholder="مذكرات التحديث"></textarea>
         <button class="deploy-btn" onclick="deployGlobalUpdate()">⚡ بث التحديث الآن</button>
     </div>
 
     <!-- سجل المنصة -->
     <div class="sec-lbl">📋 سجل المنصة · مباشر</div>
     <div id="platform-logs">
-        <div class="log-item">
-            <div class="log-icon">🆕</div>
-            <div class="log-body">
-                <div class="log-event">مالك جديد: محمد الغامدي</div>
-                <div class="log-host">QLVN-1044 · ٣ وحدات · بريدة</div>
-                <span class="log-type lt-new">NEW OWNER</span>
-            </div>
-            <div class="log-time">منذ ٢٠ د</div>
-        </div>
-        <div class="log-item">
-            <div class="log-icon">📢</div>
-            <div class="log-body">
-                <div class="log-event">نشر إعلان: البيك · الراكة</div>
-                <div class="log-host">١٥٪ خصم · صالح اليوم</div>
-                <span class="log-type lt-ad">AD ENGINE</span>
-            </div>
-            <div class="log-time">منذ ١ س</div>
-        </div>
-        <div class="log-item">
-            <div class="log-icon">📡</div>
-            <div class="log-body">
-                <div class="log-event">دفع OTA: تحديث v2.3</div>
-                <div class="log-host">جميع الـ Raspberry Pi · ٣ أجهزة</div>
-                <span class="log-type lt-ota">OTA UPDATE</span>
-            </div>
-            <div class="log-time">منذ ٣ س</div>
-        </div>
+        <div style="padding:16px;color:rgba(255,255,255,.3);font-size:11px;text-align:center;">⏳ جاري التحميل...</div>
     </div>
 
     <button class="logout-btn" onclick="logout()">🔓 تسجيل الخروج</button>
@@ -542,37 +391,29 @@
     <div class="modal" onclick="event.stopPropagation()">
         <div class="modal-handle"></div>
         <div class="modal-title">➕ إضافة مالك جديد</div>
-        <div class="modal-sub">العقد المشفّر · حفظ مباشر في السيرفر</div>
+        <div class="modal-sub">حفظ مباشر في Supabase</div>
 
         <form id="addClientForm" onsubmit="submitNewClient(event)">
-
-            <!-- معلومات المالك -->
             <div class="form-section">
                 <div class="fs-title"><span class="num">1</span> معلومات المالك</div>
-
                 <div class="form-group">
                     <label class="form-label">اسم المالك <span class="req">*</span></label>
-                    <input type="text" class="form-input" id="host_name" required placeholder="مثال: خالد السديري">
+                    <input type="text" class="form-input" id="host_name" required placeholder="مثال: محمد العتيبي">
                 </div>
-
                 <div class="form-group">
-                    <label class="form-label">رقم الجوال (واتساب) <span class="req">*</span></label>
+                    <label class="form-label">رقم الجوال <span class="req">*</span></label>
                     <input type="tel" class="form-input" id="host_phone" required placeholder="+966501234567">
-                    <div class="form-hint">يستلم رابط الدخول عبر واتساب</div>
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">البريد الإلكتروني</label>
                     <input type="email" class="form-input" id="host_email" placeholder="example@mail.com">
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">المنطقة</label>
-                    <input type="text" class="form-input" id="host_area" placeholder="الرياض، شرق الدمام...">
+                    <input type="text" class="form-input" id="host_area" placeholder="الرياض، الدمام...">
                 </div>
-
                 <div class="form-group">
-                    <label class="form-label">باقة الاشتراك <span class="req">*</span></label>
+                    <label class="form-label">باقة الاشتراك</label>
                     <div class="plan-grid">
                         <div class="plan-opt sel" data-plan="basic" data-fee="100" onclick="selectPlan(this)">
                             <div class="pn">Basic</div>
@@ -586,41 +427,29 @@
                 </div>
             </div>
 
-            <!-- الوحدة الأولى -->
             <div class="form-section">
                 <div class="fs-title"><span class="num">2</span> الوحدة الأولى</div>
-
                 <div class="form-group">
                     <label class="form-label">اسم الوحدة <span class="req">*</span></label>
                     <input type="text" class="form-input" id="unit_name" required placeholder="مثال: شقة الملقا">
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label">رابط صورة الوحدة</label>
-                    <input type="url" class="form-input" id="unit_image" placeholder="https://...">
-                </div>
             </div>
 
-            <!-- ربط iCal -->
             <div class="form-section">
                 <div class="fs-title"><span class="num">3</span> ربط المنصات (iCal)</div>
-
                 <div class="form-group">
                     <label class="form-label">رابط Airbnb iCal</label>
                     <input type="url" class="form-input" id="airbnb_ical" placeholder="https://airbnb.com/calendar/ical/...">
-                    <div class="form-hint">من Airbnb Host → Calendar → Export</div>
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">رابط Gathern iCal</label>
                     <input type="url" class="form-input" id="gathern_ical" placeholder="https://gathern.sa/...">
-                    <div class="form-hint">من Gathern → التقويم → مزامنة</div>
                 </div>
             </div>
 
             <div class="submit-row">
                 <button type="button" class="cancel-btn" onclick="closeAddClient()">إلغاء</button>
-                <button type="submit" class="submit-btn" id="submitBtn">✓ إضافة وإرسال الترحيب</button>
+                <button type="submit" class="submit-btn" id="submitBtn">✓ إضافة المالك</button>
             </div>
         </form>
     </div>
@@ -674,89 +503,15 @@
     // ===== Owners Tree =====
     function toggleOwner(id) {
         const card = document.getElementById('owner-card-' + id);
-        card.classList.toggle('open');
+        if (card) card.classList.toggle('open');
     }
 
-    function toggleOwnerStatus(ownerId) {
-        const btn = document.getElementById('status-' + ownerId);
-        const content = document.getElementById('content-' + ownerId);
-        const ownerName = document.querySelector(`#owner-card-${ownerId} .owner-info h3`).textContent;
-
-        if (btn.classList.contains('btn-active')) {
-            if (confirm(`⚠️ تنبيه أمن:\n\nتأكيد إيقاف المالك "${ownerName}"؟\n\nسيتم قفل جميع شققه وإيقاف كل الخدمات فوراً.`)) {
-                btn.classList.remove('btn-active');
-                btn.classList.add('btn-suspended');
-                btn.textContent = '🔴 موقوف';
-                content.classList.add('suspended-mask');
-                
-                addLog({
-                    icon: '⏸',
-                    event: `إيقاف مالك: ${ownerName}`,
-                    host: `QLVN-${1000 + ownerId} · انتهاء العقد`,
-                    type: 'stop',
-                    typeLabel: 'OWNER SUSPENDED'
-                });
-                toast(`⏸ تم إيقاف ${ownerName} وقفل شققه`, 'danger');
-            }
-        } else {
-            btn.classList.remove('btn-suspended');
-            btn.classList.add('btn-active');
-            btn.textContent = '🟢 نشط';
-            content.classList.remove('suspended-mask');
-            
-            addLog({
-                icon: '✓',
-                event: `تفعيل مالك: ${ownerName}`,
-                host: `QLVN-${1000 + ownerId} · تجديد العقد`,
-                type: 'new',
-                typeLabel: 'REACTIVATED'
-            });
-            toast(`✓ تم تفعيل ${ownerName} وإعادة الخدمة`, 'success');
-        }
-    }
-
-    function toggleAptKill(ownerId, aptId) {
-        const apt = document.getElementById(`apt-${ownerId}-${aptId}`);
-        const aptName = apt.querySelector('.apt-name').textContent;
-
-        if (!apt.classList.contains('killed')) {
-            if (confirm(`⚠️ تعطيل ${aptName}؟\n\nسيتم قفل الباب وإيقاف جميع الخدمات داخل الشقة.`)) {
-                apt.classList.add('killed');
-                addLog({
-                    icon: '⛔',
-                    event: `إطفاء شقة: ${aptName}`,
-                    host: 'القفل + كل الخدمات معطّلة',
-                    type: 'stop',
-                    typeLabel: 'APT KILLED'
-                });
-                toast(`⛔ تم تعطيل ${aptName} برمجياً`, 'danger');
-            }
-        } else {
-            apt.classList.remove('killed');
-            toast(`✓ تم إعادة تشغيل ${aptName}`, 'success');
-        }
-    }
-
-    function pushOTA(aptName) {
-        toast(`📡 جاري دفع OTA لـ ${aptName}...`);
-        setTimeout(() => {
-            toast(`✓ تم تحديث Raspberry Pi لـ ${aptName} بنجاح`, 'success');
-            addLog({
-                icon: '📡',
-                event: `OTA Update: ${aptName}`,
-                host: 'Raspberry Pi محدّث بنجاح',
-                type: 'ota',
-                typeLabel: 'OTA UPDATE'
-            });
-        }, 1500);
-    }
-
-    // ===== Modal إضافة مالك =====
+    // ===== Modal =====
     function openAddClient() {
         document.getElementById('addModal').classList.add('open');
     }
 
-    function closeAddClient(e) {
+    window.closeAddClient = function(e) {
         if (!e || e.target === document.getElementById('addModal') || e.type === 'click') {
             document.getElementById('addModal').classList.remove('open');
         }
@@ -767,160 +522,18 @@
         el.classList.add('sel');
     }
 
-    async function submitNewClient(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.textContent = 'جاري الحفظ...';
-
-        const selectedPlan = document.querySelector('.plan-opt.sel');
-        const clientData = {
-            host_name: document.getElementById('host_name').value,
-            host_phone: document.getElementById('host_phone').value,
-            host_email: document.getElementById('host_email').value,
-            host_area: document.getElementById('host_area').value,
-            plan: selectedPlan.dataset.plan,
-            monthly_fee: parseInt(selectedPlan.dataset.fee),
-            unit_name: document.getElementById('unit_name').value,
-            unit_image: document.getElementById('unit_image').value,
-            airbnb_ical: document.getElementById('airbnb_ical').value,
-            gathern_ical: document.getElementById('gathern_ical').value,
-            created_at: new Date().toISOString()
-        };
-
-        try {
-            /* ============================================
-            في الإنتاج: ربط مع Supabase
-            ============================================
-            const { data: host } = await supabase.from('hosts').insert({...}).select().single();
-            const { data: unit } = await supabase.from('units').insert({...}).select().single();
-            if (clientData.airbnb_ical || clientData.gathern_ical) {
-                await supabase.from('ical_sources').insert({...});
-            }
-            await fetch('/api/send-welcome-whatsapp', {...});
-            */
-
-            await new Promise(r => setTimeout(r, 1200));
-            console.log('[QLVIN] مالك جديد محفوظ:', clientData);
-
-            addNewOwnerCard(clientData);
-            addLog({
-                icon: '🆕',
-                event: `مالك جديد: ${clientData.host_name}`,
-                host: `${clientData.unit_name} · ${clientData.monthly_fee} ر.س/شهر`,
-                type: 'new',
-                typeLabel: 'NEW OWNER'
-            });
-
-            closeAddClient();
-            toast(`✅ تم إضافة ${clientData.host_name} + إرسال واتساب`, 'success');
-            
-            document.getElementById('addClientForm').reset();
-            document.querySelectorAll('.plan-opt').forEach((o,i) => o.classList.toggle('sel', i === 0));
-
-            // تحديث العداد
-            const count = document.querySelectorAll('.owner-card').length;
-            document.getElementById('owners-count').textContent = `${count} ملاك`;
-
-        } catch (err) {
-            toast('❌ خطأ: ' + err.message, 'danger');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '✓ إضافة وإرسال الترحيب';
-        }
-    }
-
-    function addNewOwnerCard(client) {
-        const ownersCount = document.querySelectorAll('.owner-card').length;
-        const newId = ownersCount + 1;
-        const initials = client.host_name.substring(0, 2);
-        const colors = [
-            ['var(--sky)', 'var(--accent)'],
-            ['var(--gold)', 'var(--danger)'],
-            ['var(--accent)', 'var(--sky)'],
-            ['#8B5CF6', 'var(--gold)']
-        ];
-        const [c1, c2] = colors[ownersCount % colors.length];
-        const code = `QLVN-${1000 + newId}`;
-
-        const html = `
-            <div class="owner-card" id="owner-card-${newId}">
-                <div class="owner-header" onclick="toggleOwner(${newId})">
-                    <div class="owner-info">
-                        <div class="owner-avatar" style="background:linear-gradient(135deg,${c1},${c2});">${initials}</div>
-                        <div>
-                            <h3>${client.host_name}</h3>
-                            <p>١ شقة · ${client.host_area || 'غير محدد'} · ${code}</p>
-                        </div>
-                    </div>
-                    <div class="owner-actions" onclick="event.stopPropagation()">
-                        <button class="btn-status btn-active" id="status-${newId}" onclick="toggleOwnerStatus(${newId})">🟢 نشط</button>
-                        <span class="chevron">▼</span>
-                    </div>
-                </div>
-                <div class="apartments-container">
-                    <div class="apartments-inner" id="content-${newId}">
-                        <div class="apt-row" id="apt-${newId}-1">
-                            <div class="apt-header-meta">
-                                <div class="apt-name">🏠 ${client.unit_name}</div>
-                                <div class="iot-status">
-                                    <span class="pulse-lamp lamp-offline"></span>
-                                    <span class="txt-lamp off">Pi قيد الإعداد</span>
-                                </div>
-                            </div>
-                            <div class="apt-stats">
-                                <div class="apt-stat-item"><span class="stat-lbl">حجوزات الشهر</span><div class="stat-val">٠</div></div>
-                                <div class="apt-stat-item"><span class="stat-lbl">دخل المالك</span><div class="stat-val" style="color:var(--accent);">٠</div></div>
-                                <div class="apt-stat-item"><span class="stat-lbl">حصتنا</span><div class="stat-val" style="color:var(--sky);">٠</div></div>
-                            </div>
-                            <div class="apt-controls">
-                                <button class="btn-control btn-ota" disabled>🔄 OTA Update</button>
-                                <button class="btn-control btn-kill" onclick="toggleAptKill(${newId},1)">⛔ إطفاء</button>
-                            </div>
-                        </div>
-                        <button class="add-apt-btn" onclick="toast('فتح إضافة شقة لـ ${client.host_name}')">+ إضافة شقة جديدة لنفس المالك</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.getElementById('owners-tree').insertAdjacentHTML('afterbegin', html);
-    }
+    // submitNewClient مُعرَّف في supabase-client.js (module)
 
     // ===== Ad Engine & OTA =====
     function publishAd() {
         toast('✓ تم نشر الإعلان', 'success');
-        addLog({
-            icon: '📢',
-            event: 'نشر إعلان جديد',
-            host: 'Ad Engine · للضيوف المستهدفين',
-            type: 'ad',
-            typeLabel: 'AD ENGINE'
-        });
     }
 
     function deployGlobalUpdate() {
-        const target = document.getElementById('update-target');
         const notes = document.getElementById('update-notes').value;
-
-        if (!notes.trim()) {
-            toast('⚠️ الرجاء كتابة مذكرات التحديث', 'danger');
-            return;
-        }
-
-        const targetText = target.options[target.selectedIndex].text;
-        toast(`🚀 جاري بث التحديث إلى ${targetText}...`);
-
-        setTimeout(() => {
-            toast('✅ تم البث بنجاح', 'success');
-            addLog({
-                icon: '📡',
-                event: `OTA Global Push`,
-                host: `${targetText} · ${notes.substring(0, 40)}...`,
-                type: 'ota',
-                typeLabel: 'GLOBAL UPDATE'
-            });
-            document.getElementById('update-notes').value = '';
-        }, 1500);
+        if (!notes.trim()) { toast('⚠️ اكتب مذكرات التحديث', 'danger'); return; }
+        toast('🚀 جاري بث التحديث...');
+        setTimeout(() => { toast('✅ تم البث بنجاح', 'success'); document.getElementById('update-notes').value = ''; }, 1500);
     }
 
     function addLog(log) {
