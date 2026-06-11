@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>QDR · Luxury by Qlvin OS</title>
+<title>QDR Tablet · Qlvin OS</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -248,7 +248,15 @@ body{
 /* ═══════════════════════════════════
    APP SHELL
 ═══════════════════════════════════ */
-.app{position:relative;z-index:2;max-width:430px;margin:0 auto;padding:12px 14px 36px;}
+.app{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:20px 24px 36px;}
+/* Tablet landscape grid */
+@media (min-width:768px){
+  .tablet-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:18px;align-items:start;}
+  .tablet-col-left{display:flex;flex-direction:column;gap:12px;}
+  .tablet-col-right{display:flex;flex-direction:column;gap:12px;}
+  .wc-grid{grid-template-columns:repeat(6,1fr)!important;}
+  .hero-time{font-size:72px!important;}
+}
 
 /* ═══════════════════════════════════
    GLASS CARD BASE (Apple Liquid Glass)
@@ -606,7 +614,7 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2);}
     <div class="qdr-left">
       <div class="qdr-names">
         <div class="qdr-brand">QDR <span class="lux">LUXURY</span></div>
-        <div class="qdr-sub">by Qlvin OS · Smart Hospitality</div>
+        <div class="qdr-sub">تابلت الشقة · متصل بالبطاقة</div>
       </div>
     </div>
     <div class="qdr-status">
@@ -652,6 +660,10 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2);}
       <div class="mb-score" id="mb-away-score">1</div>
     </div>
   </div>
+
+  <!-- TABLET GRID START -->
+  <div class="tablet-grid">
+  <div class="tablet-col-left">
 
   <!-- HERO -->
   <div class="card hero">
@@ -781,6 +793,9 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2);}
       </div>
     </div>
   </div>
+  </div><!-- /tablet-col-left -->
+
+  <div class="tablet-col-right">
 
   <!-- 🌈 LED RGB (Cinema + Relax only) -->
   <div id="led-section">
@@ -852,22 +867,6 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2);}
       oninput="onSound(this.value)" style="accent-color:#007aff">
   </div>
 
-  <!-- 🔐 ACCESS — كود الباب + طوارئ (يشتغل حتى offline) -->
-  <div class="sec">الوصول</div>
-  <div class="g2" style="margin-bottom:9px">
-    <div class="card" style="text-align:center">
-      <div class="c-eye">كود الباب 🔐</div>
-      <div id="door-code" style="font-size:34px;font-weight:900;letter-spacing:8px;color:var(--accent);margin:8px 0 4px">— — — —</div>
-      <div class="c-sm" id="code-status">جاري التحميل...</div>
-    </div>
-    <div class="card" onclick="callHost()" style="text-align:center;cursor:pointer">
-      <div class="c-eye">مساعدة فورية</div>
-      <div class="c-ico" style="font-size:30px">📞</div>
-      <div class="c-big" style="font-size:15px">اتصل بالمضيف</div>
-      <div class="c-sm">متاح دائماً · 24/7</div>
-    </div>
-  </div>
-
   <!-- INFO -->
   <div class="sec">جلستك</div>
   <div class="g2" style="margin-bottom:9px">
@@ -908,6 +907,9 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2);}
     </div>
     <button class="e-btn" onclick="endSession()">إنهاء</button>
   </div>
+
+  </div><!-- /tablet-col-right -->
+  </div><!-- /tablet-grid -->
 
 </div><!-- /app -->
 
@@ -983,7 +985,7 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2);}
 const CFG = {
   RPI_API: 'http://raspberrypi.local:5000',
   UNIT_ID: 'qlvn-1042',
-  UNIT_NAME: 'الراكة · A01',
+  UNIT_NAME: 'الراكة · A01', ROLE: 'tablet',
   GUEST_NAME: 'سليمان',
   BOOKING_REF: '#1042',
   WIFI_SSID: 'QLVN_5G',
@@ -1007,6 +1009,37 @@ async function piCommand(cmd) {
     console.log('Pi offline — command logged:', cmd);
   }
 }
+
+/* ═══════════════════════════════════
+   🔄 REALTIME SYNC — التابلت يستقبل من البطاقة
+   لما الضيف يغيّر الوضع من جواله → التابلت يتحدث
+═══════════════════════════════════ */
+// في الإنتاج: Supabase Realtime channel
+// supabase.channel(`unit:${UNIT_ID}`)
+//   .on('postgres_changes', {table:'guest_sessions'}, (payload) => {
+//      applyRemoteMode(payload.new.preferences.active_mode);
+//   }).subscribe();
+
+// Demo: polling كل 3 ثوانٍ للمزامنة
+function applyRemoteMode(mode, team) {
+  console.log('🔄 استقبل من البطاقة:', mode, team);
+  const modeEl = document.getElementById('mode-' + mode);
+  if (modeEl && currentMode !== mode) {
+    setMode(mode, modeEl);
+    if (team) {
+      const teamBtn = document.querySelector(`[onclick*="${team}"]`);
+      if (teamBtn) selectTeam(team, teamBtn);
+    }
+    toast('🔄', 'تم التحديث من بطاقة الضيف');
+  }
+}
+
+// مؤشر الاتصال بالبطاقة
+function updateSyncIndicator(connected) {
+  const status = document.getElementById('sys-status');
+  if (status) status.textContent = connected ? 'متصل بالبطاقة ✓' : 'في انتظار البطاقة';
+}
+updateSyncIndicator(true);
 
 /* ═══════════════════════════════════
    🚀 SPLASH
@@ -1499,44 +1532,6 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('led-section').classList.add('show');
   setNawafMsg(modeConfig.cinema.nawafMsg, modeConfig.cinema.nawafSugs);
 });
-
-/* ═══════════════════════════════════════
-   🔐 الوصول الآمن — كود offline + طوارئ
-   الكود ينحفظ بالجهاز أول زيارة
-   → يظهر حتى لو النت قطع تماماً
-═══════════════════════════════════════ */
-const HOST_PHONE = '+966500000000'; // يُستبدل برقم المضيف من Supabase
-
-async function loadDoorCode() {
-  const codeEl = document.getElementById('door-code');
-  const statusEl = document.getElementById('code-status');
-  try {
-    // 1. جرّب الكود المحفوظ محلياً أولاً (يشتغل offline)
-    let saved = null;
-    try { saved = localStorage.getItem('qdr_door_code'); } catch(e) {}
-    if (saved) {
-      codeEl.textContent = saved.split('').join(' ');
-      statusEl.textContent = 'محفوظ بجهازك ✓';
-    }
-    // 2. حدّث من المصدر لو فيه نت (Supabase في الإنتاج)
-    const freshCode = '4321'; // demo — في الإنتاج: من guest_sessions
-    codeEl.textContent = freshCode.split('').join(' ');
-    statusEl.textContent = 'صالح طوال إقامتك ✓';
-    try { localStorage.setItem('qdr_door_code', freshCode); } catch(e) {}
-  } catch (err) {
-    // 3. النت قطع والكود مو محفوظ → وجّه للطوارئ
-    if (codeEl.textContent.includes('—')) {
-      statusEl.textContent = '⚠️ اتصل بالمضيف للكود';
-    }
-  }
-}
-
-function callHost() {
-  haptic();
-  window.location.href = 'tel:' + HOST_PHONE;
-}
-
-window.addEventListener('DOMContentLoaded', loadDoorCode);
 </script>
 </body>
 </html>
