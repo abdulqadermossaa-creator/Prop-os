@@ -1,7 +1,6 @@
 {
   "name": "qlvin-os",
   "compatibility_date": "2026-06-11",
-  "observability": { "enabled": true },
-  "assets": { "directory": "frontend" },
+  "pages_build_output_dir": "frontend",
   "compatibility_flags": ["nodejs_compat"]
 }
