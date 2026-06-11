@@ -338,13 +338,16 @@
     <!-- شجرة الملاك -->
     <div class="sec-lbl">
         <span>👥 شجرة الملاك المتصلين</span>
-        <span class="count" id="owners-count">٢ ملاك</span>
+        <span class="count" id="owners-count">— ملاك</span>
     </div>
 
     <div id="owners-tree">
-        <div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.3);" id="owners-loading">
-            <div style="font-size:13px;">⏳ جاري تحميل البيانات...</div>
+
+        <!-- يتعبّى ديناميكياً من Supabase -->
+        <div id="owners-loading" style="text-align:center;padding:30px;color:var(--text2);font-size:13px;">
+            ⏳ جاري تحميل الملاك من قاعدة البيانات...
         </div>
+
     </div>
 
     <!-- Ad Engine -->
@@ -497,6 +500,13 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ═══ Supabase — الاتصال الحقيقي ═══ */
+const SB_URL = 'https://nrekvofyypdifqfghhnh.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yZWt2b2Z5eXBkaWZxZmdoaG5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0OTU2OTQsImV4cCI6MjA5NjA3MTY5NH0.C-KTMzXBntvuOIkiTACZPR1Bv5FTQuw57j5XfNA7LRk';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+</script>
 <script>
     // ===== PIN Lock =====
     const CORRECT_PIN = '1234';
@@ -543,7 +553,45 @@
     // ===== Owners Tree =====
     function toggleOwner(id) {
         const card = document.getElementById('owner-card-' + id);
-        if (card) card.classList.toggle('open');
+        card.classList.toggle('open');
+    }
+
+    function toggleOwnerStatus(ownerId) {
+        const btn = document.getElementById('status-' + ownerId);
+        const content = document.getElementById('content-' + ownerId);
+        const ownerName = document.querySelector(`#owner-card-${ownerId} .owner-info h3`).textContent;
+
+        if (btn.classList.contains('btn-active')) {
+            if (confirm(`⚠️ تنبيه أمن:\n\nتأكيد إيقاف المالك "${ownerName}"؟\n\nسيتم قفل جميع شققه وإيقاف كل الخدمات فوراً.`)) {
+                btn.classList.remove('btn-active');
+                btn.classList.add('btn-suspended');
+                btn.textContent = '🔴 موقوف';
+                content.classList.add('suspended-mask');
+                
+                addLog({
+                    icon: '⏸',
+                    event: `إيقاف مالك: ${ownerName}`,
+                    host: `QLVN-${1000 + ownerId} · انتهاء العقد`,
+                    type: 'stop',
+                    typeLabel: 'OWNER SUSPENDED'
+                });
+                toast(`⏸ تم إيقاف ${ownerName} وقفل شققه`, 'danger');
+            }
+        } else {
+            btn.classList.remove('btn-suspended');
+            btn.classList.add('btn-active');
+            btn.textContent = '🟢 نشط';
+            content.classList.remove('suspended-mask');
+            
+            addLog({
+                icon: '✓',
+                event: `تفعيل مالك: ${ownerName}`,
+                host: `QLVN-${1000 + ownerId} · تجديد العقد`,
+                type: 'new',
+                typeLabel: 'REACTIVATED'
+            });
+            toast(`✓ تم تفعيل ${ownerName} وإعادة الخدمة`, 'success');
+        }
     }
 
     function toggleAptKill(ownerId, aptId) {
@@ -587,7 +635,7 @@
         document.getElementById('addModal').classList.add('open');
     }
 
-    window.closeAddClient = function(e) {
+    function closeAddClient(e) {
         if (!e || e.target === document.getElementById('addModal') || e.type === 'click') {
             document.getElementById('addModal').classList.remove('open');
         }
@@ -598,7 +646,143 @@
         el.classList.add('sel');
     }
 
-    // submitNewClient مُعرَّف في supabase-client.js (module) — لا تعرّفه هنا
+    async function submitNewClient(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = 'جاري الحفظ...';
+
+        const selectedPlan = document.querySelector('.plan-opt.sel');
+        const clientData = {
+            host_name: document.getElementById('host_name').value,
+            host_phone: document.getElementById('host_phone').value,
+            host_email: document.getElementById('host_email').value,
+            host_area: document.getElementById('host_area').value,
+            plan: selectedPlan.dataset.plan,
+            monthly_fee: parseInt(selectedPlan.dataset.fee),
+            unit_name: document.getElementById('unit_name').value,
+            unit_image: document.getElementById('unit_image').value,
+            airbnb_ical: document.getElementById('airbnb_ical').value,
+            gathern_ical: document.getElementById('gathern_ical').value,
+            created_at: new Date().toISOString()
+        };
+
+        try {
+            /* ═══ الكتابة الحقيقية في Supabase ═══ */
+            // 1. إضافة المالك في users بـ role='host'
+            const { data: newHost, error: hostErr } = await sb
+                .from('users')
+                .insert({
+                    name: clientData.host_name,
+                    phone: clientData.host_phone,
+                    email: clientData.host_email || null,
+                    role: 'host',
+                    status: 'active'
+                })
+                .select()
+                .single();
+
+            if (hostErr) throw new Error('فشل حفظ المالك: ' + hostErr.message);
+
+            // 2. إضافة الوحدة مربوطة بالمالك
+            const { data: newUnit, error: unitErr } = await sb
+                .from('units')
+                .insert({
+                    host_id: newHost.id,
+                    name: clientData.unit_name,
+                    status: 'pending',
+                    ical_airbnb: clientData.airbnb_ical || null,
+                    ical_booking: clientData.gathern_ical || null
+                })
+                .select()
+                .single();
+
+            if (unitErr) console.warn('الوحدة:', unitErr.message);
+
+            console.log('[QLVIN] ✅ محفوظ في Supabase:', newHost.id);
+
+            addNewOwnerCard(clientData);
+            addLog({
+                icon: '🆕',
+                event: `مالك جديد: ${clientData.host_name}`,
+                host: `${clientData.unit_name} · ${clientData.monthly_fee} ر.س/شهر`,
+                type: 'new',
+                typeLabel: 'NEW OWNER'
+            });
+
+            closeAddClient();
+            toast(`✅ تم إضافة ${clientData.host_name} + إرسال واتساب`, 'success');
+            
+            document.getElementById('addClientForm').reset();
+            document.querySelectorAll('.plan-opt').forEach((o,i) => o.classList.toggle('sel', i === 0));
+
+            // تحديث العداد
+            const count = document.querySelectorAll('.owner-card').length;
+            document.getElementById('owners-count').textContent = `${count} ملاك`;
+
+        } catch (err) {
+            toast('❌ خطأ: ' + err.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '✓ إضافة وإرسال الترحيب';
+        }
+    }
+
+    function addNewOwnerCard(client) {
+        const ownersCount = document.querySelectorAll('.owner-card').length;
+        const newId = ownersCount + 1;
+        const initials = client.host_name.substring(0, 2);
+        const colors = [
+            ['var(--sky)', 'var(--accent)'],
+            ['var(--gold)', 'var(--danger)'],
+            ['var(--accent)', 'var(--sky)'],
+            ['#8B5CF6', 'var(--gold)']
+        ];
+        const [c1, c2] = colors[ownersCount % colors.length];
+        const code = `QLVN-${1000 + newId}`;
+
+        const html = `
+            <div class="owner-card" id="owner-card-${newId}">
+                <div class="owner-header" onclick="toggleOwner(${newId})">
+                    <div class="owner-info">
+                        <div class="owner-avatar" style="background:linear-gradient(135deg,${c1},${c2});">${initials}</div>
+                        <div>
+                            <h3>${client.host_name}</h3>
+                            <p>١ شقة · ${client.host_area || 'غير محدد'} · ${code}</p>
+                        </div>
+                    </div>
+                    <div class="owner-actions" onclick="event.stopPropagation()">
+                        <button class="btn-status btn-active" id="status-${newId}" onclick="toggleOwnerStatus(${newId})">🟢 نشط</button>
+                        <span class="chevron">▼</span>
+                    </div>
+                </div>
+                <div class="apartments-container">
+                    <div class="apartments-inner" id="content-${newId}">
+                        <div class="apt-row" id="apt-${newId}-1">
+                            <div class="apt-header-meta">
+                                <div class="apt-name">🏠 ${client.unit_name}</div>
+                                <div class="iot-status">
+                                    <span class="pulse-lamp lamp-offline"></span>
+                                    <span class="txt-lamp off">Pi قيد الإعداد</span>
+                                </div>
+                            </div>
+                            <div class="apt-stats">
+                                <div class="apt-stat-item"><span class="stat-lbl">حجوزات الشهر</span><div class="stat-val">٠</div></div>
+                                <div class="apt-stat-item"><span class="stat-lbl">دخل المالك</span><div class="stat-val" style="color:var(--accent);">٠</div></div>
+                                <div class="apt-stat-item"><span class="stat-lbl">حصتنا</span><div class="stat-val" style="color:var(--sky);">٠</div></div>
+                            </div>
+                            <div class="apt-controls">
+                                <button class="btn-control btn-ota" disabled>🔄 OTA Update</button>
+                                <button class="btn-control btn-kill" onclick="toggleAptKill(${newId},1)">⛔ إطفاء</button>
+                            </div>
+                        </div>
+                        <button class="add-apt-btn" onclick="toast('فتح إضافة شقة لـ ${client.host_name}')">+ إضافة شقة جديدة لنفس المالك</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('owners-tree').insertAdjacentHTML('afterbegin', html);
+    }
 
     // ===== Ad Engine & OTA =====
     function publishAd() {
@@ -659,7 +843,60 @@
         t.className = 'toast show ' + type;
         setTimeout(() => t.classList.remove('show'), 2800);
     }
+
+    /* القراءة من Supabase عند تحميل الصفحة — البيانات تبقى بعد refresh */
+    async function loadOwnersFromDB() {
+        const loadingEl = document.getElementById('owners-loading');
+        try {
+            const { data: hosts, error: hErr } = await sb
+                .from('users').select('*')
+                .eq('role', 'host')
+                .order('created_at', { ascending: true });
+            if (hErr) throw hErr;
+
+            const { data: units } = await sb.from('units').select('*');
+            if (loadingEl) loadingEl.remove();
+
+            if (!hosts || hosts.length === 0) {
+                document.getElementById('owners-tree').innerHTML =
+                    '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px;">لا يوجد ملاك بعد — أضف أول مالك ⬆️</div>';
+                document.getElementById('owners-count').textContent = '٠ ملاك';
+                document.getElementById('stat-hosts').textContent = '٠';
+                document.getElementById('stat-hosts-sub').textContent = 'لا يوجد ملاك بعد';
+                document.getElementById('stat-units').textContent = '٠';
+                document.getElementById('stat-guests').textContent = '٠';
+                document.getElementById('platform-logs').innerHTML =
+                    '<div style="padding:16px;color:rgba(255,255,255,.3);font-size:11px;text-align:center;">لا توجد أحداث بعد</div>';
+                return;
+            }
+
+            hosts.forEach(h => {
+                const hostUnits = (units || []).filter(u => u.host_id === h.id);
+                addNewOwnerCard({
+                    host_name: h.name,
+                    host_phone: h.phone || '',
+                    host_area: '',
+                    unit_name: hostUnits[0]?.name || 'لا توجد وحدات',
+                    monthly_fee: 449
+                });
+            });
+
+            const activeHosts = hosts.filter(h => h.status === 'active').length;
+            document.getElementById('stat-hosts').textContent = activeHosts;
+            document.getElementById('stat-hosts-sub').textContent = 'من ' + hosts.length + ' مسجل';
+            document.getElementById('stat-units').textContent = (units || []).length;
+            document.getElementById('stat-units-sub').textContent = 'إجمالي الوحدات';
+            document.getElementById('stat-guests').textContent = '٠';
+            document.getElementById('owners-count').textContent = hosts.length + ' ملاك';
+            document.getElementById('platform-logs').innerHTML =
+                '<div style="padding:16px;color:rgba(255,255,255,.3);font-size:11px;text-align:center;">لا توجد أحداث بعد</div>';
+            console.log('[QLVIN] ✅ تم تحميل', hosts.length, 'مالك من Supabase');
+        } catch (err) {
+            console.error('[QLVIN] ❌', err.message);
+            if (loadingEl) loadingEl.innerHTML = '⚠️ تعذّر الاتصال: ' + err.message;
+        }
+    }
+    window.addEventListener('DOMContentLoaded', loadOwnersFromDB);
 </script>
-<script type="module" src="./src/supabase-client.js"></script>
 </body>
 </html>
