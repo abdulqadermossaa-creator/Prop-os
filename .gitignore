@@ -72,3 +72,9 @@ __pycache__/
 *.db-wal
 __pycache__/
 .env
+
+# Node.js
+node_modules/
+*.log
+dist/
+.wrangler/
