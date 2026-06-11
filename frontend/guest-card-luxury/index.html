@@ -852,6 +852,22 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2);}
       oninput="onSound(this.value)" style="accent-color:#007aff">
   </div>
 
+  <!-- 🔐 ACCESS — كود الباب + طوارئ (يشتغل حتى offline) -->
+  <div class="sec">الوصول</div>
+  <div class="g2" style="margin-bottom:9px">
+    <div class="card" style="text-align:center">
+      <div class="c-eye">كود الباب 🔐</div>
+      <div id="door-code" style="font-size:34px;font-weight:900;letter-spacing:8px;color:var(--accent);margin:8px 0 4px">— — — —</div>
+      <div class="c-sm" id="code-status">جاري التحميل...</div>
+    </div>
+    <div class="card" onclick="callHost()" style="text-align:center;cursor:pointer">
+      <div class="c-eye">مساعدة فورية</div>
+      <div class="c-ico" style="font-size:30px">📞</div>
+      <div class="c-big" style="font-size:15px">اتصل بالمضيف</div>
+      <div class="c-sm">متاح دائماً · 24/7</div>
+    </div>
+  </div>
+
   <!-- INFO -->
   <div class="sec">جلستك</div>
   <div class="g2" style="margin-bottom:9px">
@@ -1483,6 +1499,44 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('led-section').classList.add('show');
   setNawafMsg(modeConfig.cinema.nawafMsg, modeConfig.cinema.nawafSugs);
 });
+
+/* ═══════════════════════════════════════
+   🔐 الوصول الآمن — كود offline + طوارئ
+   الكود ينحفظ بالجهاز أول زيارة
+   → يظهر حتى لو النت قطع تماماً
+═══════════════════════════════════════ */
+const HOST_PHONE = '+966500000000'; // يُستبدل برقم المضيف من Supabase
+
+async function loadDoorCode() {
+  const codeEl = document.getElementById('door-code');
+  const statusEl = document.getElementById('code-status');
+  try {
+    // 1. جرّب الكود المحفوظ محلياً أولاً (يشتغل offline)
+    let saved = null;
+    try { saved = localStorage.getItem('qdr_door_code'); } catch(e) {}
+    if (saved) {
+      codeEl.textContent = saved.split('').join(' ');
+      statusEl.textContent = 'محفوظ بجهازك ✓';
+    }
+    // 2. حدّث من المصدر لو فيه نت (Supabase في الإنتاج)
+    const freshCode = '4321'; // demo — في الإنتاج: من guest_sessions
+    codeEl.textContent = freshCode.split('').join(' ');
+    statusEl.textContent = 'صالح طوال إقامتك ✓';
+    try { localStorage.setItem('qdr_door_code', freshCode); } catch(e) {}
+  } catch (err) {
+    // 3. النت قطع والكود مو محفوظ → وجّه للطوارئ
+    if (codeEl.textContent.includes('—')) {
+      statusEl.textContent = '⚠️ اتصل بالمضيف للكود';
+    }
+  }
+}
+
+function callHost() {
+  haptic();
+  window.location.href = 'tel:' + HOST_PHONE;
+}
+
+window.addEventListener('DOMContentLoaded', loadDoorCode);
 </script>
 </body>
 </html>

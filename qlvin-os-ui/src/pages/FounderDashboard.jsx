@@ -154,6 +154,7 @@ export default function FounderDashboard() {
           الملاك والوحدات
         </div>
 
+        {/* Loading / Error */}
         {loading && (
           <div style={{ textAlign: "center", padding: "40px", color: "rgba(255,255,255,0.25)", fontSize: 13 }}>
             ⏳ جاري تحميل البيانات...
@@ -165,6 +166,7 @@ export default function FounderDashboard() {
           </div>
         )}
 
+        {/* Hosts Grid */}
         {!loading && !error && hosts.length === 0 && (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "rgba(255,255,255,0.2)", fontSize: 13 }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🏠</div>
@@ -216,6 +218,7 @@ export default function FounderDashboard() {
         </div>
       </div>
 
+      {/* Add Host Modal */}
       {showAdd && (
         <div style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
