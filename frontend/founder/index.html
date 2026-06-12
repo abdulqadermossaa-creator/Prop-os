@@ -669,37 +669,40 @@ const sb = window.supabase.createClient(SB_URL, SB_KEY);
 
         try {
             /* ═══ الكتابة الحقيقية في Supabase ═══ */
+            // نولّد UUID مسبقاً — نتجنب .select() بعد INSERT
+            const newHostId = crypto.randomUUID();
+
             // 1. إضافة المالك في users بـ role='host'
-            const { data: newHost, error: hostErr } = await sb
+            const { error: hostErr } = await sb
                 .from('users')
                 .insert({
+                    id: newHostId,
                     name: clientData.host_name,
-                    phone: clientData.host_phone,
+                    phone: clientData.host_phone || null,
                     email: clientData.host_email || null,
                     role: 'host',
                     status: 'active'
-                })
-                .select()
-                .single();
+                });
 
-            if (hostErr) throw new Error('فشل حفظ المالك: ' + hostErr.message);
+            if (hostErr) {
+                console.error('[QLVIN] host insert error:', hostErr);
+                throw new Error('فشل حفظ المالك: ' + (hostErr.code || '') + ' — ' + hostErr.message);
+            }
 
             // 2. إضافة الوحدة مربوطة بالمالك
-            const { data: newUnit, error: unitErr } = await sb
+            const { error: unitErr } = await sb
                 .from('units')
                 .insert({
-                    host_id: newHost.id,
+                    host_id: newHostId,
                     name: clientData.unit_name,
-                    status: 'pending',
+                    status: 'pending_approval',
                     ical_airbnb: clientData.airbnb_ical || null,
                     ical_booking: clientData.gathern_ical || null
-                })
-                .select()
-                .single();
+                });
 
-            if (unitErr) console.warn('الوحدة:', unitErr.message);
+            if (unitErr) console.warn('[QLVIN] unit insert warning:', unitErr.message);
 
-            console.log('[QLVIN] ✅ محفوظ في Supabase:', newHost.id);
+            console.log('[QLVIN] ✅ محفوظ في Supabase:', newHostId);
 
             addNewOwnerCard(clientData);
             addLog({
